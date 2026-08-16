@@ -18,7 +18,7 @@ const DashboardLayout = ({ data = [] }) => {
       
       <KpiCards />
       
-      <div className="glass u-container u-container--md filters-container">
+      <div className="u-container u-container--md filters-container">
         <DashboardFilters />
       </div>
 

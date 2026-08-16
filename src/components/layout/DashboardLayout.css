@@ -12,6 +12,8 @@
 
 .filters-container {
   margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg) var(--spacing-sm) !important;
+  border-radius: 0 !important;
 }
 
 .charts-grid-2 {

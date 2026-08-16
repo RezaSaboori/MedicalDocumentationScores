@@ -1,17 +1,75 @@
-import { generateMockPhysicians } from '../utils/mockData';
+import Papa from 'papaparse';
+import { comboLabel } from '../utils/flags';
 
-/**
- * Mock data service.
- * In a production environment, this will be replaced with actual API calls
- * or CSV parsing logic (e.g., using PapaParse).
- */
-export const fetchDashboardData = async () => {
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 300));
+const CURRENT_CSV_PATH = '/data/physician_scores_enriched_4405.csv';
+const PREVIOUS_CSV_PATH = '/data/physician_scores_enriched_3405.csv';
 
-  // TODO: Replace with actual CSV parsing / API logic
+const parseCsv = (path) =>
+  new Promise((resolve, reject) => {
+    Papa.parse(path, {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => resolve(results.data),
+      error: (error) => reject(error),
+    });
+  });
+
+const getNum = (row, key) => {
+  const val = row[key] !== undefined ? row[key] : row[`${key} `];
+  return val === '' || val === null || val === undefined ? 0 : Number(val);
+};
+
+const getStr = (row, key) => {
+  const val = row[key] !== undefined ? row[key] : row[`${key} `];
+  return (val || '').toString().trim();
+};
+
+const mapRow = (row) => {
+  const flagsStr = getStr(row, 'flags');
+  const flags = flagsStr
+    ? flagsStr.split('|').map((f) => f.trim()).filter(Boolean)
+    : ['OK'];
+
   return {
-    current: generateMockPhysicians(),
-    previous: [],
+    name: getStr(row, 'name'),
+    V: getNum(row, 'V'),
+    N: getNum(row, 'N'),
+    rho_Z: getNum(row, 'rho_Z'),
+    rho_F: getNum(row, 'rho_F'),
+    WQS_adj: getNum(row, 'WQS_adj'),
+    LAQ: getNum(row, 'LAQ'),
+    PDI: getNum(row, 'PDI'),
+    PDI_noF: getNum(row, 'PDI_noF'),
+    E: getNum(row, 'E'),
+    A: getNum(row, 'A'),
+    G: getNum(row, 'G'),
+    W: getNum(row, 'W'),
+    F: getNum(row, 'F'),
+    Z: getNum(row, 'Z'),
+    flags,
+    group_fa: comboLabel(flags),
+    year: getNum(row, 'year'),
   };
+};
+
+export const fetchDashboardData = async () => {
+  try {
+    const currentRaw = await parseCsv(CURRENT_CSV_PATH);
+    
+    let previousRaw = [];
+    try {
+      previousRaw = await parseCsv(PREVIOUS_CSV_PATH);
+    } catch (e) {
+      console.warn('Previous month CSV not found or failed to parse:', e);
+    }
+
+    return {
+      current: currentRaw.map(mapRow),
+      previous: previousRaw.map(mapRow),
+    };
+  } catch (error) {
+    console.error('Failed to load dashboard data:', error);
+    return { current: [], previous: [] };
+  }
 };
