@@ -1,0 +1,22 @@
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--spacing-sm) var(--spacing-lg);
+  margin-top: var(--spacing-md);
+}
+
+.chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--color-gray10);
+}
+
+.chart-legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--border-radius-pill);
+  background-color: var(--legend-dot-color);
+}

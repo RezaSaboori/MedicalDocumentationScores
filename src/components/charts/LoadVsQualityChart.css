@@ -1,0 +1,36 @@
+.lvq-container {
+  min-height: 520px;
+}
+
+.lvq-title {
+  text-align: center;
+  color: var(--color-gray12);
+  margin: 0 0 4px 0;
+  font-weight: var(--font-weight-semibold);
+}
+
+.lvq-subtitle {
+  text-align: center;
+  color: var(--color-gray7);
+  font-size: var(--font-size-sm);
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.lvq-body {
+  flex: 1;
+  min-height: 380px;
+  width: 100%;
+  direction: ltr;
+}
+
+.lvq-mean-line {
+  stroke: var(--color-gray7);
+  stroke-width: 1.6;
+  stroke-dasharray: 6 5;
+}
+
+.lvq-mean-label {
+  fill: var(--color-gray8);
+  font-size: var(--font-size-xs);
+  text-anchor: end;
+}

@@ -1,0 +1,14 @@
+.app-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.app-loading-card {
+  padding: var(--spacing-xl);
+}
+
+.app-loading-title {
+  color: var(--color-gray10);
+}

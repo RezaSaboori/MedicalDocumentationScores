@@ -1,0 +1,11 @@
+/*
+ * Global box-model reset.
+ * Required because .u-container uses width:100% + padding;
+ * without border-box the cards overflow their grid tracks
+ * and the layout gaps collapse.
+ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
