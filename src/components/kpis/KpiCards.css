@@ -1,0 +1,23 @@
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+.kpi-card {
+  text-align: center;
+  padding: var(--spacing-md);
+}
+
+.kpi-title {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray8);
+  margin-bottom: var(--spacing-xs);
+}
+
+.kpi-value {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-blue);
+}

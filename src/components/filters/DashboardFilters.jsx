@@ -1,21 +1,22 @@
 import React from 'react';
+import './DashboardFilters.css';
 
 const DashboardFilters = () => {
   return (
-    <div style={{ display: 'flex', gap: 'var(--spacing-lg)', flexWrap: 'wrap' }}>
-      <div style={{ flex: 1, minWidth: '260px' }}>
-        <label style={{ fontWeight: 'var(--font-weight-semibold)', display: 'block', marginBottom: 'var(--spacing-xs)' }}>
+    <div className="filters-wrapper">
+      <div className="filter-group">
+        <label className="filter-label">
           فیلتر بر اساس گروه رفتاری:
         </label>
-        <div className="glass u-container u-container--sm" style={{ padding: 'var(--spacing-sm)', color: 'var(--color-gray8)' }}>
+        <div className="glass u-container u-container--sm filter-control">
           Dropdown Placeholder
         </div>
       </div>
-      <div style={{ flex: 1, minWidth: '200px' }}>
-        <label style={{ fontWeight: 'var(--font-weight-semibold)', display: 'block', marginBottom: 'var(--spacing-xs)' }}>
+      <div className="filter-group">
+        <label className="filter-label">
           فیلتر بر اساس سال:
         </label>
-        <div className="glass u-container u-container--sm" style={{ padding: 'var(--spacing-sm)', color: 'var(--color-gray8)' }}>
+        <div className="glass u-container u-container--sm filter-control">
           Dropdown Placeholder
         </div>
       </div>

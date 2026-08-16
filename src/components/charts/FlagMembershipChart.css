@@ -1,0 +1,24 @@
+.chart-container {
+  min-height: 450px;
+}
+
+.chart-title {
+  text-align: center;
+  color: var(--color-gray12);
+  margin: 0 0 4px 0;
+  font-weight: var(--font-weight-semibold);
+}
+
+.chart-subtitle {
+  text-align: center;
+  color: var(--color-gray7);
+  font-size: var(--font-size-sm);
+  margin-top: 0;
+  margin-bottom: var(--spacing-md);
+}
+
+.chart-wrapper {
+  flex: 1;
+  min-height: 300px;
+  width: 100%;
+}

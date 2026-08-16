@@ -1,0 +1,22 @@
+.table-wrapper {
+  overflow-x: auto;
+  color: var(--color-gray8);
+}
+
+.audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+.audit-table th {
+  padding: var(--spacing-sm);
+  background-color: var(--color-gray3);
+  color: var(--color-gray12);
+  font-weight: var(--font-weight-semibold);
+}
+
+.audit-table td {
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-gray3);
+}

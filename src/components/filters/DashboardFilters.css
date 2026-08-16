@@ -1,0 +1,29 @@
+.filters-wrapper {
+  display: flex;
+  gap: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  flex: 1;
+  min-width: 260px;
+}
+
+.filter-group:last-child {
+  min-width: 200px;
+}
+
+.filter-label {
+  font-weight: var(--font-weight-semibold);
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  color: var(--color-gray10);
+}
+
+.filter-control {
+  padding: var(--spacing-sm);
+  color: var(--color-gray8);
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+}

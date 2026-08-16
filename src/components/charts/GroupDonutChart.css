@@ -1,0 +1,56 @@
+.chart-container {
+  min-height: 450px;
+}
+
+.chart-title {
+  text-align: center;
+  color: var(--color-gray12);
+  margin: 0 0 var(--spacing-md) 0;
+  font-weight: var(--font-weight-semibold);
+}
+
+.venn-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+}
+
+.venn-svg {
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+}
+
+.circle-a { fill: var(--color-red); opacity: 0.6; mix-blend-mode: multiply; }
+.circle-b { fill: var(--color-orange); opacity: 0.6; mix-blend-mode: multiply; }
+.circle-c { fill: var(--color-gray6); opacity: 0.6; mix-blend-mode: multiply; }
+
+.venn-legend {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.legend-dot.dot-a { background-color: var(--color-red); }
+.legend-dot.dot-b { background-color: var(--color-orange); }
+.legend-dot.dot-c { background-color: var(--color-gray6); }
+
+.legend-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray10);
+}
