@@ -1,0 +1,1058 @@
+/* ==========================================================================
+   UNIFIED LIQUID GLASS SYSTEM
+   Single source of truth for all glass surface variants.
+
+   Usage:
+     <div class="glass">              — opaque neutral surface (cards, panels)
+     <div class="glass-transparent"> — truly transparent blur (header nav)
+     <div class="blue-glass">        — colored opaque variant
+     ... etc.
+
+   Theme switching:
+     Light/dark is driven by .dark on <html>.
+     .glass + colored + solid-tone variants auto-adapt because their color
+     variables (incl. --color-gray12) remap in .dark {}.
+     White-heavy special glasses have explicit .dark twins at the bottom.
+     Only .glass-transparent uses backdrop-filter.
+   ========================================================================== */
+
+
+/* ==========================================================================
+   SHARED SPECULAR PSEUDO-ELEMENT
+   "Lens catching light" top-edge highlight for all OPAQUE glass variants.
+   .glass-transparent manages its own ::before separately.
+   ========================================================================== */
+
+
+:root {
+  --glass-backdrop-filter: blur(4px) saturate(1.8) brightness(1.2);
+}
+
+.glass::before,
+.blue-glass::before,
+.green-glass::before,
+.red-glass::before,
+.orange-glass::before,
+.purple-glass::before,
+.pink-glass::before,
+.indigo-glass::before,
+.teal-glass::before,
+.brown-glass::before,
+.coral-glass::before,
+.amber-glass::before,
+.lime-glass::before,
+.emerald-glass::before,
+.sky-glass::before,
+.violet-glass::before,
+.magenta-glass::before,
+.rainbow-glass::before,
+.aurora-glass::before,
+.sunset-glass::before,
+.ocean-glass::before,
+.opal-glass::before,
+.gold-glass::before,
+.rosegold-glass::before,
+.fire-glass::before,
+.frost-glass::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 2px;
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.7) 0%,
+        rgba(255, 255, 255, 0) 35%
+    );
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+.dark .glass::before {
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.3) 0%,
+        rgba(255, 255, 255, 0.2) 5%,
+        rgba(255, 255, 255, 0) 100%
+    );
+}
+
+/* ==========================================================================
+   .glass — Opaque neutral surface (light theme default)
+   Auto-adapts in .dark via gray variable remapping.
+   ========================================================================== */
+
+.glass {
+    position: relative;
+    background-image: linear-gradient(
+        135deg,
+        var(--color-gray1),
+        var(--color-gray2) 70%
+    );
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-gray1) 10%, transparent),
+        inset 1.8px 3px 0px -2px color-mix(in srgb, var(--color-gray1) 90%, transparent),
+        inset -2px -2px 0px -2px color-mix(in srgb, var(--color-gray1) 30%, transparent),
+        inset -3px -12px 1px -8px color-mix(in srgb, var(--color-gray1) 10%, transparent),
+        inset -0.3px -1px 4px 0px color-mix(in srgb, #000 12%, transparent),
+        inset -1.5px 2.5px 0px -2px color-mix(in srgb, #000 20%, transparent),
+        inset 0px 3px 4px -2px color-mix(in srgb, #000 20%, transparent),
+        inset 2px -6.5px 1px -4px color-mix(in srgb, #000 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, #000 10%, transparent),
+        0px 6px 16px 0px color-mix(in srgb, #000 8%, transparent);
+}
+
+.dark .glass {
+    background-image: linear-gradient(
+        135deg,
+        var(--color-gray2) 60%,
+        var(--color-gray1) 100%
+    );
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-gray3) 4%, transparent),
+        inset 1.8px 3px 0px -2px color-mix(in srgb, var(--color-gray3) 12%, transparent),
+        inset -2px -2px 0px -2px color-mix(in srgb, var(--color-gray3) 10%, transparent),
+        inset -3px -8px 1px -6px color-mix(in srgb, var(--color-gray3) 8%, transparent),
+        inset -0.3px -1px 4px 0px color-mix(in srgb, #000 25%, transparent),
+        inset -1.5px 2.5px 0px -2px color-mix(in srgb, #000 30%, transparent),
+        inset 0px 3px 4px -2px color-mix(in srgb, #000 30%, transparent),
+        inset 2px -6.5px 1px -4px color-mix(in srgb, #000 25%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, #000 15%, transparent),
+        0px 6px 16px 0px color-mix(in srgb, #000 12%, transparent);
+}
+
+
+/* ==========================================================================
+   .glass-transparent — Truly transparent blur surface (header nav)
+   The ONLY variant that uses backdrop-filter.
+   ========================================================================== */
+
+.glass-transparent {
+    position: relative;
+    z-index: 1;
+}
+
+.glass-transparent::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background-image: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.4),
+        rgba(255, 255, 255, 0.1) 40%,
+        rgba(255, 255, 255, 0) 50%,
+        rgba(0, 0, 0, 0.1) 100%
+    );
+    backdrop-filter: var(--glass-backdrop-filter);
+    -webkit-backdrop-filter: var(--glass-backdrop-filter);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, #fff 10%, transparent),
+        inset 1.8px 3px 0px -2px color-mix(in srgb, #fff 90%, transparent),
+        inset -2px -2px 0px -2px color-mix(in srgb, #fff 80%, transparent),
+        inset -3px -8px 1px -6px color-mix(in srgb, #fff 60%, transparent),
+        inset -0.3px -1px 4px 0px color-mix(in srgb, #000 12%, transparent),
+        inset -1.5px 2.5px 0px -2px color-mix(in srgb, #000 20%, transparent),
+        inset 0px 3px 4px -2px color-mix(in srgb, #000 20%, transparent),
+        inset 2px -6.5px 1px -4px color-mix(in srgb, #000 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, #000 10%, transparent),
+        0px 6px 16px 0px color-mix(in srgb, #000 8%, transparent);
+}
+
+.dark .glass-transparent::before {
+    background-image: linear-gradient(
+        135deg,
+        rgba(104, 104, 104, 0.3),
+        rgba(0, 0, 0, 0.3) 30%
+    );
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-gray8) 4%, transparent),
+        inset 1.8px 3px 0px -2px color-mix(in srgb, var(--color-gray8) 12%, transparent),
+        inset -2px -2px 0px -2px color-mix(in srgb, var(--color-gray8) 10%, transparent),
+        inset -3px -8px 1px -6px color-mix(in srgb, var(--color-gray8) 8%, transparent),
+        inset -0.3px -1px 4px 0px color-mix(in srgb, #000 25%, transparent),
+        inset -1.5px 2.5px 0px -2px color-mix(in srgb, #000 30%, transparent),
+        inset 0px 3px 4px -2px color-mix(in srgb, #000 30%, transparent),
+        inset 2px -6.5px 1px -4px color-mix(in srgb, #000 25%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, #000 15%, transparent),
+        0px 6px 16px 0px color-mix(in srgb, #000 12%, transparent);
+}
+
+/* ==========================================================================
+   COLORED LIQUID GLASS VARIANTS
+   Opaque colored surfaces
+   variables (incl. --color-gray12) shift in .dark {}.
+   ========================================================================== */
+
+.blue-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--color-cyan) 40%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-cyan) 72%, var(--color-blue)) 0%,
+            color-mix(in srgb, var(--color-blue) 88%, var(--color-indigo)) 58%,
+            color-mix(in srgb, var(--color-blue) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-cyan) 20%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--color-cyan) 90%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--color-cyan) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-cyan) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--color-blue) 25%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-blue) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-blue) 24%, transparent);
+}
+
+.green-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--color-mint) 40%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-mint) 72%, var(--color-green)) 0%,
+            color-mix(in srgb, var(--color-green) 88%, var(--color-teal)) 58%,
+            color-mix(in srgb, var(--color-green) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-mint) 20%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--color-mint) 90%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--color-mint) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-mint) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--color-teal) 25%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-green) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-green) 24%, transparent);
+}
+
+.red-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--color-orange) 40%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-orange) 60%, var(--color-red)) 0%,
+            color-mix(in srgb, var(--color-red) 90%, var(--color-pink)) 58%,
+            color-mix(in srgb, var(--color-red) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-orange) 20%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--color-orange) 90%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--color-orange) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-orange) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--color-red) 25%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-red) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-red) 24%, transparent);
+}
+
+.orange-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--color-yellow) 45%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-yellow) 60%, var(--color-orange)) 0%,
+            color-mix(in srgb, var(--color-orange) 90%, var(--color-red)) 58%,
+            color-mix(in srgb, var(--color-red) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-orange) 22%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--color-orange) 90%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--color-orange) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-orange) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--color-orange) 25%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-orange) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-orange) 24%, transparent);
+}
+
+.purple-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--color-pink) 40%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-purple) 75%, var(--color-pink)) 0%,
+            color-mix(in srgb, var(--color-purple) 88%, var(--color-indigo)) 58%,
+            color-mix(in srgb, var(--color-purple) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-pink) 20%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--color-pink) 80%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--color-pink) 70%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-purple) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--color-indigo) 25%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-purple) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-purple) 24%, transparent);
+}
+
+.pink-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--color-orange) 35%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-pink) 78%, var(--color-orange)) 0%,
+            color-mix(in srgb, var(--color-pink) 90%, var(--color-purple)) 58%,
+            color-mix(in srgb, var(--color-pink) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-pink) 25%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--color-pink) 90%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--color-pink) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-pink) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--color-purple) 25%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-pink) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-pink) 24%, transparent);
+}
+
+.indigo-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--color-blue) 40%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-blue) 60%, var(--color-indigo)) 0%,
+            color-mix(in srgb, var(--color-indigo) 88%, var(--color-purple)) 58%,
+            color-mix(in srgb, var(--color-indigo) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-blue) 20%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--color-blue) 85%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--color-blue) 75%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-indigo) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--color-purple) 25%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-indigo) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-indigo) 24%, transparent);
+}
+
+.teal-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--color-mint) 40%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-mint) 65%, var(--color-teal)) 0%,
+            color-mix(in srgb, var(--color-teal) 88%, var(--color-cyan)) 58%,
+            color-mix(in srgb, var(--color-teal) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-mint) 20%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--color-mint) 90%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--color-mint) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-mint) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--color-cyan) 25%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-teal) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-teal) 24%, transparent);
+}
+
+.brown-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--color-orange) 30%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-brown) 70%, var(--color-orange)) 0%,
+            color-mix(in srgb, var(--color-brown) 92%, var(--color-red)) 58%,
+            color-mix(in srgb, var(--color-brown) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-orange) 18%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--color-orange) 70%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--color-brown) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-brown) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--color-red) 20%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-brown) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-brown) 24%, transparent);
+}
+
+.dark .blue-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--fill-color-cyan) 40%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--fill-color-cyan) 72%, var(--fill-color-blue)) 0%,
+            color-mix(in srgb, var(--fill-color-blue) 88%, var(--fill-color-indigo)) 58%,
+            color-mix(in srgb, var(--fill-color-blue) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--fill-color-cyan) 20%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--fill-color-cyan) 90%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--fill-color-cyan) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--fill-color-cyan) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--fill-color-blue) 25%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-blue) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-blue) 24%, transparent);
+}
+
+.dark .green-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--fill-color-mint) 40%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--fill-color-mint) 72%, var(--fill-color-green)) 0%,
+            color-mix(in srgb, var(--fill-color-green) 88%, var(--fill-color-teal)) 58%,
+            color-mix(in srgb, var(--fill-color-green) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--fill-color-mint) 20%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--fill-color-mint) 90%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--fill-color-mint) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--fill-color-mint) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--fill-color-teal) 25%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-green) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-green) 24%, transparent);
+}
+
+.dark .red-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--fill-color-orange) 40%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--fill-color-orange) 60%, var(--fill-color-red)) 0%,
+            color-mix(in srgb, var(--fill-color-red) 90%, var(--fill-color-pink)) 58%,
+            color-mix(in srgb, var(--fill-color-red) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--fill-color-orange) 20%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--fill-color-orange) 90%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--fill-color-orange) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--fill-color-orange) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--fill-color-red) 25%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-red) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-red) 24%, transparent);
+}
+
+.dark .orange-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--fill-color-yellow) 45%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--fill-color-yellow) 60%, var(--fill-color-orange)) 0%,
+            color-mix(in srgb, var(--fill-color-orange) 90%, var(--fill-color-red)) 58%,
+            color-mix(in srgb, var(--fill-color-red) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--fill-color-orange) 22%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--fill-color-orange) 90%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--fill-color-orange) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--fill-color-orange) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--fill-color-orange) 25%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-orange) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-orange) 24%, transparent);
+}
+
+.dark .purple-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--fill-color-pink) 40%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--fill-color-purple) 75%, var(--fill-color-pink)) 0%,
+            color-mix(in srgb, var(--fill-color-purple) 88%, var(--fill-color-indigo)) 58%,
+            color-mix(in srgb, var(--fill-color-purple) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--fill-color-pink) 20%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--fill-color-pink) 80%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--fill-color-pink) 70%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--fill-color-purple) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--fill-color-indigo) 25%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-purple) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-purple) 24%, transparent);
+}
+
+.dark .pink-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--fill-color-orange) 35%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--fill-color-pink) 78%, var(--fill-color-orange)) 0%,
+            color-mix(in srgb, var(--fill-color-pink) 90%, var(--fill-color-purple)) 58%,
+            color-mix(in srgb, var(--fill-color-pink) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--fill-color-pink) 25%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--fill-color-pink) 90%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--fill-color-pink) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--fill-color-pink) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--fill-color-purple) 25%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-pink) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-pink) 24%, transparent);
+}
+
+.dark .indigo-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--fill-color-blue) 40%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--fill-color-blue) 60%, var(--fill-color-indigo)) 0%,
+            color-mix(in srgb, var(--fill-color-indigo) 88%, var(--fill-color-purple)) 58%,
+            color-mix(in srgb, var(--fill-color-indigo) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--fill-color-blue) 20%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--fill-color-blue) 85%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--fill-color-blue) 75%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--fill-color-indigo) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--fill-color-purple) 25%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-indigo) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-indigo) 24%, transparent);
+}
+
+.dark .teal-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--fill-color-mint) 40%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--fill-color-mint) 65%, var(--fill-color-teal)) 0%,
+            color-mix(in srgb, var(--fill-color-teal) 88%, var(--fill-color-cyan)) 58%,
+            color-mix(in srgb, var(--fill-color-teal) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--fill-color-mint) 20%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--fill-color-mint) 90%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--fill-color-mint) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--fill-color-mint) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--fill-color-cyan) 25%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-teal) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-teal) 24%, transparent);
+}
+
+.dark .brown-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--fill-color-orange) 30%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--fill-color-brown) 70%, var(--fill-color-orange)) 0%,
+            color-mix(in srgb, var(--fill-color-brown) 92%, var(--fill-color-red)) 58%,
+            color-mix(in srgb, var(--fill-color-brown) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--fill-color-orange) 18%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--fill-color-orange) 70%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--fill-color-brown) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--fill-color-brown) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--fill-color-red) 20%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-brown) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-brown) 24%, transparent);
+}
+
+
+/* ==========================================================================
+   SPECIAL GLASSES — extended color tokens (only those still in use)
+   ========================================================================== */
+
+:root {
+    --color-scarlet:    rgb(227, 20, 40);
+    --color-coral:      rgb(255, 111, 97);
+    --color-amber:      rgb(255, 179, 0);
+    --color-gold:       rgb(212, 175, 55);
+    --color-lime:       rgb(164, 223, 40);
+    --color-emerald:    rgb(16, 185, 129);
+    --color-sky:        rgb(56, 182, 255);
+    --color-navy:       rgb(28, 45, 110);
+    --color-violet:     rgb(139, 92, 246);
+    --color-lavender:   rgb(181, 156, 255);
+    --color-magenta:    rgb(255, 0, 179);
+    --color-fuchsia:    rgb(240, 70, 200);
+    --color-copper:     rgb(184, 115, 51);
+    --color-rosegold:   rgb(224, 166, 149);
+    --color-champagne:  rgb(247, 231, 206);
+    --color-ice:        rgb(210, 240, 255);
+}
+
+
+/* --- Solid-tone glasses (auto-adapt to dark via --color-gray12) --- */
+
+.coral-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--color-orange) 40%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-orange) 55%, var(--color-coral)) 0%,
+            color-mix(in srgb, var(--color-coral) 88%, var(--color-pink)) 58%,
+            color-mix(in srgb, var(--color-coral) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-orange) 20%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--color-coral) 90%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--color-coral) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-coral) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--color-pink) 25%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-coral) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-coral) 24%, transparent);
+}
+
+.amber-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--color-yellow) 45%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-yellow) 55%, var(--color-amber)) 0%,
+            color-mix(in srgb, var(--color-amber) 90%, var(--color-orange)) 58%,
+            color-mix(in srgb, var(--color-amber) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-yellow) 22%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--color-yellow) 90%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--color-amber) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-amber) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--color-orange) 25%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-amber) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-amber) 24%, transparent);
+}
+
+.lime-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--color-yellow) 40%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-lime) 70%, var(--color-yellow)) 0%,
+            color-mix(in srgb, var(--color-lime) 88%, var(--color-green)) 58%,
+            color-mix(in srgb, var(--color-lime) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-lime) 22%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--color-lime) 90%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--color-lime) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-lime) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--color-green) 25%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-lime) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-lime) 24%, transparent);
+}
+
+.emerald-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--color-mint) 40%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-mint) 55%, var(--color-emerald)) 0%,
+            color-mix(in srgb, var(--color-emerald) 90%, var(--color-teal)) 58%,
+            color-mix(in srgb, var(--color-emerald) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-mint) 20%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--color-mint) 90%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--color-emerald) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-emerald) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--color-teal) 25%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-emerald) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-emerald) 24%, transparent);
+}
+
+.sky-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--color-cyan) 45%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-cyan) 55%, var(--color-sky)) 0%,
+            color-mix(in srgb, var(--color-sky) 90%, var(--color-blue)) 58%,
+            color-mix(in srgb, var(--color-sky) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-cyan) 20%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--color-cyan) 90%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--color-sky) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-sky) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--color-blue) 25%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-sky) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-sky) 24%, transparent);
+}
+
+.violet-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--color-lavender) 45%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-lavender) 55%, var(--color-violet)) 0%,
+            color-mix(in srgb, var(--color-violet) 90%, var(--color-indigo)) 58%,
+            color-mix(in srgb, var(--color-violet) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-lavender) 20%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--color-lavender) 90%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--color-violet) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-violet) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--color-indigo) 25%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-violet) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-violet) 24%, transparent);
+}
+
+.magenta-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%,
+            color-mix(in srgb, var(--color-pink) 45%, transparent) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-fuchsia) 60%, var(--color-magenta)) 0%,
+            color-mix(in srgb, var(--color-magenta) 90%, var(--color-purple)) 58%,
+            color-mix(in srgb, var(--color-magenta) 70%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-fuchsia) 22%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--color-fuchsia) 90%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--color-magenta) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-magenta) 60%, transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--color-purple) 25%, transparent),
+        inset 0px -4px 1px -2px color-mix(in srgb, var(--color-gray12) 15%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-magenta) 14%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-magenta) 24%, transparent);
+}
+
+/* ==========================================================================
+   SCENIC / EFFECT GLASSES (light-theme base)
+   Dark twins provided in the block below.
+   ========================================================================== */
+
+/* رنگین‌کمانی / هولوگرافیک — soft linear rainbow (no center singularity) */
+.rainbow-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 15%,
+            rgba(255,255,255,0.45) 0%, transparent 45%),
+        linear-gradient(135deg,
+            var(--color-red) 0%,
+            var(--color-orange) 15%,
+            var(--color-yellow) 30%,
+            var(--color-green) 45%,
+            var(--color-cyan) 60%,
+            var(--color-blue) 75%,
+            var(--color-purple) 88%,
+            var(--color-pink) 100%);
+    box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.25),
+        inset 2px 1px 0px -1px rgba(255,255,255,0.9),
+        inset -1.5px -1px 0px -1px rgba(255,255,255,0.5),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-purple) 50%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 12%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-blue) 16%, transparent),
+        0px 8px 24px 0px color-mix(in srgb, var(--color-purple) 26%, transparent);
+}
+
+/* شفق قطبی */
+.aurora-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 25% 15%, rgba(255,255,255,0.5) 0%, transparent 38%),
+        radial-gradient(ellipse at 70% 30%,
+            color-mix(in srgb, var(--color-mint) 60%, transparent) 0%, transparent 55%),
+        radial-gradient(ellipse at 30% 80%,
+            color-mix(in srgb, var(--color-purple) 55%, transparent) 0%, transparent 60%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-teal) 80%, var(--color-blue)) 0%,
+            color-mix(in srgb, var(--color-indigo) 85%, var(--color-purple)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-mint) 22%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--color-mint) 85%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-indigo) 55%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 12%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-teal) 16%, transparent),
+        0px 8px 22px 0px color-mix(in srgb, var(--color-indigo) 26%, transparent);
+}
+
+/* غروب */
+.sunset-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 28% 16%, rgba(255,255,255,0.5) 0%, transparent 40%),
+        linear-gradient(155deg,
+            color-mix(in srgb, var(--color-yellow) 70%, var(--color-orange)) 0%,
+            color-mix(in srgb, var(--color-orange) 80%, var(--color-pink)) 40%,
+            color-mix(in srgb, var(--color-pink) 85%, var(--color-purple)) 72%,
+            color-mix(in srgb, var(--color-purple) 80%, var(--color-indigo)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-orange) 22%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--color-yellow) 85%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-purple) 55%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 12%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-pink) 16%, transparent),
+        0px 8px 22px 0px color-mix(in srgb, var(--color-purple) 24%, transparent);
+}
+
+/* اقیانوس */
+.ocean-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 16%, rgba(255,255,255,0.5) 0%, transparent 42%),
+        radial-gradient(ellipse at 75% 85%,
+            color-mix(in srgb, var(--color-cyan) 50%, transparent) 0%, transparent 55%),
+        linear-gradient(140deg,
+            color-mix(in srgb, var(--color-teal) 70%, var(--color-cyan)) 0%,
+            color-mix(in srgb, var(--color-blue) 85%, var(--color-indigo)) 60%,
+            color-mix(in srgb, var(--color-navy) 90%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-cyan) 20%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--color-cyan) 88%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-navy) 55%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 12%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-blue) 16%, transparent),
+        0px 8px 22px 0px color-mix(in srgb, var(--color-navy) 28%, transparent);
+}
+
+/* اوپال / صدفی — soft overlapping radials replace the conic singularity */
+.opal-glass {
+    position: relative;
+    background-image:
+        radial-gradient(ellipse 90% 90% at 22% 24%,
+            color-mix(in srgb, var(--color-mint) 35%, white) 0%, transparent 62%),
+        radial-gradient(ellipse 90% 90% at 78% 30%,
+            color-mix(in srgb, var(--color-sky) 35%, white) 0%, transparent 62%),
+        radial-gradient(ellipse 100% 100% at 65% 75%,
+            color-mix(in srgb, var(--color-lavender) 35%, white) 0%, transparent 62%),
+        radial-gradient(ellipse 85% 85% at 25% 82%,
+            color-mix(in srgb, var(--color-pink) 30%, white) 0%, transparent 58%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-yellow) 22%, white) 0%,
+            color-mix(in srgb, var(--color-mint) 28%, white) 100%);
+    box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.35),
+        inset 2px 1px 0px -1px rgba(255,255,255,0.95),
+        inset -1.5px -1px 0px -1px rgba(255,255,255,0.6),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-lavender) 40%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 8%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-sky) 12%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-lavender) 20%, transparent);
+}
+
+/* طلایی فلزی */
+.gold-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 28% 16%, rgba(255,255,255,0.8) 0%, transparent 40%),
+        linear-gradient(135deg,
+            var(--color-champagne) 0%,
+            color-mix(in srgb, var(--color-gold) 85%, var(--color-yellow)) 30%,
+            color-mix(in srgb, var(--color-gold) 90%, var(--color-brown)) 60%,
+            color-mix(in srgb, var(--color-copper) 85%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-champagne) 40%, transparent),
+        inset 2px 1px 0px -1px var(--color-champagne),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--color-gold) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-copper) 60%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 12%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-gold) 20%, transparent),
+        0px 8px 22px 0px color-mix(in srgb, var(--color-copper) 26%, transparent);
+}
+
+/* رزگلد */
+.rosegold-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 28% 16%, rgba(255,255,255,0.75) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-champagne) 60%, var(--color-rosegold)) 0%,
+            color-mix(in srgb, var(--color-rosegold) 90%, var(--color-pink)) 55%,
+            color-mix(in srgb, var(--color-rosegold) 75%, var(--color-brown)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-champagne) 35%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--color-champagne) 90%, transparent),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--color-rosegold) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-brown) 45%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 10%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-rosegold) 18%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-rosegold) 24%, transparent);
+}
+
+/* آتش / گدازه */
+.fire-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 85%,
+            color-mix(in srgb, var(--color-yellow) 70%, transparent) 0%, transparent 45%),
+        linear-gradient(0deg,
+            color-mix(in srgb, var(--color-yellow) 75%, var(--color-orange)) 0%,
+            color-mix(in srgb, var(--color-orange) 85%, var(--color-red)) 45%,
+            color-mix(in srgb, var(--color-red) 90%, var(--color-scarlet)) 78%,
+            color-mix(in srgb, var(--color-scarlet) 80%, var(--color-gray12)) 100%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--color-orange) 25%, transparent),
+        inset 2px 1px 0px -1px color-mix(in srgb, var(--color-yellow) 85%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-scarlet) 60%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-gray12) 14%, transparent),
+        0px 0px 12px 0px color-mix(in srgb, var(--color-orange) 30%, transparent),
+        0px 8px 22px 0px color-mix(in srgb, var(--color-red) 28%, transparent);
+}
+
+/* یخ / برفی */
+.frost-glass {
+    position: relative;
+    background-image:
+        radial-gradient(circle at 30% 18%, rgba(255,255,255,0.85) 0%, transparent 45%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-ice) 85%, white) 0%,
+            color-mix(in srgb, var(--color-ice) 80%, var(--color-cyan)) 55%,
+            color-mix(in srgb, var(--color-sky) 60%, white) 100%);
+    box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.45),
+        inset 2px 1px 0px -1px rgba(255,255,255,0.95),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--color-ice) 80%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-sky) 40%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, var(--color-cyan) 8%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, var(--color-sky) 12%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, var(--color-cyan) 18%, transparent);
+}
+
+/* ==========================================================================
+   DARK MODE TWINS — scenic / white-heavy glasses
+   The colored + solid-tone variants above auto-adapt via --color-gray12,
+   so they need no override here. These do, because they lean on white.
+   ========================================================================== */
+
+.dark .rainbow-glass {
+    background-image:
+        radial-gradient(circle at 30% 15%,
+            rgba(255,255,255,0.18) 0%, transparent 45%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-red) 78%, black) 0%,
+            color-mix(in srgb, var(--color-orange) 78%, black) 15%,
+            color-mix(in srgb, var(--color-yellow) 72%, black) 30%,
+            color-mix(in srgb, var(--color-green) 78%, black) 45%,
+            color-mix(in srgb, var(--color-cyan) 78%, black) 60%,
+            color-mix(in srgb, var(--color-blue) 82%, black) 75%,
+            color-mix(in srgb, var(--color-purple) 82%, black) 88%,
+            color-mix(in srgb, var(--color-pink) 78%, black) 100%);
+}
+
+.dark .aurora-glass {
+    background-image:
+        radial-gradient(circle at 25% 15%, rgba(255,255,255,0.18) 0%, transparent 38%),
+        radial-gradient(ellipse at 70% 30%,
+            color-mix(in srgb, var(--color-mint) 45%, transparent) 0%, transparent 55%),
+        radial-gradient(ellipse at 30% 80%,
+            color-mix(in srgb, var(--color-purple) 45%, transparent) 0%, transparent 60%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-teal) 55%, black) 0%,
+            color-mix(in srgb, var(--color-indigo) 60%, black) 100%);
+}
+
+.dark .sunset-glass {
+    background-image:
+        radial-gradient(circle at 28% 16%, rgba(255,255,255,0.16) 0%, transparent 40%),
+        linear-gradient(155deg,
+            color-mix(in srgb, var(--color-orange) 65%, black) 0%,
+            color-mix(in srgb, var(--color-pink) 62%, black) 40%,
+            color-mix(in srgb, var(--color-purple) 68%, black) 72%,
+            color-mix(in srgb, var(--color-indigo) 72%, black) 100%);
+}
+
+.dark .ocean-glass {
+    background-image:
+        radial-gradient(circle at 30% 16%, rgba(255,255,255,0.16) 0%, transparent 42%),
+        radial-gradient(ellipse at 75% 85%,
+            color-mix(in srgb, var(--color-cyan) 40%, transparent) 0%, transparent 55%),
+        linear-gradient(140deg,
+            color-mix(in srgb, var(--color-teal) 55%, black) 0%,
+            color-mix(in srgb, var(--color-blue) 60%, black) 60%,
+            color-mix(in srgb, var(--color-navy) 85%, black) 100%);
+}
+
+.dark .opal-glass {
+    background-image:
+        radial-gradient(ellipse 90% 90% at 22% 24%,
+            color-mix(in srgb, var(--color-mint) 45%, black) 0%, transparent 62%),
+        radial-gradient(ellipse 90% 90% at 78% 30%,
+            color-mix(in srgb, var(--color-sky) 45%, black) 0%, transparent 62%),
+        radial-gradient(ellipse 100% 100% at 65% 75%,
+            color-mix(in srgb, var(--color-lavender) 45%, black) 0%, transparent 62%),
+        radial-gradient(ellipse 85% 85% at 25% 82%,
+            color-mix(in srgb, var(--color-pink) 40%, black) 0%, transparent 58%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-mint) 30%, black) 0%,
+            color-mix(in srgb, var(--color-lavender) 35%, black) 100%);
+    box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.18),
+        inset 2px 1px 0px -1px rgba(255,255,255,0.5),
+        inset -1.5px -1px 0px -1px rgba(255,255,255,0.3),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-lavender) 40%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, #000 25%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, #000 20%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, #000 30%, transparent);
+}
+
+.dark .gold-glass {
+    background-image:
+        radial-gradient(circle at 28% 16%, rgba(255,255,255,0.35) 0%, transparent 40%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-gold) 70%, black) 0%,
+            color-mix(in srgb, var(--color-gold) 80%, var(--color-brown)) 40%,
+            color-mix(in srgb, var(--color-copper) 75%, black) 100%);
+}
+
+.dark .rosegold-glass {
+    background-image:
+        radial-gradient(circle at 28% 16%, rgba(255,255,255,0.3) 0%, transparent 42%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-rosegold) 75%, black) 0%,
+            color-mix(in srgb, var(--color-rosegold) 85%, var(--color-pink)) 55%,
+            color-mix(in srgb, var(--color-brown) 70%, black) 100%);
+}
+
+.dark .fire-glass {
+    background-image:
+        radial-gradient(circle at 30% 85%,
+            color-mix(in srgb, var(--color-orange) 55%, transparent) 0%, transparent 45%),
+        linear-gradient(0deg,
+            color-mix(in srgb, var(--color-orange) 78%, black) 0%,
+            color-mix(in srgb, var(--color-red) 82%, black) 45%,
+            color-mix(in srgb, var(--color-scarlet) 78%, black) 78%,
+            color-mix(in srgb, var(--color-scarlet) 55%, black) 100%);
+}
+
+.dark .frost-glass {
+    background-image:
+        radial-gradient(circle at 30% 18%, rgba(255,255,255,0.28) 0%, transparent 45%),
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--color-ice) 40%, black) 0%,
+            color-mix(in srgb, var(--color-cyan) 45%, black) 55%,
+            color-mix(in srgb, var(--color-sky) 40%, black) 100%);
+    box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.2),
+        inset 2px 1px 0px -1px rgba(255,255,255,0.5),
+        inset -1.5px -1px 0px -1px color-mix(in srgb, var(--color-ice) 40%, transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--color-sky) 40%, transparent),
+        inset 0px 3px 6px 0px color-mix(in srgb, #000 20%, transparent),
+        0px 1px 5px 0px color-mix(in srgb, #000 15%, transparent),
+        0px 8px 20px 0px color-mix(in srgb, #000 25%, transparent);
+}
