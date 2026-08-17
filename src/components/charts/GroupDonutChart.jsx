@@ -1,13 +1,27 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useDashboard } from '../../context/DashboardContext';
 import { BASE_FLAG_FA } from '../../utils/constants';
 import './GroupDonutChart.css';
 
-const GroupDonutChart = ({ data = [] }) => {
-  // SVG coordinates and radii mapped for a 100x100 viewBox
+const GroupDonutChart = () => {
+  const { data } = useDashboard();
+  const d = data.current;
+
+  const counts = useMemo(() => {
+    const integrity = new Set(d.filter(r => r.flags.includes('INTEGRITY_AUDIT')).map(r => r.name));
+    const engagement = new Set(d.filter(r => r.flags.includes('ENGAGEMENT_TRAINING')).map(r => r.name));
+    const lowData = new Set(d.filter(r => r.flags.includes('LOW_DATA')).map(r => r.name));
+    return {
+      a: [...integrity].filter(x => !engagement.has(x) && !lowData.has(x)).length,
+      b: [...engagement].filter(x => !integrity.has(x) && !lowData.has(x)).length,
+      c: [...lowData].filter(x => !integrity.has(x) && !engagement.has(x)).length,
+    };
+  }, [d]);
+
   const circles = [
-    { id: 'a', cx: 35, cy: 40, r: 28, label: BASE_FLAG_FA.INTEGRITY_AUDIT },
-    { id: 'b', cx: 65, cy: 40, r: 28, label: BASE_FLAG_FA.ENGAGEMENT_TRAINING },
-    { id: 'c', cx: 50, cy: 70, r: 28, label: BASE_FLAG_FA.LOW_DATA },
+    { id: 'a', cx: 35, cy: 40, r: 28, label: `${BASE_FLAG_FA.INTEGRITY_AUDIT} (${counts.a})` },
+    { id: 'b', cx: 65, cy: 40, r: 28, label: `${BASE_FLAG_FA.ENGAGEMENT_TRAINING} (${counts.b})` },
+    { id: 'c', cx: 50, cy: 70, r: 28, label: `${BASE_FLAG_FA.LOW_DATA} (${counts.c})` },
   ];
 
   return (

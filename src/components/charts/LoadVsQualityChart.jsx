@@ -35,16 +35,16 @@ const Tooltip = ({ node }) => (
   />
 );
 
-const LoadVsQualityChart = ({ data = [] }) => {
-  const { series, mean } = useMemo(() => {
-    const meanValue = data.length
-      ? data.reduce((sum, d) => sum + d.WQS_adj, 0) / data.length
-      : 0;
+const LoadVsQualityChart = () => {
+  const { data } = useDashboard();
+  const d = data.current;
 
+  const { series, mean } = useMemo(() => {
+    const meanValue = d.length ? d.reduce((sum, row) => sum + row.WQS_adj, 0) / d.length : 0;
     const byGroup = new Map();
-    data.forEach((d) => {
-      if (!byGroup.has(d.group_fa)) byGroup.set(d.group_fa, []);
-      byGroup.get(d.group_fa).push({ ...d, x: d.V, y: d.WQS_adj });
+    d.forEach((row) => {
+      if (!byGroup.has(row.group_fa)) byGroup.set(row.group_fa, []);
+      byGroup.get(row.group_fa).push({ ...row, x: row.V, y: row.WQS_adj });
     });
 
     return {

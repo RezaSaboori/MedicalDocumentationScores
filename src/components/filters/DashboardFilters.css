@@ -27,3 +27,19 @@
   display: flex;
   align-items: center;
 }
+
+.filter-select {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-family-persian);
+  font-size: var(--font-size-sm);
+  width: 100%;
+  cursor: pointer;
+}
+
+.filter-select option {
+  background-color: var(--color-gray1);
+  color: var(--color-gray12);
+  padding: var(--spacing-xs);
+}

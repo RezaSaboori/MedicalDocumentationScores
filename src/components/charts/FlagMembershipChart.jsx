@@ -1,15 +1,20 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ResponsiveBar } from '@nivo/bar';
+import { useDashboard } from '../../context/DashboardContext';
 import { BASE_FLAG_FA, BASE_FLAG_COLOR, FLAG_PRIORITY } from '../../utils/constants';
 import './FlagMembershipChart.css';
 
-const FlagMembershipChart = ({ data = [] }) => {
-  // Mock data structure mapping to Nivo format
-  const chartData = FLAG_PRIORITY.map(flag => ({
-    flag: BASE_FLAG_FA[flag],
-    count: Math.floor(Math.random() * 50) + 10, // Placeholder logic
-    color: BASE_FLAG_COLOR[flag]
-  })).sort((a, b) => a.count - b.count);
+const FlagMembershipChart = () => {
+  const { data } = useDashboard();
+  const d = data.current;
+
+  const chartData = useMemo(() => {
+    return FLAG_PRIORITY.map(flag => ({
+      flag: BASE_FLAG_FA[flag],
+      count: d.filter(row => row.flags.includes(flag)).length,
+      color: BASE_FLAG_COLOR[flag]
+    })).sort((a, b) => a.count - b.count);
+  }, [d]);
 
   return (
     <div className="glass u-container u-container--md chart-container">

@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { fetchDashboardData } from '../services/dataService';
 
 export const useDashboardData = () => {
-  const [data, setData] = useState({ current: [], previous: [] });
+  const [rawData, setRawData] = useState({ current: [], previous: [] });
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     selectedFlags: [],
@@ -13,7 +13,7 @@ export const useDashboardData = () => {
     setLoading(true);
     try {
       const result = await fetchDashboardData();
-      setData(result);
+      setRawData(result);
     } catch (error) {
       console.error("Failed to load dashboard data:", error);
     } finally {
@@ -25,14 +25,38 @@ export const useDashboardData = () => {
     loadData();
   }, [loadData]);
 
+  const availableYears = useMemo(() => {
+    const years = new Set(rawData.current.map(d => d.year).filter(Boolean));
+    return Array.from(years).sort();
+  }, [rawData]);
+
+  const filteredData = useMemo(() => {
+    let d = rawData.current;
+    let prev = rawData.previous;
+
+    if (filters.selectedYear && filters.selectedYear !== 'all') {
+      d = d.filter(row => row.year === filters.selectedYear);
+      prev = prev.filter(row => row.year === filters.selectedYear);
+    }
+
+    if (filters.selectedFlags && filters.selectedFlags.length > 0) {
+      d = d.filter(row => row.flags.some(f => filters.selectedFlags.includes(f)));
+      prev = prev.filter(row => row.flags.some(f => filters.selectedFlags.includes(f)));
+    }
+
+    return { current: d, previous: prev };
+  }, [rawData, filters]);
+
   const updateFilters = (newFilters) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
   };
 
   return {
-    data,
+    data: filteredData,
+    rawData,
     loading,
     filters,
+    availableYears,
     updateFilters,
   };
 };

@@ -1,10 +1,10 @@
 import React from 'react';
 import DashboardLayout from './components/layout/DashboardLayout';
-import { useDashboardData } from './hooks/useDashboardData';
+import { DashboardProvider, useDashboard } from './context/DashboardContext';
 import './App.css';
 
-function App() {
-  const { data, loading } = useDashboardData();
+function DashboardContent() {
+  const { loading } = useDashboard();
 
   if (loading) {
     return (
@@ -16,7 +16,15 @@ function App() {
     );
   }
 
-  return <DashboardLayout data={data.current} />;
+  return <DashboardLayout />;
+}
+
+function App() {
+  return (
+    <DashboardProvider>
+      <DashboardContent />
+    </DashboardProvider>
+  );
 }
 
 export default App;

@@ -21,3 +21,9 @@
   font-weight: var(--font-weight-bold);
   color: var(--color-blue);
 }
+
+.kpi-sub {
+  font-size: var(--font-size-xs);
+  color: var(--color-gray7);
+  margin-top: 2px;
+}

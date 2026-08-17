@@ -58,12 +58,15 @@ const Tooltip = ({ node }) => (
   />
 );
 
-const IntegrityMapChart = ({ data = [] }) => {
+const IntegrityMapChart = () => {
+  const { data } = useDashboard();
+  const d = data.current;
+
   const series = useMemo(() => {
     const byGroup = new Map();
-    data.forEach((d) => {
-      if (!byGroup.has(d.group_fa)) byGroup.set(d.group_fa, []);
-      byGroup.get(d.group_fa).push({ ...d, x: d.rho_Z, y: d.rho_F });
+    d.forEach((row) => {
+      if (!byGroup.has(row.group_fa)) byGroup.set(row.group_fa, []);
+      byGroup.get(row.group_fa).push({ ...row, x: row.rho_Z, y: row.rho_F });
     });
     return [...byGroup.entries()].map(([id, points]) => ({ id, data: points }));
   }, [data]);

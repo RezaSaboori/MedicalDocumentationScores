@@ -1,0 +1,6 @@
+.laq-container { min-height: 500px; }
+.laq-title { text-align: center; color: var(--color-gray12); margin: 0 0 4px 0; font-weight: var(--font-weight-semibold); }
+.laq-subtitle { text-align: center; color: var(--color-gray7); font-size: var(--font-size-sm); margin: 0 0 var(--spacing-md) 0; }
+.laq-body { flex: 1; min-height: 380px; width: 100%; direction: ltr; }
+.laq-mean-line { stroke: var(--color-gray10); stroke-width: 2; stroke-dasharray: 6 5; }
+.laq-mean-label { fill: var(--color-gray10); font-size: var(--font-size-xs); font-weight: bold; }
