@@ -45,8 +45,6 @@
   white-space: nowrap;
 }
 
-/* The modal is now quadrant-placed inside the card; hard-stop any residual
-   overflow so no scrollbar can ever appear on chart cards. */
 .im-container,
 .lvq-container,
 .laq-container,
@@ -54,4 +52,13 @@
 .pdi-container,
 .chart-container {
   overflow: hidden;
+}
+
+/* Portal-rendered tooltip: fixed to the viewport, above everything, and
+   completely out of any container's flow — it can never enlarge a chart
+   card or create a scrollbar, in any edge scenario. */
+.chart-tooltip--portal {
+  position: fixed;
+  z-index: 99999;
+  pointer-events: none;
 }
