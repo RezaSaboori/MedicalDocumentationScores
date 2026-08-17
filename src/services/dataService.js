@@ -53,7 +53,16 @@ const mapRow = (row) => {
   };
 };
 
-export const fetchDashboardData = async () => {
+let dashboardDataPromise = null;
+
+export const fetchDashboardData = () => {
+  if (!dashboardDataPromise) {
+    dashboardDataPromise = loadDashboardData();
+  }
+  return dashboardDataPromise;
+};
+
+const loadDashboardData = async () => {
   try {
     const currentRaw = await parseCsv(CURRENT_CSV_PATH);
     

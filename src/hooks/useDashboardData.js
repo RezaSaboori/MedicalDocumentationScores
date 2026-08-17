@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { fetchDashboardData } from '../services/dataService';
 import { BASE_FLAG_FA } from '../utils/constants';
+import { BASE_FLAG_FA } from '../utils/constants';
 
 export const useDashboardData = () => {
   const [rawData, setRawData] = useState({ current: [], previous: [] });

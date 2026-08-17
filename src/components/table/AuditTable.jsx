@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 import { formatPercent } from '../../utils/formatters';
+import { Skeleton } from '../ui/Skeleton';
 import './AuditTable.css';
 
 const AuditTable = () => {
-  const { data } = useDashboard();
+  const { data, loading } = useDashboard();
   const [sortConfig, setSortConfig] = useState({ key: 'PDI', direction: 'desc' });
 
   const sortedData = useMemo(() => {
@@ -36,7 +37,14 @@ const AuditTable = () => {
           </tr>
         </thead>
         <tbody>
-          {sortedData.slice(0, 50).map((row, i) => (
+          {loading && Array.from({ length: 10 }).map((_, i) => (
+            <tr key={`skeleton-${i}`}>
+              {Array.from({ length: 8 }).map((_, j) => (
+                <td key={j}><Skeleton width="80%" height="0.9rem" /></td>
+              ))}
+            </tr>
+          ))}
+          {!loading && sortedData.slice(0, 50).map((row, i) => (
             <tr key={i}>
               <td>{row.name}</td>
               <td>{row.group_fa}</td>

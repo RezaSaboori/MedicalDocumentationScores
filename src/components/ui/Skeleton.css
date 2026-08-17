@@ -1,0 +1,25 @@
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-gray3);
+  opacity: 0.55;
+  border-radius: var(--border-radius-container-xs);
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--color-gray1) 65%, transparent),
+    transparent
+  );
+  animation: skeleton-shimmer 1.4s infinite;
+}
+
+@keyframes skeleton-shimmer {
+  100% { transform: translateX(100%); }
+}

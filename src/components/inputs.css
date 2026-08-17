@@ -97,6 +97,36 @@
 }
 
 /* ── Icon button inside the shell ────────────────────────────── */
+/* ── Icon button inside the shell ────────────────────────────── */
+
+.dz-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  box-shadow: none;
+  color: var(--color-gray9);
+  cursor: pointer;
+  flex-shrink: 0;
+  width: var(--ui-input-icon-size);
+  height: var(--ui-input-icon-size);
+  border-radius: var(--border-radius-container-xs);
+}
+
+/* Kill the .glass specular ring when combined with .glass */
+.dz-icon-btn::before {
+  content: none;
+}
+
+.dz-icon-btn__icon {
+  width: 1rem;
+  height: 1rem;
+  display: block;
+}
+
 .ui-input-shell .dz-icon-btn {
   background-color: var(--color-gray2);
   flex-shrink: 0;

@@ -1,10 +1,11 @@
 import React, { useMemo } from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 import { formatNumber, formatPercent } from '../../utils/formatters';
+import { Skeleton } from '../ui/Skeleton';
 import './KpiCards.css';
 
 const KpiCards = () => {
-  const { data } = useDashboard();
+  const { data, loading } = useDashboard();
   const d = data.current;
 
   const kpis = useMemo(() => {
@@ -23,7 +24,29 @@ const KpiCards = () => {
     };
   }, [d]);
 
-  if (!kpis) return null;
+  if (loading) {
+    return (
+      <div className="kpi-grid">
+        {Array.from({ length: 9 }).map((_, i) => (
+          <div key={i} className="glass u-container u-container--sm kpi-card">
+            <Skeleton width="70%" height="0.9rem" />
+            <Skeleton width="45%" height="1.6rem" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (!kpis) {
+    return (
+      <div
+        className="glass u-container u-container--md"
+        style={{ padding: 'var(--spacing-lg)', textAlign: 'center', color: 'var(--color-gray9)', fontFamily: 'var(--font-family-base)' }}
+      >
+        داده‌ای مطابق فیلترهای انتخابی یافت نشد
+      </div>
+    );
+  }
 
   const cards = [
     { title: 'تعداد رزیدنت‌ها', value: formatNumber(kpis.n_physicians), color: 'var(--color-blue)' },
