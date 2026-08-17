@@ -143,6 +143,7 @@ const QualityMixChartBase = ({ rows, scoreKey, categories, title, subtitle }) =>
               indexBy="name"
               layout="horizontal"
               margin={{ top: MARGIN_TOP, right: 0, bottom: MARGIN_BOTTOM, left: layout.leftMargin }}
+              xScale={{ type: 'linear', min: 0, max: 1 }}
               padding={0.15}
               theme={chartTheme}
               colors={({ id }) => categories[id]?.color || '#ccc'}
@@ -171,6 +172,7 @@ const QualityMixChartBase = ({ rows, scoreKey, categories, title, subtitle }) =>
               indexBy="name"
               layout="horizontal"
               margin={{ top: MARGIN_TOP, right: 24, bottom: MARGIN_BOTTOM, left: 0 }}
+              xScale={{ type: 'linear', min: 0, max: 100 }}
               padding={0.15}
               theme={chartTheme}
               colors={({ data }) => data.barColor}
