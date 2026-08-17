@@ -35,8 +35,7 @@ const QualityMixChartBase = ({ rows, scoreKey, categories, title, subtitle }) =>
       .sort((a, b) => Number(a[scoreKey]) - Number(b[scoreKey]) || String(a.name).localeCompare(String(b.name)));
 
     // NOTE: do NOT reverse. Nivo horizontal bars render data[0] at the BOTTOM,
-    // so an ascending sort yields lowest-at-bottom / highest-at-top,
-    // identical to the Python figure (y range [count-0.5, -0.5]).
+    // so ascending sort yields lowest-at-bottom / highest-at-top (like Python).
     return valid.map(row => {
       const counts = {};
       let total = 0;
@@ -76,8 +75,7 @@ const QualityMixChartBase = ({ rows, scoreKey, categories, title, subtitle }) =>
     const belowCount = rowCount - aboveCount;
 
     // Render order is lowest-at-bottom => the top `aboveCount` rows are the
-    // >=50 group, therefore the group boundary from the TOP of the plot area
-    // is exactly aboveCount * step.
+    // >=50 group => boundary from the TOP of the plot = aboveCount * step.
     const sepTop = TITLE_BLOCK + MARGIN_TOP + aboveCount * step;
 
     return {
@@ -89,6 +87,8 @@ const QualityMixChartBase = ({ rows, scoreKey, categories, title, subtitle }) =>
 
   const qualityKeys = Object.keys(categories);
   const chartTheme = { axis: { ticks: { text: { fontSize: layout.tickSize, fill: '#263238' } } } };
+  const ratioTick = (v) => `${Math.round(v * 100)}٪`;
+  const scoreTick = (v) => `${v}٪`;
 
   if (layout.rowCount === 0) {
     return (
@@ -142,7 +142,7 @@ const QualityMixChartBase = ({ rows, scoreKey, categories, title, subtitle }) =>
               keys={qualityKeys}
               indexBy="name"
               layout="horizontal"
-              margin={{ top: MARGIN_TOP, right: 0, bottom: MARGIN_BOTTOM, left: layout.leftMargin }}
+              margin={{ top: MARGIN_TOP, right: 16, bottom: MARGIN_BOTTOM, left: layout.leftMargin }}
               xScale={{ type: 'linear', min: 0, max: 1 }}
               padding={0.15}
               theme={chartTheme}
@@ -154,7 +154,7 @@ const QualityMixChartBase = ({ rows, scoreKey, categories, title, subtitle }) =>
                 legend: 'سهم از پرونده‌ها',
                 legendPosition: 'middle',
                 legendOffset: 30,
-                format: v => `${Math.round(v * 100)}٪`,
+                format: ratioTick,
                 tickValues: [0, 0.2, 0.4, 0.6, 0.8, 1],
               }}
               axisLeft={{ tickSize: 5, tickPadding: 8, tickRotation: 0 }}
@@ -171,7 +171,7 @@ const QualityMixChartBase = ({ rows, scoreKey, categories, title, subtitle }) =>
               keys={['score']}
               indexBy="name"
               layout="horizontal"
-              margin={{ top: MARGIN_TOP, right: 24, bottom: MARGIN_BOTTOM, left: 0 }}
+              margin={{ top: MARGIN_TOP, right: 30, bottom: MARGIN_BOTTOM, left: 8 }}
               xScale={{ type: 'linear', min: 0, max: 100 }}
               padding={0.15}
               theme={chartTheme}
@@ -183,6 +183,7 @@ const QualityMixChartBase = ({ rows, scoreKey, categories, title, subtitle }) =>
                 legend: 'امتیاز کیفیت ثبت پرونده‌ها',
                 legendPosition: 'middle',
                 legendOffset: 30,
+                format: scoreTick,
                 tickValues: [0, 25, 50, 75, 100],
               }}
               axisLeft={{ renderTick: () => null }}
