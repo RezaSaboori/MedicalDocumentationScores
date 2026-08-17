@@ -129,7 +129,7 @@ const QualityMixChartBase = ({
         <text x={-8} y={0} textAnchor="end" dominantBaseline="central" fontSize={layout.tickSize} fill="#263238">
           {label}
         </text>
-        {rankChange != null && (
+        {(rankChange != null || hasComparison) && (
           <text
             x={-8 - Math.ceil(nameWidth) - 6}
             y={0}
@@ -137,9 +137,9 @@ const QualityMixChartBase = ({
             dominantBaseline="central"
             fontSize={layout.tickSize}
             fontWeight={600}
-            fill={changeColor(rankChange, positiveColor)}
+            fill={rankChange != null ? changeColor(rankChange, positiveColor) : '#90A4AE'}
           >
-            {formatRankChange(rankChange)}
+            {rankChange != null ? formatRankChange(rankChange) : 'n/a'}
           </text>
         )}
       </g>
@@ -150,9 +150,10 @@ const QualityMixChartBase = ({
   const ScoreChangesLayer = ({ yScale, innerWidth }) => (
     <g>
       {chartData.map(row => {
-        if (row.scoreChange == null) return null;
+        if (row.scoreChange == null && !hasComparison) return null;
         const band = typeof yScale.bandwidth === 'function' ? yScale.bandwidth() : 0;
         const y = (yScale(row.name) ?? 0) + band / 2;
+        const hasValue = row.scoreChange != null;
         return (
           <text
             key={`sc-${row.name}`}
@@ -161,9 +162,9 @@ const QualityMixChartBase = ({
             textAnchor="start"
             dominantBaseline="central"
             fontSize={Math.max(10, layout.tickSize - 1)}
-            fill={changeColor(row.scoreChange, positiveColor)}
+            fill={hasValue ? changeColor(row.scoreChange, positiveColor) : '#90A4AE'}
           >
-            {formatScoreChange(row.scoreChange)}
+            {hasValue ? formatScoreChange(row.scoreChange) : 'n/a'}
           </text>
         );
       })}
