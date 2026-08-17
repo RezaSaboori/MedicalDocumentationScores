@@ -1,18 +1,19 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { ResponsiveScatterPlot } from '@nivo/scatterplot';
 import { useDashboard } from '../../context/DashboardContext';
 import { GROUP_COLOR_MAP } from '../../utils/flags';
-import { formatNumber } from '../../utils/formatters';
-import ChartTooltip from './ChartTooltip';
+import BubbleNodesLayer from './BubbleNodesLayer';
 import ChartLegend from './ChartLegend';
 import './LoadVsQualityChart.css';
-
-const MIN_R = 4;
-const MAX_R = 17.5; // plotly size_max=35 → radius 17.5
 
 const LoadVsQualityChart = () => {
   const { data } = useDashboard();
   const d = data.current;
+
+  // Data-sample check: proves V/N reach the chart (CSV headers may carry trailing spaces).
+  useEffect(() => {
+    console.info('[LoadVsQuality] data sample:', d.slice(0, 3).map((r) => ({ name: r.name, V: r.V, N: r.N })));
+  }, [d]);
 
   const series = useMemo(() => {
     const byGroup = new Map();
@@ -28,24 +29,6 @@ const LoadVsQualityChart = () => {
     () => (d.length ? d.reduce((s, r) => s + (r.WQS_adj || 0), 0) / d.length : 0),
     [d]
   );
-
-  // Bubbles are rendered manually so the diameter ALWAYS encodes the number of
-  // classified documents (N), independent of the nivo version's size accessor.
-  const renderNode = (node) => {
-    const datum = node.data || {};
-    const value = Number(datum.N) || 0;
-    const r = MIN_R + (MAX_R - MIN_R) * Math.sqrt(value / maxN);
-    return (
-      <circle
-        r={r}
-        fill={node.color}
-        fillOpacity={0.72}
-        stroke={node.color}
-        strokeOpacity={0.9}
-        strokeWidth={1}
-      />
-    );
-  };
 
   const MeanLineLayer = ({ yScale, innerWidth }) => (
     <g>
@@ -67,13 +50,11 @@ const LoadVsQualityChart = () => {
           yScale={{ type: 'linear', min: 'auto', max: 'auto' }}
           margin={{ top: 16, right: 24, bottom: 64, left: 64 }}
           colors={({ serieId }) => GROUP_COLOR_MAP[serieId] ?? '#1f77b4'}
-          size={10}
-          renderNode={renderNode}
           layers={[
             'grid',
             'axes',
             (layerProps) => <MeanLineLayer key="mean" {...layerProps} />,
-            'nodes',
+            (layerProps) => <BubbleNodesLayer key="bubbles" {...layerProps} sizeKey="N" maxValue={maxN} />,
           ]}
           axisBottom={{
             legend: 'تعداد ویزیت (مقیاس لگاریتمی)',
@@ -85,18 +66,6 @@ const LoadVsQualityChart = () => {
             legendPosition: 'middle',
             legendOffset: -46,
           }}
-          tooltip={({ node }) => (
-            <ChartTooltip
-              title={node.data.name}
-              rows={[
-                { label: 'گروه', value: node.data.group_fa },
-                { label: 'ویزیت', value: formatNumber(node.data.V) },
-                { label: 'پرونده طبقه‌بندی‌شده', value: formatNumber(node.data.N) },
-                { label: 'PDI', value: node.data.PDI?.toFixed(1) },
-                { label: 'LAQ', value: node.data.LAQ?.toFixed(2) },
-              ]}
-            />
-          )}
         />
       </div>
       <ChartLegend items={series.map((s) => ({ label: s.id, color: GROUP_COLOR_MAP[s.id] }))} />
