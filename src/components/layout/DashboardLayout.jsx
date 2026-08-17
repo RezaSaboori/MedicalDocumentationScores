@@ -7,13 +7,14 @@ import AuditTable from '../table/AuditTable';
 import ModeToggle from './ModeToggle';
 import { useDashboard } from '../../context/DashboardContext';
 import { DASHBOARD_MODES } from '../../utils/constants';
+import './DashboardLayout.css';
 
 const DashboardLayout = () => {
   const { mode, setMode } = useDashboard();
 
   return (
     <div className="page-content dashboard-wrapper">
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--spacing-md)' }}>
+      <div className="dashboard-header">
         <ModeToggle mode={mode} onModeChange={setMode} />
       </div>
 
