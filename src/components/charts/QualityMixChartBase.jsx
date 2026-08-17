@@ -83,7 +83,7 @@ const QualityMixChartBase = ({
     const longest = chartData.reduce((m, r) => (r.name.length > m.length ? r.name : m), '');
     const labelWidth = measureTextWidth(longest, `${tickSize}px IRANSansX, IRANSansXV, sans-serif`);
     const leftMargin = Math.ceil(labelWidth) + TICK_SPACE + (hasComparison ? RANK_BADGE_SPACE : 0);
-    const rightMargin = hasComparison ? 92 : 24; // room for score-change labels
+    const rightMargin = hasComparison ? 110 : 24; // room for score-change labels
 
     const aboveCount = chartData.filter(r => r.score >= PDI_THRESHOLD).length;
     const belowCount = rowCount - aboveCount;
@@ -146,7 +146,7 @@ const QualityMixChartBase = ({
     );
   };
 
-  // Score-change labels at the right edge of the score panel
+  // Score-change labels at the right edge of the score panel (no background, moved right)
   const ScoreChangesLayer = ({ yScale, innerWidth }) => (
     <g>
       {chartData.map(row => {
@@ -157,11 +157,12 @@ const QualityMixChartBase = ({
         return (
           <text
             key={`sc-${row.name}`}
-            x={innerWidth + 10}
+            x={innerWidth + 24}
             y={y}
             textAnchor="start"
             dominantBaseline="central"
             fontSize={Math.max(10, layout.tickSize - 1)}
+            fontWeight={600}
             fill={hasValue ? changeColor(row.scoreChange, positiveColor) : '#90A4AE'}
           >
             {hasValue ? formatScoreChange(row.scoreChange) : 'n/a'}
