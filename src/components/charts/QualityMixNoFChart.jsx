@@ -4,9 +4,17 @@ import { useDashboard } from '../../context/DashboardContext';
 import { QUALITY_CATEGORIES_NO_F } from '../../utils/constants';
 import { pdiGradientColor } from '../../utils/formatters';
 import ChartLegend from './ChartLegend';
-import './QualityMixChart.css'; // Reuse the same CSS styling
+import './QualityMixChart.css';
 
 const PDI_THRESHOLD = 50;
+const HEADER_PX = 96;
+const FOOTER_PX = 140;
+
+const rowMetrics = (rowCount) => {
+  if (rowCount <= 30) return { rowHeight: 36, tickSize: 12 };
+  if (rowCount <= 70) return { rowHeight: 30, tickSize: 11 };
+  return { rowHeight: 26, tickSize: 10 };
+};
 
 const QualityMixNoFChart = () => {
   const { data } = useDashboard();
@@ -14,19 +22,21 @@ const QualityMixNoFChart = () => {
 
   const chartData = useMemo(() => {
     if (d.length === 0) return [];
-    
+
     const sorted = [...d]
       .filter(row => row.N > 0 && row.name)
       .sort((a, b) => a.PDI_noF - b.PDI_noF || a.name.localeCompare(b.name))
       .reverse();
 
     return sorted.map(row => {
-      const qualityTotal = Object.keys(QUALITY_CATEGORIES_NO_F).reduce((sum, key) => sum + (row[key] || 0), 0);
+      const qualityTotal = Object.keys(QUALITY_CATEGORIES_NO_F).reduce(
+        (sum, key) => sum + (row[key] || 0), 0
+      );
       const ratios = {};
       Object.keys(QUALITY_CATEGORIES_NO_F).forEach(key => {
         ratios[key] = qualityTotal > 0 ? (row[key] || 0) / qualityTotal : 0;
       });
-      
+
       return {
         name: `${row.name} (${row.V})`,
         PDI_noF: row.PDI_noF,
@@ -36,24 +46,37 @@ const QualityMixNoFChart = () => {
     });
   }, [d]);
 
-  if (chartData.length === 0) {
+  const rowCount = chartData.length;
+  const { rowHeight, tickSize } = rowMetrics(rowCount);
+  const chartHeight = Math.max(640, HEADER_PX + FOOTER_PX + rowHeight * rowCount);
+  const longestName = chartData.reduce((m, r) => Math.max(m, r.name.length), 0);
+  const leftMargin = Math.max(175, Math.min(560, 240 + longestName * 6));
+
+  const belowCount = chartData.filter(r => r.PDI_noF < PDI_THRESHOLD).length;
+  const aboveCount = rowCount - belowCount;
+  const qualityKeys = Object.keys(QUALITY_CATEGORIES_NO_F);
+
+  const chartTheme = {
+    axis: { ticks: { text: { fontSize: tickSize, fill: '#263238' } } },
+  };
+
+  if (rowCount === 0) {
     return (
       <div className="glass u-container u-container--md qm-container">
-        <h3 className="qm-title">رتبه‌بندی رزیدنت‌ها و توزیع کیفیت (PDI_noF)</h3>
+        <h3 className="qm-title">رتبه‌بندی رزیدنت‌ها و توزیع کیفیت پرونده‌های آنان (PDI_noF)</h3>
         <p className="qm-empty">داده‌ای برای نمایش وجود ندارد</p>
       </div>
     );
   }
 
-  const belowCount = chartData.filter(r => r.PDI_noF < PDI_THRESHOLD).length;
-  const aboveCount = chartData.length - belowCount;
-  const qualityKeys = Object.keys(QUALITY_CATEGORIES_NO_F);
-
   return (
-    <div className="glass u-container u-container--md qm-container">
-      <h3 className="qm-title">رتبه‌بندی رزیدنت‌ها و توزیع کیفیت (PDI_noF)</h3>
+    <div
+      className="glass u-container u-container--md qm-container"
+      style={{ '--qm-chart-height': `${chartHeight}px` }}
+    >
+      <h3 className="qm-title">رتبه‌بندی رزیدنت‌ها و توزیع کیفیت پرونده‌های آنان (PDI_noF)</h3>
       <p className="qm-subtitle">مرتب‌شده از کمترین امتیاز تا بیشترین امتیاز (بدون احتساب داده‌های کاذب)</p>
-      
+
       <div className="qm-panels">
         <div className="qm-panel qm-panel-left">
           <div className="qm-panel-title">توزیع کیفیت پرونده‌ها</div>
@@ -63,8 +86,9 @@ const QualityMixNoFChart = () => {
               keys={qualityKeys}
               indexBy="name"
               layout="horizontal"
-              margin={{ top: 10, right: 10, bottom: 40, left: 180 }}
+              margin={{ top: 10, right: 10, bottom: 40, left: leftMargin }}
               padding={0.15}
+              theme={chartTheme}
               colors={({ id }) => QUALITY_CATEGORIES_NO_F[id]?.color || '#ccc'}
               axisBottom={{
                 legend: 'سهم از پرونده‌ها',
@@ -89,6 +113,7 @@ const QualityMixNoFChart = () => {
               layout="horizontal"
               margin={{ top: 10, right: 40, bottom: 40, left: 0 }}
               padding={0.15}
+              theme={chartTheme}
               colors={({ data }) => data.pdi_color}
               axisBottom={{
                 legend: 'امتیاز کیفیت ثبت پرونده‌ها',
@@ -107,17 +132,17 @@ const QualityMixNoFChart = () => {
                 'axes',
                 'bars',
                 ({ xScale, innerHeight, innerWidth }) => {
-                  const step = innerHeight / chartData.length;
+                  const step = innerHeight / rowCount;
                   return (
                     <g>
                       <rect x={0} y={0} width={xScale(PDI_THRESHOLD)} height={innerHeight} fill="#D64545" opacity={0.05} />
                       <rect x={xScale(PDI_THRESHOLD)} y={0} width={innerWidth - xScale(PDI_THRESHOLD)} height={innerHeight} fill="#2E7D32" opacity={0.05} />
                       <line x1={xScale(PDI_THRESHOLD)} x2={xScale(PDI_THRESHOLD)} y1={0} y2={innerHeight} stroke="#37474F" strokeWidth={2.2} strokeDasharray="6 4" />
                       {belowCount > 0 && aboveCount > 0 && (
-                        <line 
-                          x1={0} x2={innerWidth} 
-                          y1={aboveCount * step} y2={aboveCount * step} 
-                          stroke="#263238" strokeWidth={2.5} strokeDasharray="6 4" 
+                        <line
+                          x1={0} x2={innerWidth}
+                          y1={aboveCount * step} y2={aboveCount * step}
+                          stroke="#263238" strokeWidth={2.5} strokeDasharray="6 4"
                         />
                       )}
                     </g>
@@ -135,8 +160,8 @@ const QualityMixNoFChart = () => {
         <span className="qm-status-item qm-status-good">قابل قبول · {aboveCount} نفر</span>
       </div>
 
-      <ChartLegend 
-        items={qualityKeys.map(k => ({ label: QUALITY_CATEGORIES_NO_F[k].label, color: QUALITY_CATEGORIES_NO_F[k].color }))} 
+      <ChartLegend
+        items={qualityKeys.map(k => ({ label: QUALITY_CATEGORIES_NO_F[k].label, color: QUALITY_CATEGORIES_NO_F[k].color }))}
       />
     </div>
   );

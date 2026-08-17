@@ -9,3 +9,17 @@
 *::after {
   box-sizing: border-box;
 }
+
+/* Form controls do not inherit body font by default */
+button,
+input,
+select,
+textarea,
+table {
+  font-family: inherit;
+}
+
+/* Force the local Persian font into Nivo/SVG chart text */
+svg text {
+  font-family: var(--font-family-persian) !important;
+}
