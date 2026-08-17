@@ -1,4 +1,4 @@
-import React, { useTransition } from 'react';
+import React from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 import { BASE_FLAG_FA, DASHBOARD_MODES } from '../../utils/constants';
 import { DropdownInput } from '../inputs/DropdownInput';
@@ -11,9 +11,8 @@ const ChevronIcon = () => (
 );
 
 const DashboardFilters = () => {
-  const { filters, updateFilters, availableYears, mode } = useDashboard();
-  const [isPending, startTransition] = useTransition();
-  
+  const { filters, updateFilters, availableYears, mode, loading } = useDashboard();
+
   const flagEntries = Object.entries(BASE_FLAG_FA);
   const totalFlags = flagEntries.length;
 
@@ -24,24 +23,20 @@ const DashboardFilters = () => {
     const selectedValues = flagEntries
       .filter(([_, label]) => selectedLabels.includes(label))
       .map(([value]) => value);
-    startTransition(() => {
-      updateFilters({ selectedFlags: selectedValues });
-    });
+    updateFilters({ selectedFlags: selectedValues });
   };
 
   const handleYearChange = (val) => {
-    startTransition(() => {
-      if (val === 'همه سال‌ها') {
-        updateFilters({ selectedYear: 'all' });
-      } else {
-        const yearStr = val.replace('سال ', '');
-        updateFilters({ selectedYear: yearStr });
-      }
-    });
+    if (val === 'همه سال‌ها') {
+      updateFilters({ selectedYear: 'all' });
+    } else {
+      const yearStr = val.replace('سال ', '');
+      updateFilters({ selectedYear: yearStr });
+    }
   };
 
-  const yearValue = filters.selectedYear === 'all' 
-    ? 'همه سال‌ها' 
+  const yearValue = filters.selectedYear === 'all'
+    ? 'همه سال‌ها'
     : `سال ${filters.selectedYear}`;
 
   const flagValue = flagEntries
@@ -58,6 +53,7 @@ const DashboardFilters = () => {
         <DropdownInput
           multiple
           dir="rtl"
+          busy={loading}
           options={flagDropdownOptions}
           value={flagValue}
           onChange={handleFlagChange}
@@ -71,6 +67,7 @@ const DashboardFilters = () => {
         <label className="filter-label">فیلتر بر اساس سال:</label>
         <DropdownInput
           dir="rtl"
+          busy={loading}
           options={yearDropdownOptions}
           value={yearValue}
           onChange={handleYearChange}

@@ -12,6 +12,7 @@ export const DropdownInput = ({
   value,
   onChange,
   displayValue,
+  busy = false,
 }) => {
   const [open, setOpen] = useState(false);
   const [hoveredOption, setHoveredOption] = useState(null);
@@ -176,7 +177,7 @@ export const DropdownInput = ({
           }
           if (e.key === "Escape") setOpen(false);
         }}
-        style={{ cursor: "pointer" }}
+        style={{ cursor: busy ? "progress" : "pointer" }}
       >
         <span className={`ui-dropdown__text${!displayText ? " ui-dropdown__text--placeholder" : ""}`}>
           {displayText || placeholder}

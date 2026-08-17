@@ -22,7 +22,7 @@
   font-size: 24px;
   font-weight: var(--font-weight-semibold);
   height: 2.75rem;
-  padding: 0 var(--spacing-lg);
+  padding: 0 var(--spacing-lg) var(--spacing-sm) var(--spacing-lg);
   border-radius: var(--border-radius-pill);
   cursor: pointer;
   white-space: nowrap;
@@ -35,6 +35,12 @@
 
 .dark .mode-toggle__btn.is-active {
   color: var(--color-gray12);
+}
+
+/* While data loads, hovering shows a loading cursor — the control itself
+   stays fully interactive and instant. */
+.mode-toggle.is-loading .mode-toggle__btn {
+  cursor: progress;
 }
 
 /* ── Blue-glass sliding indicator ─────────────────────────────── */

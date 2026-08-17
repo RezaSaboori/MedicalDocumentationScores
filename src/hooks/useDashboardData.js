@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useDeferredValue } from 'react';
 import { fetchDashboardData } from '../services/dataService';
 import { BASE_FLAG_FA, DASHBOARD_MODES } from '../utils/constants';
 
@@ -61,8 +61,13 @@ export const useDashboardData = () => {
     setFilters(prev => ({ ...prev, ...newFilters }));
   };
 
+  // Charts/KPIs/table read the DEFERRED copy so their heavy re-renders never
+  // block urgent UI (mode toggle slide, dropdown open/select). Inputs stay
+  // instant; visualization catches up asynchronously.
+  const deferredData = useDeferredValue(filteredData);
+
   return {
-    data: filteredData,
+    data: deferredData,
     rawData,
     loading,
     filters,

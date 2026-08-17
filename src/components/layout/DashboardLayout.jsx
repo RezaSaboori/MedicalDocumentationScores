@@ -15,12 +15,12 @@ import { DASHBOARD_MODES } from '../../utils/constants';
 import './DashboardLayout.css';
 
 const DashboardLayout = () => {
-  const { mode, setMode } = useDashboard();
+  const { mode, setMode, loading } = useDashboard();
 
   return (
     <div className="page-content dashboard-wrapper">
       <div className="dashboard-header">
-        <ModeToggle mode={mode} onModeChange={setMode} />
+        <ModeToggle mode={mode} onModeChange={setMode} busy={loading} />
       </div>
 
       <h1 className="dashboard-title">
