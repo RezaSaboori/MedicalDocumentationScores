@@ -8,10 +8,12 @@ const QualityMixChart = () => {
   return (
     <QualityMixChartBase
       rows={data.current}
+      previousRows={data.previous}
       scoreKey="PDI"
       categories={QUALITY_CATEGORIES}
+      positiveColor="#049C49"
       title="رتبه‌بندی رزیدنت‌ها و توزیع کیفیت پرونده‌های آنان"
-      subtitle="مرتب‌شده از بیشترین امتیاز تا کمترین امتیاز"
+      subtitle="مرتب‌شده از کمترین امتیاز تا بیشترین امتیاز"
     />
   );
 };
