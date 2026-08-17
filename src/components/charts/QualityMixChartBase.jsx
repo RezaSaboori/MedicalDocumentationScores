@@ -7,6 +7,7 @@ import ChartTooltip from './ChartTooltip';
 import './QualityMixChart.css';
 
 const PDI_THRESHOLD = 50;
+const SCORE_MAX = 100;
 const MARGIN_TOP = 10;
 const MARGIN_BOTTOM = 40;
 const TITLE_BLOCK = 24;  // .qm-panel-title (20px) + margin-bottom (4px)
@@ -47,7 +48,7 @@ const QualityMixChartBase = ({ rows, scoreKey, categories, title, subtitle }) =>
       Object.keys(categories).forEach(k => {
         ratios[k] = total > 0 ? counts[k] / total : 0;
       });
-      const score = Math.min(100, Math.max(0, Number(row[scoreKey])));
+      const score = Math.min(SCORE_MAX, Math.max(0, Number(row[scoreKey])));
       return {
         name: `${row.name} (${row.V})`,
         score,
@@ -123,6 +124,21 @@ const QualityMixChartBase = ({ rows, scoreKey, categories, title, subtitle }) =>
     />
   );
 
+  // Zones are derived from the SCALE (not innerWidth) so they always end
+  // exactly at the 100٪ tick, whatever the rendered plot width is.
+  const ScoreZonesLayer = ({ xScale, innerHeight }) => {
+    const x0 = xScale(0);
+    const xT = xScale(PDI_THRESHOLD);
+    const xEnd = xScale(SCORE_MAX);
+    return (
+      <g>
+        <rect x={x0} y={0} width={Math.max(0, xT - x0)} height={innerHeight} fill="#D64545" opacity={0.055} />
+        <rect x={xT} y={0} width={Math.max(0, xEnd - xT)} height={innerHeight} fill="#2E7D32" opacity={0.055} />
+        <line x1={xT} x2={xT} y1={0} y2={innerHeight} stroke="#37474F" strokeWidth={2.2} strokeDasharray="6 4" />
+      </g>
+    );
+  };
+
   return (
     <div
       className="glass u-container u-container--md qm-container"
@@ -171,8 +187,8 @@ const QualityMixChartBase = ({ rows, scoreKey, categories, title, subtitle }) =>
               keys={['score']}
               indexBy="name"
               layout="horizontal"
-              margin={{ top: MARGIN_TOP, right: 30, bottom: MARGIN_BOTTOM, left: 8 }}
-              xScale={{ type: 'linear', min: 0, max: 100 }}
+              margin={{ top: MARGIN_TOP, right: 40, bottom: MARGIN_BOTTOM, left: 8 }}
+              xScale={{ type: 'linear', min: 0, max: SCORE_MAX }}
               padding={0.15}
               theme={chartTheme}
               colors={({ data }) => data.barColor}
@@ -192,13 +208,7 @@ const QualityMixChartBase = ({ rows, scoreKey, categories, title, subtitle }) =>
                 'grid',
                 'axes',
                 'bars',
-                ({ xScale, innerHeight, innerWidth }) => (
-                  <g>
-                    <rect x={0} y={0} width={xScale(PDI_THRESHOLD)} height={innerHeight} fill="#D64545" opacity={0.055} />
-                    <rect x={xScale(PDI_THRESHOLD)} y={0} width={Math.max(0, innerWidth - xScale(PDI_THRESHOLD))} height={innerHeight} fill="#2E7D32" opacity={0.055} />
-                    <line x1={xScale(PDI_THRESHOLD)} x2={xScale(PDI_THRESHOLD)} y1={0} y2={innerHeight} stroke="#37474F" strokeWidth={2.2} strokeDasharray="6 4" />
-                  </g>
-                ),
+                (layerProps) => <ScoreZonesLayer key="zones" {...layerProps} />,
               ]}
             />
           </div>
