@@ -5,6 +5,15 @@ import { BASE_FLAG_FA, BASE_FLAG_COLOR, FLAG_PRIORITY } from '../../utils/consta
 import { Skeleton } from '../ui/Skeleton';
 import './FlagMembershipChart.css';
 
+const EMPTY_STATE_STYLE = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  minHeight: '260px',
+  color: 'var(--color-gray8)',
+  fontFamily: 'var(--font-family-base)',
+};
+
 const FlagMembershipChart = () => {
   const { data, loading } = useDashboard();
   const d = data.current;
@@ -34,9 +43,7 @@ const FlagMembershipChart = () => {
       <p className="chart-subtitle">(یک پزشک می‌تواند در چند گروه باشد)</p>
       <div className="chart-wrapper">
         {isEmpty ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '260px', color: 'var(--color-gray8)', fontFamily: 'var(--font-family-base)' }}>
-            داده‌ای برای نمایش وجود ندارد
-          </div>
+          <div style={EMPTY_STATE_STYLE}>داده‌ای برای نمایش وجود ندارد</div>
         ) : (
           <ResponsiveBar
             data={chartData}

@@ -8,7 +8,7 @@ const ModeToggle = ({ mode, onModeChange }) => {
   useModeIndicator(containerRef, `mode-btn-${mode}`, [mode]);
 
   return (
-    <div className="mode-toggle" ref={containerRef} role="tablist" aria-label="نوع کاربر">
+    <div className="mode-toggle glass" ref={containerRef} role="tablist" aria-label="نوع کاربر">
       <button
         id="mode-btn-faculty"
         type="button"

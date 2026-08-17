@@ -4,6 +4,15 @@ import { BASE_FLAG_FA } from '../../utils/constants';
 import { Skeleton } from '../ui/Skeleton';
 import './GroupDonutChart.css';
 
+const EMPTY_STATE_STYLE = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  minHeight: '220px',
+  color: 'var(--color-gray8)',
+  fontFamily: 'var(--font-family-base)',
+};
+
 const GroupDonutChart = () => {
   const { data, loading } = useDashboard();
   const d = data.current;
@@ -34,38 +43,34 @@ const GroupDonutChart = () => {
     );
   }
 
-  const isEmpty = d.length === 0;
-
   return (
     <div className="glass u-container u-container--md chart-container">
       <h3 className="chart-title">تقاطع گروه‌های رفتاری</h3>
-      {isEmpty ? (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '220px', color: 'var(--color-gray8)', fontFamily: 'var(--font-family-base)' }}>
-          داده‌ای برای نمایش وجود ندارد
-        </div>
+      {d.length === 0 ? (
+        <div style={EMPTY_STATE_STYLE}>داده‌ای برای نمایش وجود ندارد</div>
       ) : (
         <>
-      <div className="venn-wrapper">
-        <svg viewBox="0 0 100 100" className="venn-svg">
-          {circles.map((circle) => (
-            <circle
-              key={circle.id}
-              cx={circle.cx}
-              cy={circle.cy}
-              r={circle.r}
-              className={`circle-${circle.id}`}
-            />
-          ))}
-        </svg>
-      </div>
-      <div className="venn-legend">
-        {circles.map((circle) => (
-          <div key={circle.id} className="legend-item">
-            <span className={`legend-dot dot-${circle.id}`}></span>
-            <span className="legend-label">{circle.label}</span>
+          <div className="venn-wrapper">
+            <svg viewBox="0 0 100 100" className="venn-svg">
+              {circles.map((circle) => (
+                <circle
+                  key={circle.id}
+                  cx={circle.cx}
+                  cy={circle.cy}
+                  r={circle.r}
+                  className={`circle-${circle.id}`}
+                />
+              ))}
+            </svg>
           </div>
-        ))}
-      </div>
+          <div className="venn-legend">
+            {circles.map((circle) => (
+              <div key={circle.id} className="legend-item">
+                <span className={`legend-dot dot-${circle.id}`}></span>
+                <span className="legend-label">{circle.label}</span>
+              </div>
+            ))}
+          </div>
         </>
       )}
     </div>

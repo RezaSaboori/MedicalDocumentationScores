@@ -13,13 +13,25 @@ const CSV_PATHS = {
   },
 };
 
+// A file without these columns is not a scores CSV (e.g. the dev server's
+// index.html fallback for a missing file) and must be rejected.
+const REQUIRED_COLUMNS = ['name', 'V', 'PDI', 'flags'];
+
 const parseCsv = (path) =>
   new Promise((resolve, reject) => {
     Papa.parse(path, {
       download: true,
       header: true,
       skipEmptyLines: true,
-      complete: (results) => resolve(results.data),
+      complete: (results) => {
+        const fields = (results.meta && results.meta.fields) || [];
+        const missing = REQUIRED_COLUMNS.filter((c) => !fields.includes(c));
+        if (missing.length > 0) {
+          reject(new Error(`Invalid CSV ${path} — missing columns: ${missing.join(', ')}`));
+          return;
+        }
+        resolve(results.data);
+      },
       error: (error) => reject(error),
     });
   });
@@ -63,6 +75,10 @@ const mapRow = (row) => {
   };
 };
 
+// Mirrors dashboard.py: df.dropna(subset=["V", "PDI"])
+const isValidRow = (row) =>
+  Boolean(row.name) && Number.isFinite(row.V) && Number.isFinite(row.PDI);
+
 const dataCache = {};
 
 export const fetchDashboardData = (mode) => {
@@ -85,8 +101,8 @@ const loadDashboardData = async (mode) => {
     }
 
     return {
-      current: currentRaw.map(mapRow),
-      previous: previousRaw.map(mapRow),
+      current: currentRaw.map(mapRow).filter(isValidRow),
+      previous: previousRaw.map(mapRow).filter(isValidRow),
     };
   } catch (error) {
     console.error('Failed to load dashboard data:', error);
