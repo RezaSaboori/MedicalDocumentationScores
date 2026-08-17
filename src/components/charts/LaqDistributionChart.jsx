@@ -2,8 +2,8 @@ import React, { useMemo } from 'react';
 import { ResponsiveBar } from '@nivo/bar';
 import { useDashboard } from '../../context/DashboardContext';
 import { GROUP_COLOR_MAP } from '../../utils/flags';
-import ChartTooltip from './ChartTooltip';
 import ChartLegend from './ChartLegend';
+import ChartTooltip from './ChartTooltip';
 import './LaqDistributionChart.css';
 
 const NBINS = 30;
@@ -57,11 +57,17 @@ const LaqDistributionChart = () => {
     <div className="glass u-container u-container--md laq-container">
       <h3 className="laq-title">تعداد و گروه‌بندی پزشکان براساس شاخص کیفیت تعدیل‌شده با بار کاری</h3>
       <p className="laq-subtitle">(راستِ خط یعنی بهتر از انتظار)</p>
-      <div className="laq-body">
+      <div className="laq-body" dir="ltr">
         <ResponsiveBar
           data={chartData}
           keys={keys}
           indexBy="binLabel"
+          tooltip={({ id, value, data }) => (
+            <ChartTooltip
+              title={`بازه LAQ: ${data.binLabel}`}
+              rows={[{ label: String(id), value: Number(value) }]}
+            />
+          )}
           margin={{ top: 20, right: 20, bottom: 60, left: 50 }}
           padding={0.05}
           colors={({ id }) => GROUP_COLOR_MAP[id] || '#1f77b4'}

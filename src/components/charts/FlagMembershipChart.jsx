@@ -4,6 +4,8 @@ import { useDashboard } from '../../context/DashboardContext';
 import { BASE_FLAG_FA, BASE_FLAG_COLOR, FLAG_PRIORITY } from '../../utils/constants';
 import { Skeleton } from '../ui/Skeleton';
 import './FlagMembershipChart.css';
+import ChartLegend from './ChartLegend';
+import ChartTooltip from './ChartTooltip';
 
 const EMPTY_STATE_STYLE = {
   display: 'flex',
@@ -41,7 +43,7 @@ const FlagMembershipChart = () => {
     <div className="glass u-container u-container--md chart-container">
       <h3 className="chart-title">توزیع پزشکان در گروه های رفتاری</h3>
       <p className="chart-subtitle">(یک پزشک می‌تواند در چند گروه باشد)</p>
-      <div className="chart-wrapper">
+      <div className="chart-wrapper" dir="ltr">
         {isEmpty ? (
           <div style={EMPTY_STATE_STYLE}>داده‌ای برای نمایش وجود ندارد</div>
         ) : (
@@ -50,6 +52,12 @@ const FlagMembershipChart = () => {
             keys={['count']}
             indexBy="flag"
             margin={{ top: 20, right: 40, bottom: 40, left: 120 }}
+            tooltip={({ data }) => (
+              <ChartTooltip
+                title={data.flag}
+                rows={[{ label: 'تعداد پزشکان', value: data.count }]}
+              />
+            )}
             padding={0.3}
             layout="horizontal"
             colors={{ datum: 'data.color' }}
