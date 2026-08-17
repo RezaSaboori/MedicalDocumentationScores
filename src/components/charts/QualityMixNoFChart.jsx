@@ -7,8 +7,9 @@ import ChartLegend from './ChartLegend';
 import './QualityMixChart.css';
 
 const PDI_THRESHOLD = 50;
-const HEADER_PX = 96;
-const FOOTER_PX = 140;
+const MARGIN_TOP = 10;
+const MARGIN_BOTTOM = 40;
+const TITLE_BLOCK = 24;
 
 const rowMetrics = (rowCount) => {
   if (rowCount <= 30) return { rowHeight: 36, tickSize: 12 };
@@ -36,7 +37,6 @@ const QualityMixNoFChart = () => {
       Object.keys(QUALITY_CATEGORIES_NO_F).forEach(key => {
         ratios[key] = qualityTotal > 0 ? (row[key] || 0) / qualityTotal : 0;
       });
-
       return {
         name: `${row.name} (${row.V})`,
         PDI_noF: row.PDI_noF,
@@ -48,12 +48,17 @@ const QualityMixNoFChart = () => {
 
   const rowCount = chartData.length;
   const { rowHeight, tickSize } = rowMetrics(rowCount);
-  const chartHeight = Math.max(640, HEADER_PX + FOOTER_PX + rowHeight * rowCount);
+  const chartHeight = Math.max(640, 96 + 140 + rowHeight * rowCount);
+  const innerHeight = chartHeight - MARGIN_TOP - MARGIN_BOTTOM;
+  const step = rowCount > 0 ? innerHeight / rowCount : 0;
+
   const longestName = chartData.reduce((m, r) => Math.max(m, r.name.length), 0);
-  const leftMargin = Math.max(175, Math.min(560, 240 + longestName * 6));
+  const leftMargin = Math.max(140, Math.min(320, 110 + longestName * 6));
 
   const belowCount = chartData.filter(r => r.PDI_noF < PDI_THRESHOLD).length;
   const aboveCount = rowCount - belowCount;
+  const showSeparator = belowCount > 0 && aboveCount > 0;
+  const sepTop = TITLE_BLOCK + MARGIN_TOP + aboveCount * step;
   const qualityKeys = Object.keys(QUALITY_CATEGORIES_NO_F);
 
   const chartTheme = {
@@ -77,7 +82,9 @@ const QualityMixNoFChart = () => {
       <h3 className="qm-title">رتبه‌بندی رزیدنت‌ها و توزیع کیفیت پرونده‌های آنان (PDI_noF)</h3>
       <p className="qm-subtitle">مرتب‌شده از کمترین امتیاز تا بیشترین امتیاز (بدون احتساب داده‌های کاذب)</p>
 
-      <div className="qm-panels">
+      <div className="qm-panels" style={{ '--qm-sep-top': `${sepTop}px` }}>
+        {showSeparator && <div className="qm-separator" />}
+
         <div className="qm-panel qm-panel-left">
           <div className="qm-panel-title">توزیع کیفیت پرونده‌ها</div>
           <div className="qm-chart-wrapper">
@@ -86,7 +93,7 @@ const QualityMixNoFChart = () => {
               keys={qualityKeys}
               indexBy="name"
               layout="horizontal"
-              margin={{ top: 10, right: 10, bottom: 40, left: leftMargin }}
+              margin={{ top: MARGIN_TOP, right: 10, bottom: MARGIN_BOTTOM, left: leftMargin }}
               padding={0.15}
               theme={chartTheme}
               colors={({ id }) => QUALITY_CATEGORIES_NO_F[id]?.color || '#ccc'}
@@ -111,7 +118,7 @@ const QualityMixNoFChart = () => {
               keys={['PDI_noF']}
               indexBy="name"
               layout="horizontal"
-              margin={{ top: 10, right: 40, bottom: 40, left: 0 }}
+              margin={{ top: MARGIN_TOP, right: 40, bottom: MARGIN_BOTTOM, left: 0 }}
               padding={0.15}
               theme={chartTheme}
               colors={({ data }) => data.pdi_color}
@@ -131,23 +138,13 @@ const QualityMixNoFChart = () => {
                 'grid',
                 'axes',
                 'bars',
-                ({ xScale, innerHeight, innerWidth }) => {
-                  const step = innerHeight / rowCount;
-                  return (
-                    <g>
-                      <rect x={0} y={0} width={xScale(PDI_THRESHOLD)} height={innerHeight} fill="#D64545" opacity={0.05} />
-                      <rect x={xScale(PDI_THRESHOLD)} y={0} width={innerWidth - xScale(PDI_THRESHOLD)} height={innerHeight} fill="#2E7D32" opacity={0.05} />
-                      <line x1={xScale(PDI_THRESHOLD)} x2={xScale(PDI_THRESHOLD)} y1={0} y2={innerHeight} stroke="#37474F" strokeWidth={2.2} strokeDasharray="6 4" />
-                      {belowCount > 0 && aboveCount > 0 && (
-                        <line
-                          x1={0} x2={innerWidth}
-                          y1={aboveCount * step} y2={aboveCount * step}
-                          stroke="#263238" strokeWidth={2.5} strokeDasharray="6 4"
-                        />
-                      )}
-                    </g>
-                  );
-                }
+                ({ xScale, innerHeight: h, innerWidth }) => (
+                  <g>
+                    <rect x={0} y={0} width={xScale(PDI_THRESHOLD)} height={h} fill="#D64545" opacity={0.05} />
+                    <rect x={xScale(PDI_THRESHOLD)} y={0} width={Math.max(0, innerWidth - xScale(PDI_THRESHOLD))} height={h} fill="#2E7D32" opacity={0.05} />
+                    <line x1={xScale(PDI_THRESHOLD)} x2={xScale(PDI_THRESHOLD)} y1={0} y2={h} stroke="#37474F" strokeWidth={2.2} strokeDasharray="6 4" />
+                  </g>
+                ),
               ]}
             />
           </div>
