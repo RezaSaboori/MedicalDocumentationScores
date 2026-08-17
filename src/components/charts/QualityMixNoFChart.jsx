@@ -11,7 +11,7 @@ const QualityMixNoFChart = () => {
       scoreKey="PDI_noF"
       categories={QUALITY_CATEGORIES_NO_F}
       title="رتبه‌بندی رزیدنت‌ها و توزیع کیفیت پرونده‌های آنان (PDI_noF)"
-      subtitle="مرتب‌شده از کمترین امتیاز تا بیشترین امتیاز (بدون احتساب داده‌های کاذب)"
+      subtitle="مرتب‌شده از بیشترین امتیاز تا کمترین امتیاز (بدون احتساب داده‌های کاذب)"
     />
   );
 };

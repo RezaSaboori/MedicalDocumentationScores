@@ -11,7 +11,7 @@ const QualityMixChart = () => {
       scoreKey="PDI"
       categories={QUALITY_CATEGORIES}
       title="رتبه‌بندی رزیدنت‌ها و توزیع کیفیت پرونده‌های آنان"
-      subtitle="مرتب‌شده از کمترین امتیاز تا بیشترین امتیاز"
+      subtitle="مرتب‌شده از بیشترین امتیاز تا کمترین امتیاز"
     />
   );
 };

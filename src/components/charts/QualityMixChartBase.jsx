@@ -34,29 +34,30 @@ const QualityMixChartBase = ({ rows, scoreKey, categories, title, subtitle }) =>
       .filter(r => r && r.name && r.N > 0 && r[scoreKey] != null && !Number.isNaN(Number(r[scoreKey])))
       .sort((a, b) => Number(a[scoreKey]) - Number(b[scoreKey]) || String(a.name).localeCompare(String(b.name)));
 
-    return valid
-      .map(row => {
-        const counts = {};
-        let total = 0;
-        Object.keys(categories).forEach(k => {
-          counts[k] = Math.max(0, Number(row[k]) || 0);
-          total += counts[k];
-        });
-        const ratios = {};
-        Object.keys(categories).forEach(k => {
-          ratios[k] = total > 0 ? counts[k] / total : 0;
-        });
-        const score = Math.min(100, Math.max(0, Number(row[scoreKey])));
-        return {
-          name: `${row.name} (${row.V})`,
-          score,
-          barColor: pdiGradientColor(score, PDI_THRESHOLD),
-          status: score >= PDI_THRESHOLD ? 'قابل قبول' : 'غیر قابل قبول',
-          raw: { ...row, ...counts },
-          ...ratios,
-        };
-      })
-      .reverse(); // highest score on top, like the Python figure
+    // NOTE: do NOT reverse. Nivo horizontal bars render data[0] at the BOTTOM,
+    // so an ascending sort yields lowest-at-bottom / highest-at-top,
+    // identical to the Python figure (y range [count-0.5, -0.5]).
+    return valid.map(row => {
+      const counts = {};
+      let total = 0;
+      Object.keys(categories).forEach(k => {
+        counts[k] = Math.max(0, Number(row[k]) || 0);
+        total += counts[k];
+      });
+      const ratios = {};
+      Object.keys(categories).forEach(k => {
+        ratios[k] = total > 0 ? counts[k] / total : 0;
+      });
+      const score = Math.min(100, Math.max(0, Number(row[scoreKey])));
+      return {
+        name: `${row.name} (${row.V})`,
+        score,
+        barColor: pdiGradientColor(score, PDI_THRESHOLD),
+        status: score >= PDI_THRESHOLD ? 'قابل قبول' : 'غیر قابل قبول',
+        raw: { ...row, ...counts },
+        ...ratios,
+      };
+    });
   }, [rows, scoreKey, categories]);
 
   const layout = useMemo(() => {
@@ -74,9 +75,10 @@ const QualityMixChartBase = ({ rows, scoreKey, categories, title, subtitle }) =>
     const aboveCount = chartData.filter(r => r.score >= PDI_THRESHOLD).length;
     const belowCount = rowCount - aboveCount;
 
-    // Boundary in *render* order — correct regardless of sort direction
-    const boundaryIndex = rowCount > 0 && chartData[0].score >= PDI_THRESHOLD ? aboveCount : belowCount;
-    const sepTop = TITLE_BLOCK + MARGIN_TOP + boundaryIndex * step;
+    // Render order is lowest-at-bottom => the top `aboveCount` rows are the
+    // >=50 group, therefore the group boundary from the TOP of the plot area
+    // is exactly aboveCount * step.
+    const sepTop = TITLE_BLOCK + MARGIN_TOP + aboveCount * step;
 
     return {
       rowCount, tickSize, chartHeight, leftMargin,
