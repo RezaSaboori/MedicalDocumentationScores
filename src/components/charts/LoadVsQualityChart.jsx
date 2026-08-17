@@ -7,6 +7,9 @@ import ChartTooltip from './ChartTooltip';
 import ChartLegend from './ChartLegend';
 import './LoadVsQualityChart.css';
 
+const MIN_R = 4;
+const MAX_R = 17.5; // plotly size_max=35 → radius 17.5
+
 const LoadVsQualityChart = () => {
   const { data } = useDashboard();
   const d = data.current;
@@ -20,18 +23,28 @@ const LoadVsQualityChart = () => {
     return [...byGroup.entries()].map(([id, points]) => ({ id, data: points }));
   }, [d]);
 
-  const maxN = useMemo(() => Math.max(1, ...d.map((r) => r.N || 0)), [d]);
+  const maxN = useMemo(() => Math.max(1, ...d.map((r) => Number(r.N) || 0)), [d]);
   const meanQ = useMemo(
     () => (d.length ? d.reduce((s, r) => s + (r.WQS_adj || 0), 0) / d.length : 0),
     [d]
   );
 
-  // Bubble diameter encodes classified-document count (N) — mirrors size="N" in dashboard.py.
-  // Handles both nivo accessor signatures (node.data wrapper OR raw datum).
-  const bubbleSize = (arg) => {
-    const src = arg && typeof arg.data === 'object' && arg.data !== null ? arg.data : arg;
-    const value = Number(src && src.N) || 0;
-    return 8 + 27 * Math.sqrt(value / maxN);
+  // Bubbles are rendered manually so the diameter ALWAYS encodes the number of
+  // classified documents (N), independent of the nivo version's size accessor.
+  const renderNode = (node) => {
+    const datum = node.data || {};
+    const value = Number(datum.N) || 0;
+    const r = MIN_R + (MAX_R - MIN_R) * Math.sqrt(value / maxN);
+    return (
+      <circle
+        r={r}
+        fill={node.color}
+        fillOpacity={0.72}
+        stroke={node.color}
+        strokeOpacity={0.9}
+        strokeWidth={1}
+      />
+    );
   };
 
   const MeanLineLayer = ({ yScale, innerWidth }) => (
@@ -54,7 +67,8 @@ const LoadVsQualityChart = () => {
           yScale={{ type: 'linear', min: 'auto', max: 'auto' }}
           margin={{ top: 16, right: 24, bottom: 64, left: 64 }}
           colors={({ serieId }) => GROUP_COLOR_MAP[serieId] ?? '#1f77b4'}
-          size={bubbleSize}
+          size={10}
+          renderNode={renderNode}
           layers={[
             'grid',
             'axes',
