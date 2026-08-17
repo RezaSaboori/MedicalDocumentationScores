@@ -35,8 +35,8 @@ export const useDashboardData = () => {
     let prev = rawData.previous;
 
     if (filters.selectedYear && filters.selectedYear !== 'all') {
-      d = d.filter(row => row.year === filters.selectedYear);
-      prev = prev.filter(row => row.year === filters.selectedYear);
+      d = d.filter(row => String(row.year) === String(filters.selectedYear));
+      prev = prev.filter(row => String(row.year) === String(filters.selectedYear));
     }
 
     if (filters.selectedFlags && filters.selectedFlags.length > 0) {
