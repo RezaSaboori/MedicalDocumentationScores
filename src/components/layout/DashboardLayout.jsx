@@ -2,7 +2,12 @@ import KpiCards from '../kpis/KpiCards';
 import DashboardFilters from '../filters/DashboardFilters';
 import GroupDonutChart from '../charts/GroupDonutChart';
 import FlagMembershipChart from '../charts/FlagMembershipChart';
-import ChartPlaceholder from '../charts/ChartPlaceholder';
+import LaqDistributionChart from '../charts/LaqDistributionChart';
+import LoadVsQualityChart from '../charts/LoadVsQualityChart';
+import IntegrityMapChart from '../charts/IntegrityMapChart';
+import QualityMixChart from '../charts/QualityMixChart';
+import QualityMixNoFChart from '../charts/QualityMixNoFChart';
+import PdiRankingChart from '../charts/PdiRankingChart';
 import AuditTable from '../table/AuditTable';
 import ModeToggle from './ModeToggle';
 import { useDashboard } from '../../context/DashboardContext';
@@ -36,12 +41,12 @@ const DashboardLayout = () => {
       </div>
 
       <div className="charts-grid-1">
-        <ChartPlaceholder title="شاخص کیفیت تعدیل‌شده با بار کاری (LAQ)" />
-        <ChartPlaceholder title="بار کاری دربرابر کیفیت" />
-        <ChartPlaceholder title="نقشه ریسک" />
-        <ChartPlaceholder title="رتبه بندی رزیدنت‌ها و توزیع کیفیت (PDI)" height="600px" />
-        <ChartPlaceholder title="رتبه بندی رزیدنت‌ها و توزیع کیفیت (PDI_noF)" height="600px" />
-        <ChartPlaceholder title="رتبه‌بندی شاخص ترکیبی مستندسازی (PDI)" height="600px" />
+        <LaqDistributionChart />
+        <LoadVsQualityChart />
+        <IntegrityMapChart />
+        <QualityMixChart />
+        <QualityMixNoFChart />
+        <PdiRankingChart />
       </div>
 
       <div className="glass u-container u-container--md">
