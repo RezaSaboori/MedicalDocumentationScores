@@ -1,50 +1,82 @@
 import React, { useLayoutEffect, useRef } from 'react';
 import './ChartTooltip.css';
 
+const GAP = 14;
+
 const ChartTooltip = ({ title, rows = [] }) => {
   const rootRef = useRef(null);
+  const stateRef = useRef({ appliedX: 0, appliedY: 0, lastTransform: null });
 
-  // Self-clamping: measure our own rect and shift ourselves back inside the
-  // chart card (and viewport) whenever nivo's raw placement overflows an edge.
-  // Near the top edge the modal flips below the cursor, near the left edge it
-  // flips to the right — and it can never extend the scroll area again.
-  // Works independently of the installed nivo version's wrapper internals.
+  // Quadrant placement: position the modal fully above/below AND right/left of
+  // the anchor (never over the cursor/bubble), chosen by available space, and
+  // move nivo's positioned WRAPPER itself so nothing overflows the card
+  // (which is what created the scrollbar).
   useLayoutEffect(() => {
     const tip = rootRef.current;
     if (!tip) return;
 
-    // Reset any previous shift so the measurement is the raw placement.
-    tip.style.position = 'relative';
-    tip.style.left = '0px';
-    tip.style.top = '0px';
+    // Locate the positioned wrapper nivo renders us inside.
+    let wrapper = tip.parentElement;
+    while (wrapper && wrapper !== document.body) {
+      const cs = getComputedStyle(wrapper);
+      if ((cs.transform && cs.transform !== 'none') || cs.position === 'absolute' || cs.position === 'fixed') break;
+      wrapper = wrapper.parentElement;
+    }
+    if (!wrapper || wrapper === document.body) return;
 
-    const tipRect = tip.getBoundingClientRect();
-    const host =
-      tip.closest('.u-container') ||
-      tip.closest('.glass') ||
-      document.documentElement;
+    const st = stateRef.current;
+    // If nivo rewrote the wrapper transform since our last pass, our delta is gone.
+    if (wrapper.style.transform !== st.lastTransform) {
+      st.appliedX = 0;
+      st.appliedY = 0;
+    }
+
+    const readTranslate = () => {
+      const t = getComputedStyle(wrapper).transform;
+      const m = /matrix\(\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*([^,]+)\s*\)/.exec(t);
+      if (m) return { x: parseFloat(m[5]), y: parseFloat(m[6]) };
+      return { x: parseFloat(wrapper.style.left) || 0, y: parseFloat(wrapper.style.top) || 0 };
+    };
+
+    const setTranslate = (x, y) => {
+      wrapper.style.transform = `translate(${x}px, ${y}px)`;
+      wrapper.style.left = '0px';
+      wrapper.style.top = '0px';
+      st.lastTransform = wrapper.style.transform;
+    };
+
+    // 1) Revert to nivo's raw placement for a clean measurement.
+    const cur = readTranslate();
+    const rawX = cur.x - st.appliedX;
+    const rawY = cur.y - st.appliedY;
+    setTranslate(rawX, rawY);
+
+    // 2) Measure raw anchor + modal size.
+    const rawRect = tip.getBoundingClientRect();
+    const host = tip.closest('.u-container') || tip.closest('.glass') || document.documentElement;
     const hostRect = host.getBoundingClientRect();
-    const pad = 6;
+    const w = rawRect.width;
+    const h = rawRect.height;
+    const ax = rawRect.left;
+    const ay = rawRect.top;
 
-    let dx = 0;
-    let dy = 0;
+    // 3) Choose quadrant: right else left, below else above.
+    const spaceRight = hostRect.right - ax;
+    const spaceBelow = hostRect.bottom - ay;
+    let posX = spaceRight >= w + GAP * 2 ? ax + GAP : ax - w - GAP;
+    let posY = spaceBelow >= h + GAP * 2 ? ay + GAP : ay - h - GAP;
 
-    // Keep inside the chart card.
-    if (tipRect.right > hostRect.right - pad) dx = hostRect.right - pad - tipRect.right;
-    if (tipRect.left + dx < hostRect.left + pad) dx = hostRect.left + pad - tipRect.left;
-    if (tipRect.bottom > hostRect.bottom - pad) dy = hostRect.bottom - pad - tipRect.bottom;
-    if (tipRect.top + dy < hostRect.top + pad) dy = hostRect.top + pad - tipRect.top;
+    // Safety clamp inside the card.
+    posX = Math.min(Math.max(posX, hostRect.left + 4), Math.max(hostRect.left + 4, hostRect.right - w - 4));
+    posY = Math.min(Math.max(posY, hostRect.top + 4), Math.max(hostRect.top + 4, hostRect.bottom - h - 4));
 
-    // Then never leave the viewport.
-    const vw = document.documentElement.clientWidth;
-    const vh = document.documentElement.clientHeight;
-    if (tipRect.right + dx > vw - pad) dx = vw - pad - tipRect.right;
-    if (tipRect.left + dx < pad) dx = pad - tipRect.left;
-    if (tipRect.bottom + dy > vh - pad) dy = vh - pad - tipRect.bottom;
-    if (tipRect.top + dy < pad) dy = pad - tipRect.top;
-
-    tip.style.left = `${dx}px`;
-    tip.style.top = `${dy}px`;
+    // 4) Move the wrapper by the delta so the modal lands in the quadrant
+    //    and no overflow (scrollbar) can occur.
+    const dx = posX - rawRect.left;
+    const dy = posY - rawRect.top;
+    setTranslate(rawX + dx, rawY + dy);
+    st.appliedX = dx;
+    st.appliedY = dy;
   });
 
   return (

@@ -44,3 +44,14 @@
   color: var(--color-gray11, #37474f);
   white-space: nowrap;
 }
+
+/* The modal is now quadrant-placed inside the card; hard-stop any residual
+   overflow so no scrollbar can ever appear on chart cards. */
+.im-container,
+.lvq-container,
+.laq-container,
+.qm-container,
+.pdi-container,
+.chart-container {
+  overflow: hidden;
+}
