@@ -30,14 +30,29 @@ const LoadVsQualityChart = () => {
     [d]
   );
 
-  const MeanLineLayer = ({ yScale, innerWidth }) => (
-    <g>
-      <line x1={0} x2={innerWidth} y1={yScale(meanQ)} y2={yScale(meanQ)} stroke="grey" strokeDasharray="6 4" />
-      <text x={innerWidth} y={yScale(meanQ) - 6} textAnchor="end" className="chart-axis-text">
-        میانگین انستیتو
-      </text>
-    </g>
-  );
+  const MeanLineLayer = ({ yScale, innerWidth }) => {
+    const y = yScale(meanQ);
+    if (!Number.isFinite(y)) return null; // empty data → auto scale is NaN
+    return (
+      <g>
+        <line x1={0} x2={innerWidth} y1={y} y2={y} stroke="grey" strokeDasharray="6 4" />
+        <text x={innerWidth} y={y - 6} textAnchor="end" className="chart-axis-text">
+          میانگین انستیتو
+        </text>
+      </g>
+    );
+  };
+
+  if (!d.length) {
+    return (
+      <div className="glass u-container u-container--md lvq-container">
+        <h3 className="lvq-title">بار کاری یا حجم ویزیت دربرابر کیفیت</h3>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 240, color: 'var(--color-gray8)', fontFamily: 'var(--font-family-base)' }}>
+          داده‌ای برای نمایش وجود ندارد
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="glass u-container u-container--md lvq-container">

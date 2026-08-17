@@ -1,11 +1,10 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import './ChartTooltip.css';
 
 const GAP = 14;
 
-// Global cursor tracker so the portal knows the cursor position from the
-// very first frame (nivo does not pass the mouse event to tooltip content).
+// Global cursor tracker (passive, zero React overhead).
 let lastMouse = { x: 0, y: 0 };
 if (typeof window !== 'undefined') {
   window.addEventListener(
@@ -17,43 +16,44 @@ if (typeof window !== 'undefined') {
 
 const ChartTooltip = ({ title, rows = [] }) => {
   const nodeRef = useRef(null);
-  const [mouse, setMouse] = useState(lastMouse);
-  const [size, setSize] = useState({ w: 0, h: 0 });
 
+  // Quadrant placement (right-down / left-down / right-up / left-up) done with
+  // direct DOM writes batched in requestAnimationFrame: NO React state, NO
+  // re-renders, NO layout thrash — it cannot affect loading or app speed.
   useEffect(() => {
-    const onMove = (e) => setMouse({ x: e.clientX, y: e.clientY });
+    const el = nodeRef.current;
+    if (!el) return;
+
+    let raf = 0;
+    const place = () => {
+      raf = 0;
+      const w = el.offsetWidth;
+      const h = el.offsetHeight;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      let left = lastMouse.x + GAP;
+      if (left + w > vw - 8) left = lastMouse.x - w - GAP;
+      let top = lastMouse.y + GAP;
+      if (top + h > vh - 8) top = lastMouse.y - h - GAP;
+      if (left < 8) left = 8;
+      if (top < 8) top = 8;
+      el.style.left = `${left}px`;
+      el.style.top = `${top}px`;
+    };
+    const onMove = () => { if (!raf) raf = requestAnimationFrame(place); };
+
+    place();
     window.addEventListener('mousemove', onMove, { passive: true });
-    return () => window.removeEventListener('mousemove', onMove);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, []);
 
-  useLayoutEffect(() => {
-    const el = nodeRef.current;
-    if (el && (el.offsetWidth !== size.w || el.offsetHeight !== size.h)) {
-      setSize({ w: el.offsetWidth, h: el.offsetHeight });
-    }
-  });
-
-  const vw = typeof window !== 'undefined' ? window.innerWidth : 0;
-  const vh = typeof window !== 'undefined' ? window.innerHeight : 0;
-
-  // Quadrant placement around the cursor:
-  // default Right-Down; flip Left-Down near the right edge;
-  // flip Right-Up near the bottom edge; Left-Up at the bottom-right corner.
-  let left = mouse.x + GAP;
-  if (left + size.w > vw - 8) left = mouse.x - size.w - GAP;
-  let top = mouse.y + GAP;
-  if (top + size.h > vh - 8) top = mouse.y - size.h - GAP;
-  left = Math.max(8, Math.min(left, Math.max(8, vw - size.w - 8)));
-  top = Math.max(8, Math.min(top, Math.max(8, vh - size.h - 8)));
-
-  // Portaled to <body> with fixed positioning: it can never enlarge a chart
-  // card, never create a scrollbar, and always floats above everything.
+  // Portaled to <body>: fixed position + top z-index, out of every container's
+  // flow — never enlarges a card, never creates a scrollbar.
   return ReactDOM.createPortal(
-    <div
-      className="chart-tooltip chart-tooltip--portal"
-      ref={nodeRef}
-      style={{ left: `${left}px`, top: `${top}px` }}
-    >
+    <div className="chart-tooltip chart-tooltip--portal" ref={nodeRef}>
       <div className="chart-tooltip__title">{title}</div>
       {rows.length > 0 && (
         <div className="chart-tooltip__rows">
