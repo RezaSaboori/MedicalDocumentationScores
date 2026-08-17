@@ -3,8 +3,8 @@ import { ResponsiveScatterPlot } from '@nivo/scatterplot';
 import { useDashboard } from '../../context/DashboardContext';
 import { GROUP_COLOR_MAP } from '../../utils/flags';
 import { formatNumber, formatPercent } from '../../utils/formatters';
-import ChartLegend from './ChartLegend';
 import ChartTooltip from './ChartTooltip';
+import ChartLegend from './ChartLegend';
 import './IntegrityMapChart.css';
 
 const RISK_ZONES = [
@@ -13,8 +13,6 @@ const RISK_ZONES = [
   { x: 0.15, y: 0.35, label: '🔴 مشکوک به داده کاذب' },
   { x: 0.75, y: 0.35, label: '⛔ بحرانی (هر دو)' },
 ];
-
-const bubbleSize = (node) => Math.min(34, 8 + Math.sqrt(node.data.V ?? 10) * 0.9);
 
 const RiskZonesLayer = ({ xScale, yScale, innerWidth, innerHeight }) => (
   <g>
@@ -33,7 +31,7 @@ const Tooltip = ({ node }) => (
     title={node.data.name}
     rows={[
       { label: 'گروه', value: node.data.group_fa },
-      { label: 'PDI', value: node.data.PDI.toFixed(1) },
+      { label: 'PDI', value: node.data.PDI?.toFixed(1) },
       { label: 'نرخ خالی', value: formatPercent(node.data.x) },
       { label: 'نرخ داده کاذب', value: formatPercent(node.data.y) },
       { label: 'ویزیت', value: formatNumber(node.data.V) },
@@ -43,7 +41,7 @@ const Tooltip = ({ node }) => (
 
 const IntegrityMapChart = () => {
   const { data } = useDashboard();
-  const d = data.current || [];
+  const d = data.current;
 
   const series = useMemo(() => {
     const byGroup = new Map();
@@ -54,12 +52,17 @@ const IntegrityMapChart = () => {
     return [...byGroup.entries()].map(([id, points]) => ({ id, data: points }));
   }, [d]);
 
+  const maxV = useMemo(() => Math.max(1, ...d.map((r) => r.V || 0)), [d]);
+
+  // Bubble diameter encodes visit volume (V) — mirrors size="V" in dashboard.py
+  const bubbleSize = ({ data }) => 6 + 29 * Math.sqrt((data.V || 0) / maxV);
+
   const percentTick = (value) => `${Math.round(value * 100)}٪`;
 
   return (
     <div className="glass u-container u-container--md im-container">
       <h3 className="im-title">نقشه ریسک — اندازه حباب = حجم ویزیت</h3>
-      <div className="im-body">
+      <div className="im-body" style={{ height: 420 }}>
         <ResponsiveScatterPlot
           data={series}
           xScale={{ type: 'linear', min: 0, max: 1 }}
@@ -88,9 +91,7 @@ const IntegrityMapChart = () => {
           tooltip={Tooltip}
         />
       </div>
-      <ChartLegend
-        items={series.map((s) => ({ label: s.id, color: GROUP_COLOR_MAP[s.id] }))}
-      />
+      <ChartLegend items={series.map((s) => ({ label: s.id, color: GROUP_COLOR_MAP[s.id] }))} />
     </div>
   );
 };
