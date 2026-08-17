@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 import { formatNumber, formatPercent } from '../../utils/formatters';
+import { DASHBOARD_MODES } from '../../utils/constants';
 import { Skeleton } from '../ui/Skeleton';
 import './KpiCards.css';
 
 const KpiCards = () => {
-  const { data, loading } = useDashboard();
+  const { data, loading, mode } = useDashboard();
   const d = data.current;
 
   const kpis = useMemo(() => {
@@ -49,7 +50,7 @@ const KpiCards = () => {
   }
 
   const cards = [
-    { title: 'تعداد رزیدنت‌ها', value: formatNumber(kpis.n_physicians), color: 'var(--color-blue)' },
+    { title: mode === DASHBOARD_MODES.FACULTY ? 'تعداد اساتید' : 'تعداد رزیدنت‌ها', value: formatNumber(kpis.n_physicians), color: 'var(--color-blue)' },
     { title: 'مجموع ویزیت‌ها', value: formatNumber(kpis.total_visits), color: 'var(--color-blue)' },
     { title: 'میانگین PDI', value: kpis.mean_pdi.toFixed(1), color: 'var(--color-blue)', sub: 'از 100' },
     { title: 'نسبت مستندسازی', value: formatPercent(kpis.mean_cov, 0), color: 'var(--color-green)' },

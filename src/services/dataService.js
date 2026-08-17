@@ -1,8 +1,17 @@
 import Papa from 'papaparse';
 import { comboLabel } from '../utils/flags';
+import { DASHBOARD_MODES } from '../utils/constants';
 
-const CURRENT_CSV_PATH = '/data/physician_scores_enriched_4405.csv';
-const PREVIOUS_CSV_PATH = '/data/physician_scores_enriched_3405.csv';
+const CSV_PATHS = {
+  [DASHBOARD_MODES.RESIDENTS]: {
+    current: '/data/physician_scores_enriched_4405.csv',
+    previous: '/data/physician_scores_enriched_3405.csv',
+  },
+  [DASHBOARD_MODES.FACULTY]: {
+    current: '/data/faculty_scores_enriched_4405.csv',
+    previous: '/data/faculty_scores_enriched_3405.csv',
+  },
+};
 
 const parseCsv = (path) =>
   new Promise((resolve, reject) => {
@@ -35,6 +44,7 @@ const mapRow = (row) => {
     name: getStr(row, 'name'),
     V: getNum(row, 'V'),
     N: getNum(row, 'N'),
+    COV: getNum(row, 'COV'),
     rho_Z: getNum(row, 'rho_Z'),
     rho_F: getNum(row, 'rho_F'),
     WQS_adj: getNum(row, 'WQS_adj'),
@@ -53,22 +63,23 @@ const mapRow = (row) => {
   };
 };
 
-let dashboardDataPromise = null;
+const dataCache = {};
 
-export const fetchDashboardData = () => {
-  if (!dashboardDataPromise) {
-    dashboardDataPromise = loadDashboardData();
+export const fetchDashboardData = (mode) => {
+  if (!dataCache[mode]) {
+    dataCache[mode] = loadDashboardData(mode);
   }
-  return dashboardDataPromise;
+  return dataCache[mode];
 };
 
-const loadDashboardData = async () => {
+const loadDashboardData = async (mode) => {
+  const paths = CSV_PATHS[mode] || CSV_PATHS[DASHBOARD_MODES.RESIDENTS];
   try {
-    const currentRaw = await parseCsv(CURRENT_CSV_PATH);
-    
+    const currentRaw = await parseCsv(paths.current);
+
     let previousRaw = [];
     try {
-      previousRaw = await parseCsv(PREVIOUS_CSV_PATH);
+      previousRaw = await parseCsv(paths.previous);
     } catch (e) {
       console.warn('Previous month CSV not found or failed to parse:', e);
     }

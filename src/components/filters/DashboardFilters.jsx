@@ -1,6 +1,6 @@
 import React from 'react';
 import { useDashboard } from '../../context/DashboardContext';
-import { BASE_FLAG_FA } from '../../utils/constants';
+import { BASE_FLAG_FA, DASHBOARD_MODES } from '../../utils/constants';
 import { DropdownInput } from '../inputs/DropdownInput';
 import './DashboardFilters.css';
 
@@ -11,7 +11,7 @@ const ChevronIcon = () => (
 );
 
 const DashboardFilters = () => {
-  const { filters, updateFilters, availableYears } = useDashboard();
+  const { filters, updateFilters, availableYears, mode } = useDashboard();
   
   const flagEntries = Object.entries(BASE_FLAG_FA);
   const totalFlags = flagEntries.length;
@@ -61,6 +61,7 @@ const DashboardFilters = () => {
           placeholder="انتخاب گروه..."
         />
       </div>
+      {mode === DASHBOARD_MODES.RESIDENTS && (
       <div className="filter-group">
         <label className="filter-label">فیلتر بر اساس سال:</label>
         <DropdownInput
@@ -72,6 +73,7 @@ const DashboardFilters = () => {
           placeholder="انتخاب سال..."
         />
       </div>
+      )}
     </div>
   );
 };

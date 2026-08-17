@@ -1,30 +1,39 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { fetchDashboardData } from '../services/dataService';
-import { BASE_FLAG_FA } from '../utils/constants';
+import { BASE_FLAG_FA, DASHBOARD_MODES } from '../utils/constants';
+
+const createInitialFilters = () => ({
+  selectedFlags: Object.keys(BASE_FLAG_FA),
+  selectedYear: 'all',
+});
 
 export const useDashboardData = () => {
+  const [mode, setModeState] = useState(DASHBOARD_MODES.RESIDENTS);
   const [rawData, setRawData] = useState({ current: [], previous: [] });
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
-    selectedFlags: Object.keys(BASE_FLAG_FA),
-    selectedYear: 'all',
-  });
+  const [filters, setFilters] = useState(createInitialFilters);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await fetchDashboardData();
+      const result = await fetchDashboardData(mode);
       setRawData(result);
     } catch (error) {
-      console.error("Failed to load dashboard data:", error);
+      console.error('Failed to load dashboard data:', error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [mode]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const setMode = (nextMode) => {
+    if (nextMode === mode) return;
+    setModeState(nextMode);
+    setFilters(createInitialFilters());
+  };
 
   const availableYears = useMemo(() => {
     const years = new Set(rawData.current.map(d => d.year).filter(Boolean));
@@ -59,5 +68,7 @@ export const useDashboardData = () => {
     filters,
     availableYears,
     updateFilters,
+    mode,
+    setMode,
   };
 };

@@ -7,6 +7,11 @@ export const BASE_FLAG_FA = {
   LOW_DATA: "فاقد ویزیت کافی",
 };
 
+export const DASHBOARD_MODES = {
+  RESIDENTS: "residents",
+  FACULTY: "faculty",
+};
+
 export const BASE_FLAG_COLOR = {
   INTEGRITY_AUDIT: "#d62728",
   ENGAGEMENT_TRAINING: "#ff9f1c",

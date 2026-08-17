@@ -1,0 +1,73 @@
+/* ── Mode toggle (دستیاران / هیئت علمی) ───────────────────────── */
+
+.mode-toggle {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  height: 2.5rem;
+  padding: 0 var(--spacing-xs);
+  border-radius: var(--border-radius-pill);
+  background-color: var(--color-gray2);
+  border: var(--border-width-thin) solid var(--color-gray3);
+  box-sizing: border-box;
+}
+
+.mode-toggle__btn {
+  position: relative;
+  z-index: 1;
+  border: none;
+  background: transparent;
+  color: var(--color-gray10);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  height: 1.75rem;
+  padding: 0 var(--spacing-md);
+  border-radius: var(--border-radius-pill);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--motion-duration-normal) var(--motion-easing-easeInOut);
+}
+
+.mode-toggle__btn.is-active {
+  color: var(--color-gray1);
+}
+
+.dark .mode-toggle__btn.is-active {
+  color: var(--color-gray12);
+}
+
+/* ── Blue-glass sliding indicator ─────────────────────────────── */
+
+.mode-toggle::after {
+  content: "";
+  position: absolute;
+  top: 10%;
+  height: 80%;
+  left: 0;
+  width: var(--active-indicator-width, 0px);
+  transform: translateX(var(--active-indicator-left, 0px));
+  opacity: var(--active-indicator-opacity, 0);
+  transition:
+    transform var(--motion-duration-slow) var(--motion-easing-easeInOut),
+    width var(--motion-duration-slow) var(--motion-easing-easeInOut),
+    opacity var(--motion-duration-normal) var(--motion-easing-easeInOut);
+  display: block;
+  border-radius: var(--border-radius-pill);
+  background-color: color-mix(in srgb, var(--color-blue) 80%, transparent);
+  z-index: -1;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, #01eeff 20%, transparent),
+    inset 2px 1px 0px -1px color-mix(in srgb, #01eeff 90%, transparent),
+    inset -1.5px -1px 0px -1px color-mix(in srgb, #01eeff 80%, transparent),
+    inset -2px -6px 1px -5px color-mix(in srgb, #01eeff 60%, transparent),
+    inset -1px 2px 3px -1px color-mix(in srgb, #001130 25%, transparent),
+    inset 0px -4px 1px -2px color-mix(in srgb, #000820 15%, transparent),
+    inset 0px 3px 6px 0px color-mix(in srgb, #000820 10%, transparent);
+}
+
+.dark .mode-toggle::after {
+  background-color: color-mix(in srgb, var(--color-blue) 90%, transparent);
+}
