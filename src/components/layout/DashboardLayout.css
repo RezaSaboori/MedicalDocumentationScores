@@ -11,9 +11,15 @@
 }
 
 .filters-container {
-  margin-bottom: var(--spacing-xl);
-  padding: var(--spacing-lg) var(--spacing-sm) !important;
-  border-radius: 0 !important;
+  padding: var(--spacing-xl) 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Strip the glass specular ring specifically for this container */
+.filters-container::before {
+  content: none !important;
 }
 
 .charts-grid-2 {

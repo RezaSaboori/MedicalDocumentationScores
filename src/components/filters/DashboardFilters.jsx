@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useTransition } from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 import { BASE_FLAG_FA, DASHBOARD_MODES } from '../../utils/constants';
 import { DropdownInput } from '../inputs/DropdownInput';
@@ -12,6 +12,7 @@ const ChevronIcon = () => (
 
 const DashboardFilters = () => {
   const { filters, updateFilters, availableYears, mode } = useDashboard();
+  const [isPending, startTransition] = useTransition();
   
   const flagEntries = Object.entries(BASE_FLAG_FA);
   const totalFlags = flagEntries.length;
@@ -23,16 +24,20 @@ const DashboardFilters = () => {
     const selectedValues = flagEntries
       .filter(([_, label]) => selectedLabels.includes(label))
       .map(([value]) => value);
-    updateFilters({ selectedFlags: selectedValues });
+    startTransition(() => {
+      updateFilters({ selectedFlags: selectedValues });
+    });
   };
 
   const handleYearChange = (val) => {
-    if (val === 'همه سال‌ها') {
-      updateFilters({ selectedYear: 'all' });
-    } else {
-      const yearStr = val.replace('سال ', '');
-      updateFilters({ selectedYear: yearStr });
-    }
+    startTransition(() => {
+      if (val === 'همه سال‌ها') {
+        updateFilters({ selectedYear: 'all' });
+      } else {
+        const yearStr = val.replace('سال ', '');
+        updateFilters({ selectedYear: yearStr });
+      }
+    });
   };
 
   const yearValue = filters.selectedYear === 'all' 
