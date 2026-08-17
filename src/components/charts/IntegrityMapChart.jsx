@@ -54,15 +54,20 @@ const IntegrityMapChart = () => {
 
   const maxV = useMemo(() => Math.max(1, ...d.map((r) => r.V || 0)), [d]);
 
-  // Bubble diameter encodes visit volume (V) — mirrors size="V" in dashboard.py
-  const bubbleSize = ({ data }) => 6 + 29 * Math.sqrt((data.V || 0) / maxV);
+  // Bubble diameter encodes visit volume (V) — mirrors size="V" in dashboard.py.
+  // Handles both nivo accessor signatures (node.data wrapper OR raw datum).
+  const bubbleSize = (arg) => {
+    const src = arg && typeof arg.data === 'object' && arg.data !== null ? arg.data : arg;
+    const value = Number(src && src.V) || 0;
+    return 8 + 27 * Math.sqrt(value / maxV);
+  };
 
   const percentTick = (value) => `${Math.round(value * 100)}٪`;
 
   return (
     <div className="glass u-container u-container--md im-container">
       <h3 className="im-title">نقشه ریسک — اندازه حباب = حجم ویزیت</h3>
-      <div className="im-body" style={{ height: 420 }}>
+      <div className="im-body" dir="ltr" style={{ height: 420 }}>
         <ResponsiveScatterPlot
           data={series}
           xScale={{ type: 'linear', min: 0, max: 1 }}

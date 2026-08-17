@@ -26,8 +26,13 @@ const LoadVsQualityChart = () => {
     [d]
   );
 
-  // Bubble diameter encodes classified-document count (N) — mirrors size="N" in dashboard.py
-  const bubbleSize = ({ data }) => 6 + 29 * Math.sqrt((data.N || 0) / maxN);
+  // Bubble diameter encodes classified-document count (N) — mirrors size="N" in dashboard.py.
+  // Handles both nivo accessor signatures (node.data wrapper OR raw datum).
+  const bubbleSize = (arg) => {
+    const src = arg && typeof arg.data === 'object' && arg.data !== null ? arg.data : arg;
+    const value = Number(src && src.N) || 0;
+    return 8 + 27 * Math.sqrt(value / maxN);
+  };
 
   const MeanLineLayer = ({ yScale, innerWidth }) => (
     <g>
@@ -42,7 +47,7 @@ const LoadVsQualityChart = () => {
     <div className="glass u-container u-container--md lvq-container">
       <h3 className="lvq-title">بار کاری یا حجم ویزیت دربرابر کیفیت</h3>
       <p className="lvq-subtitle">(اندازه حباب = تعداد پرونده طبقه‌بندی‌شده)</p>
-      <div className="lvq-body" style={{ height: 420 }}>
+      <div className="lvq-body" dir="ltr" style={{ height: 420 }}>
         <ResponsiveScatterPlot
           data={series}
           xScale={{ type: 'log', base: 10, max: 'auto' }}
