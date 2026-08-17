@@ -1,5 +1,111 @@
-/* ── Dropdown pill text ──────────────────────────────────────── */
+@import "../styles/theme.css";
 
+/* ============================================================
+   UI INPUT SYSTEM — shared primitives
+   All input variants build on the pill-shell (.ui-input-shell)
+   which mirrors the established .s2-panel-header__search-box
+   visual language from datasaz.
+   ============================================================ */
+
+/* ── Shell (pill wrapper) ────────────────────────────────────── */
+/*
+ * Used by: TextInput, NumberInput, SearchInput, DropdownInput
+ * Wrap any input variant with this to get the glass-pill look.
+ */
+
+/* ── Design token: single source of truth for all input heights ── */
+:root {
+  --ui-input-height: 2.5rem;        /* 40px  — shell fixed height            */
+  --ui-input-icon-size: 1.75rem;    /* 28px  — icon btn inside shell         */
+  --ui-input-max-text-height: 6rem; /* max-height for growable TextInput     */
+}
+
+.ui-input-shell {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  gap: var(--spacing-xs);
+  border: var(--border-width-thin) solid var(--color-gray2);
+  border-radius: var(--border-radius-container-xs);
+  padding: 0 var(--spacing-xs);
+  height: var(--ui-input-height);
+  min-height: var(--ui-input-height);
+  background-color: var(--color-gray1);
+  box-sizing: border-box;
+  transition:
+    border-color var(--motion-duration-normal) var(--motion-easing-easeInOut),
+    box-shadow var(--motion-duration-normal) var(--motion-easing-easeInOut);
+}
+
+.ui-input-shell:focus-within {
+  border-color: var(--color-gray3);
+  box-shadow: var(--elevation-2);
+}
+
+.ui-input-shell--open {
+  border-color: var(--color-blue);
+}
+
+/* ── Growable shell: TextInput/SearchInput with multiline prop ── */
+.ui-input-shell--grow {
+  height: auto;
+  min-height: var(--ui-input-height);
+  max-height: var(--ui-input-max-text-height);
+  overflow: visible;
+  align-items: flex-start;
+  padding: var(--spacing-xs);
+}
+
+.ui-input-shell--grow .dz-icon-btn {
+  align-self: flex-start;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+/* ── Persian locale modifier ─────────────────────────────────── */
+.ui-input-shell--persian .ui-input-field {
+  font-family: var(--font-family-persian);
+  font-size: var(--font-size-sm);
+}
+
+/* ── Bare text/number field (sits inside the shell) ──────────── */
+.ui-input-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--color-gray11);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family-base);
+  padding: 0 var(--spacing-sm);
+  text-align: start;
+  align-self: center;
+}
+
+/* Textarea variant for growable TextInput / SearchInput */
+.ui-input-field--textarea {
+  resize: none;
+  overflow-y: auto;
+  line-height: var(--line-height-normal);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  align-self: stretch;
+  height: auto;
+  max-height: calc(var(--ui-input-max-text-height) - 2 * var(--spacing-xs));
+  min-height: calc(var(--ui-input-height) - 2 * var(--spacing-xs));
+}
+
+/* ── Icon button inside the shell ────────────────────────────── */
+.ui-input-shell .dz-icon-btn {
+  background-color: var(--color-gray2);
+  flex-shrink: 0;
+  width: var(--ui-input-icon-size);
+  height: var(--ui-input-icon-size);
+  --dz-icon-btn-size: var(--ui-input-icon-size);
+}
+
+/* ── Dropdown pill text ──────────────────────────────────────── */
 .ui-dropdown__text {
   flex: 1;
   min-width: 0;
@@ -18,7 +124,6 @@
 }
 
 /* ── Chevron icon rotation ───────────────────────────────────── */
-
 .ui-chevron-icon {
   transition: transform var(--motion-duration-normal) var(--motion-easing-easeInOut);
 }
@@ -28,7 +133,6 @@
 }
 
 /* ── Dropdown panel ──────────────────────────────────────────── */
-
 .ui-dropdown {
   position: relative;
   width: 100%;
@@ -66,7 +170,6 @@
 }
 
 /* ── Portal panel direction isolation ─────────────────────────── */
-
 .ui-dropdown__panel[dir="ltr"],
 .ui-dropdown__panel[dir="ltr"] * {
   text-align: left;
@@ -125,4 +228,55 @@
   flex-shrink: 0;
   font-size: 11px;
   color: var(--color-blue);
+}
+
+#ui-dropdown-portals {
+  position: static !important;
+  width: 0;
+  height: 0;
+  overflow: visible;
+}
+
+/* ── RadioToggle ─────────────────────────────────── */
+.ui-radio-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family-base);
+  color: var(--color-gray9);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: color var(--motion-duration-normal) var(--motion-easing-easeInOut);
+}
+
+.ui-radio-toggle__dot {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition:
+    background var(--motion-duration-normal) var(--motion-easing-easeInOut),
+    box-shadow var(--motion-duration-normal) var(--motion-easing-easeInOut);
+}
+
+.ui-radio-toggle__label {
+  padding: 0px 0 0 0;
+}
+
+.ui-radio-toggle--checked .ui-radio-toggle__label {
+  color: var(--color-red);
+}
+
+/* ── Number input — hide spinner arrows ──────────────────────── */
+.ui-input-field[type="number"]::-webkit-inner-spin-button,
+.ui-input-field[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.ui-input-field[type="number"] {
+  -moz-appearance: textfield;
 }

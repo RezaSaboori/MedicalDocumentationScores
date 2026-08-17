@@ -1,11 +1,12 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { fetchDashboardData } from '../services/dataService';
+import { BASE_FLAG_FA } from '../utils/constants';
 
 export const useDashboardData = () => {
   const [rawData, setRawData] = useState({ current: [], previous: [] });
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
-    selectedFlags: [],
+    selectedFlags: Object.keys(BASE_FLAG_FA),
     selectedYear: 'all',
   });
 
@@ -27,7 +28,7 @@ export const useDashboardData = () => {
 
   const availableYears = useMemo(() => {
     const years = new Set(rawData.current.map(d => d.year).filter(Boolean));
-    return Array.from(years).sort();
+    return Array.from(years).sort((a, b) => a - b);
   }, [rawData]);
 
   const filteredData = useMemo(() => {

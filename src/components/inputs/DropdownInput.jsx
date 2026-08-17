@@ -2,26 +2,24 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import ReactDOM from "react-dom";
 import "../inputs.css";
 
-export const DropdownInput = (props) => {
-  const {
-    options,
-    placeholder = "Select value...",
-    className = "",
-    chevronIcon,
-    searchable = false,
-    multiple = false,
-    dir,
-  } = props;
-
+export const DropdownInput = ({
+  options,
+  placeholder = "Select value...",
+  className = "",
+  chevronIcon,
+  multiple = false,
+  dir,
+  value,
+  onChange,
+  displayValue,
+}) => {
   const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
   const [hoveredOption, setHoveredOption] = useState(null);
   const ref = useRef(null);
   const panelRef = useRef(null);
-  const searchRef = useRef(null);
 
   useEffect(() => {
-    if (!open) { setSearch(""); return; }
+    if (!open) return;
     const handler = (e) => {
       const target = e.target;
       const inSelf =
@@ -35,37 +33,28 @@ export const DropdownInput = (props) => {
     return () => document.removeEventListener("mousedown", handler, true);
   }, [open]);
 
-  useEffect(() => {
-    if (open && searchable) searchRef.current?.focus();
-  }, [open, searchable]);
-
   const isSelected = (opt) =>
-    multiple
-      ? props.value.includes(opt)
-      : props.value === opt;
+    multiple ? value.includes(opt) : value === opt;
 
   const handleSelect = (opt) => {
     if (multiple) {
-      const current = props.value;
-      const next = current.includes(opt)
-        ? current.filter((v) => v !== opt)
-        : [...current, opt];
-      props.onChange(next);
+      const next = value.includes(opt)
+        ? value.filter((v) => v !== opt)
+        : [...value, opt];
+      onChange(next);
     } else {
       setOpen(false);
-      props.onChange(opt);
+      onChange(opt);
     }
   };
 
-  const filteredOptions = searchable && search.trim()
-    ? options.filter((o) => o.toLowerCase().includes(search.toLowerCase()))
-    : options;
-
   const displayText = multiple
-    ? props.value.length > 0
-      ? props.value.join(", ")
-      : ""
-    : props.value;
+    ? displayValue !== undefined
+      ? displayValue
+      : value.length > 0
+        ? value.join(", ")
+        : ""
+    : value;
 
   const triggerRef = useRef(null);
 
@@ -140,21 +129,8 @@ export const DropdownInput = (props) => {
       className={`ui-dropdown__panel${open ? " is-open" : ""}`}
       style={panelStyle}
     >
-      {searchable && (
-        <div className="ui-input-shell ui-dropdown__search-shell">
-          <input
-            ref={searchRef}
-            className="ui-input-field"
-            type="text"
-            placeholder={panelStyle.direction === "rtl" ? "جست و جو" : "Search..."}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      )}
       <div className="ui-dropdown__list">
-        {filteredOptions.map((opt) => (
+        {options.map((opt) => (
           <div
             key={opt}
             className={`ui-dropdown__item${
@@ -178,7 +154,7 @@ export const DropdownInput = (props) => {
             {opt}
           </div>
         ))}
-        {filteredOptions.length === 0 && (
+        {options.length === 0 && (
           <div className="ui-dropdown__item ui-dropdown__item--empty">No results</div>
         )}
       </div>
