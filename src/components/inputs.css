@@ -154,11 +154,36 @@
 }
 
 /* ── Chevron icon rotation ───────────────────────────────────── */
+
 .ui-chevron-icon {
   transition: transform var(--motion-duration-normal) var(--motion-easing-easeInOut);
 }
 
 .ui-chevron-icon--open {
+  transform: rotate(180deg);
+}
+
+.ui-dropdown__chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--ui-input-icon-size);
+  height: var(--ui-input-icon-size);
+  border: none;
+  border-radius: var(--border-radius-container-xs);
+  background-color: var(--color-gray2);
+  color: var(--color-gray9);
+  transition: transform var(--motion-duration-normal) var(--motion-easing-easeInOut);
+}
+
+.ui-dropdown__chevron svg {
+  width: 1rem;
+  height: 1rem;
+  display: block;
+}
+
+.ui-dropdown__chevron--open {
   transform: rotate(180deg);
 }
 

@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 import "../inputs.css";
 
 export const DropdownInput = ({
-  options,
+  options = [],
   placeholder = "Select value...",
   className = "",
   chevronIcon,
@@ -17,16 +17,16 @@ export const DropdownInput = ({
   const [hoveredOption, setHoveredOption] = useState(null);
   const ref = useRef(null);
   const panelRef = useRef(null);
+  const triggerRef = useRef(null);
+
+  const safeValue = multiple ? (Array.isArray(value) ? value : []) : value;
 
   useEffect(() => {
     if (!open) return;
     const handler = (e) => {
       const target = e.target;
-      const inSelf =
-        ref.current?.contains(target) || panelRef.current?.contains(target);
-      if (inSelf) return;
-      const inOtherDropdown = target.closest?.(".ui-dropdown");
-      if (inOtherDropdown) return;
+      if (ref.current?.contains(target) || panelRef.current?.contains(target)) return;
+      if (target.closest?.(".ui-dropdown")) return;
       setOpen(false);
     };
     document.addEventListener("mousedown", handler, true);
@@ -34,13 +34,13 @@ export const DropdownInput = ({
   }, [open]);
 
   const isSelected = (opt) =>
-    multiple ? value.includes(opt) : value === opt;
+    multiple ? safeValue.includes(opt) : safeValue === opt;
 
   const handleSelect = (opt) => {
     if (multiple) {
-      const next = value.includes(opt)
-        ? value.filter((v) => v !== opt)
-        : [...value, opt];
+      const next = safeValue.includes(opt)
+        ? safeValue.filter((v) => v !== opt)
+        : [...safeValue, opt];
       onChange(next);
     } else {
       setOpen(false);
@@ -51,33 +51,27 @@ export const DropdownInput = ({
   const displayText = multiple
     ? displayValue !== undefined
       ? displayValue
-      : value.length > 0
-        ? value.join(", ")
+      : safeValue.length > 0
+        ? safeValue.join(", ")
         : ""
-    : value;
-
-  const triggerRef = useRef(null);
-
-  const [panelStyle, setPanelStyle] = useState({
-    position: "fixed",
-    top: -9999,
-    left: -9999,
-    visibility: "hidden",
-  });
+    : safeValue || "";
 
   const HIDDEN_PANEL_STYLE = {
     position: "fixed",
     top: -9999,
     left: -9999,
     visibility: "hidden",
+    opacity: 0,
     pointerEvents: "none",
   };
 
+  const [panelStyle, setPanelStyle] = useState(HIDDEN_PANEL_STYLE);
+
   const updatePanelPosition = useCallback(() => {
-    const el = triggerRef.current;
+    const el = triggerRef.current || ref.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    const resolvedDir = dir ?? (getComputedStyle(el).direction);
+    const resolvedDir = dir || getComputedStyle(el).direction || "ltr";
     setPanelStyle({
       position: "fixed",
       top: rect.bottom + 6,
@@ -87,6 +81,8 @@ export const DropdownInput = ({
       direction: resolvedDir,
       textAlign: "start",
       visibility: "visible",
+      opacity: 1,
+      transform: "none",
       pointerEvents: "auto",
     });
   }, [dir]);
@@ -107,8 +103,7 @@ export const DropdownInput = ({
 
   const portalRoot = useMemo(() => {
     if (typeof document === "undefined") return null;
-    const reactRoot = document.getElementById("root");
-    if (!reactRoot) return document.body;
+    const reactRoot = document.getElementById("root") || document.body;
     let root = document.getElementById("ui-dropdown-portals");
     if (!root) {
       root = document.createElement("div");
@@ -120,7 +115,7 @@ export const DropdownInput = ({
     return root;
   }, []);
 
-  const resolvedDir = panelStyle.direction ?? "ltr";
+  const resolvedDir = panelStyle.direction || "ltr";
 
   const panel = (
     <div
@@ -162,7 +157,7 @@ export const DropdownInput = ({
   );
 
   return (
-    <div className={`ui-dropdown ${className}`} ref={ref}>
+    <div className={`ui-dropdown ${className}`.trim()} ref={ref}>
       <div
         ref={triggerRef}
         className={`ui-input-shell${open ? " ui-input-shell--open" : ""}`}
@@ -171,7 +166,10 @@ export const DropdownInput = ({
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") setOpen((o) => !o);
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setOpen((o) => !o);
+          }
           if (e.key === "Escape") setOpen(false);
         }}
         style={{ cursor: "pointer" }}
@@ -179,16 +177,12 @@ export const DropdownInput = ({
         <span className={`ui-dropdown__text${!displayText ? " ui-dropdown__text--placeholder" : ""}`}>
           {displayText || placeholder}
         </span>
-        <button
-          className="glass dz-icon-btn"
-          type="button"
-          tabIndex={-1}
+        <span
+          className={`ui-dropdown__chevron${open ? " ui-dropdown__chevron--open" : ""}`}
           aria-hidden="true"
         >
-          {React.cloneElement(chevronIcon, {
-            className: `dz-icon-btn__icon ui-chevron-icon${open ? " ui-chevron-icon--open" : ""}`,
-          })}
-        </button>
+          {chevronIcon}
+        </span>
       </div>
 
       {portalRoot && ReactDOM.createPortal(panel, portalRoot)}
