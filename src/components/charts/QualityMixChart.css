@@ -30,7 +30,7 @@
   height: var(--qm-chart-height, 480px);
 }
 
-/* Single separator line spanning BOTH panels */
+/* Single separator line spanning BOTH panels, exactly at the 50-score boundary */
 .qm-separator {
   position: absolute;
   left: 0;
