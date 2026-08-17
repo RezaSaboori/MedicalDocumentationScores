@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import ReactDOM from "react-dom";
 import "../inputs.css";
 
@@ -15,11 +15,29 @@ export const DropdownInput = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [hoveredOption, setHoveredOption] = useState(null);
+  const [portalRoot, setPortalRoot] = useState(null);
   const ref = useRef(null);
   const panelRef = useRef(null);
   const triggerRef = useRef(null);
 
   const safeValue = multiple ? (Array.isArray(value) ? value : []) : value;
+
+  // The portal target MUST be created after React's first commit.
+  // Creating it during render (previous version) broke on page refresh:
+  // React 18/19 resets the root container at the initial commit and removed
+  // the div, leaving the portal detached and the dropdown invisible.
+  useEffect(() => {
+    const reactRoot = document.getElementById("root") || document.body;
+    let root = document.getElementById("ui-dropdown-portals");
+    if (!root) {
+      root = document.createElement("div");
+      root.id = "ui-dropdown-portals";
+      reactRoot.appendChild(root);
+    } else if (root.parentElement !== reactRoot) {
+      reactRoot.appendChild(root);
+    }
+    setPortalRoot(root);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -100,20 +118,6 @@ export const DropdownInput = ({
       window.removeEventListener("resize", updatePanelPosition);
     };
   }, [open, updatePanelPosition]);
-
-  const portalRoot = useMemo(() => {
-    if (typeof document === "undefined") return null;
-    const reactRoot = document.getElementById("root") || document.body;
-    let root = document.getElementById("ui-dropdown-portals");
-    if (!root) {
-      root = document.createElement("div");
-      root.id = "ui-dropdown-portals";
-      reactRoot.appendChild(root);
-    } else if (root.parentElement !== reactRoot) {
-      reactRoot.appendChild(root);
-    }
-    return root;
-  }, []);
 
   const resolvedDir = panelStyle.direction || "ltr";
 
