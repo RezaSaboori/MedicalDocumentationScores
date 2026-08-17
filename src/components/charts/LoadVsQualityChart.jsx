@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { ResponsiveScatterPlot } from '@nivo/scatterplot';
+import { useDashboard } from '../../context/DashboardContext';
 import { GROUP_COLOR_MAP } from '../../utils/flags';
 import { formatNumber, formatPercent } from '../../utils/formatters';
 import ChartLegend from './ChartLegend';
@@ -37,7 +38,7 @@ const Tooltip = ({ node }) => (
 
 const LoadVsQualityChart = () => {
   const { data } = useDashboard();
-  const d = data.current;
+  const d = data.current || [];
 
   const { series, mean } = useMemo(() => {
     const meanValue = d.length ? d.reduce((sum, row) => sum + row.WQS_adj, 0) / d.length : 0;
@@ -51,7 +52,7 @@ const LoadVsQualityChart = () => {
       series: [...byGroup.entries()].map(([id, points]) => ({ id, data: points })),
       mean: meanValue,
     };
-  }, [data]);
+  }, [d]);
 
   return (
     <div className="glass u-container u-container--md lvq-container">

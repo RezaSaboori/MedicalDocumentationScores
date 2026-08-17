@@ -6,9 +6,9 @@ import FlagMembershipChart from '../charts/FlagMembershipChart';
 import LaqDistributionChart from '../charts/LaqDistributionChart';
 import LoadVsQualityChart from '../charts/LoadVsQualityChart';
 import IntegrityMapChart from '../charts/IntegrityMapChart';
-import PdiRankingChart from '../charts/PdiRankingChart';
 import QualityMixChart from '../charts/QualityMixChart';
-import ChartPlaceholder from '../charts/ChartPlaceholder';
+import QualityMixNoFChart from '../charts/QualityMixNoFChart';
+import PdiRankingChart from '../charts/PdiRankingChart';
 import AuditTable from '../table/AuditTable';
 import './DashboardLayout.css';
 
@@ -33,7 +33,7 @@ const DashboardLayout = () => {
         <LoadVsQualityChart />
         <IntegrityMapChart />
         <QualityMixChart />
-        <ChartPlaceholder title="رتبه بندی رزیدنت‌ها و توزیع کیفیت (PDI_noF)" height="600px" />
+        <QualityMixNoFChart />
         <PdiRankingChart />
       </div>
 

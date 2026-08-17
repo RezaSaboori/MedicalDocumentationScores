@@ -31,3 +31,11 @@ export const QUALITY_CATEGORIES = {
   W: { label: "ضعیف", color: "#F28E2B" },
   F: { label: "مشکوک به داده کاذب", color: "#D64545" },
 };
+
+export const QUALITY_CATEGORIES_NO_F = {
+  E: { label: "خوب", color: "#004b23" },
+  A: { label: "قابل قبول", color: "#38b000" },
+  G: { label: "حداقل", color: "#bfd200" },
+  Z: { label: "خالی/نسبتا خالی", color: "#B0BEC5" },
+  W: { label: "ضعیف", color: "#F28E2B" },
+};

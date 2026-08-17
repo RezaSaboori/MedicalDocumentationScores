@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
 import { ResponsiveScatterPlot } from '@nivo/scatterplot';
+import { useDashboard } from '../../context/DashboardContext';
 import { GROUP_COLOR_MAP } from '../../utils/flags';
 import { formatNumber, formatPercent } from '../../utils/formatters';
 import ChartLegend from './ChartLegend';
 import ChartTooltip from './ChartTooltip';
 import './IntegrityMapChart.css';
 
-// Thresholds and quadrant labels ported from fig_integrity_map
 const RISK_ZONES = [
   { x: 0.15, y: 0.02, label: '✅ سالم' },
   { x: 0.75, y: 0.02, label: '🟠 کم‌حوصله' },
@@ -18,27 +18,10 @@ const bubbleSize = (node) => Math.min(34, 8 + Math.sqrt(node.data.V ?? 10) * 0.9
 
 const RiskZonesLayer = ({ xScale, yScale, innerWidth, innerHeight }) => (
   <g>
-    <line
-      className="im-line-x"
-      x1={xScale(0.4)}
-      x2={xScale(0.4)}
-      y1={0}
-      y2={innerHeight}
-    />
-    <line
-      className="im-line-y"
-      x1={0}
-      x2={innerWidth}
-      y1={yScale(0.05)}
-      y2={yScale(0.05)}
-    />
+    <line className="im-line-x" x1={xScale(0.4)} x2={xScale(0.4)} y1={0} y2={innerHeight} />
+    <line className="im-line-y" x1={0} x2={innerWidth} y1={yScale(0.05)} y2={yScale(0.05)} />
     {RISK_ZONES.map((zone) => (
-      <text
-        key={zone.label}
-        className="im-zone-label"
-        x={xScale(zone.x)}
-        y={yScale(zone.y)}
-      >
+      <text key={zone.label} className="im-zone-label" x={xScale(zone.x)} y={yScale(zone.y)}>
         {zone.label}
       </text>
     ))}
@@ -60,7 +43,7 @@ const Tooltip = ({ node }) => (
 
 const IntegrityMapChart = () => {
   const { data } = useDashboard();
-  const d = data.current;
+  const d = data.current || [];
 
   const series = useMemo(() => {
     const byGroup = new Map();
@@ -69,7 +52,7 @@ const IntegrityMapChart = () => {
       byGroup.get(row.group_fa).push({ ...row, x: row.rho_Z, y: row.rho_F });
     });
     return [...byGroup.entries()].map(([id, points]) => ({ id, data: points }));
-  }, [data]);
+  }, [d]);
 
   const percentTick = (value) => `${Math.round(value * 100)}٪`;
 
