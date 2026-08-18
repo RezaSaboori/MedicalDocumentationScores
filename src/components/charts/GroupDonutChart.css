@@ -12,17 +12,33 @@
   overflow: visible;
 }
 
-/* Hoverable venn parts: lift slightly with elevation */
-.venn-part {
+.venn-static,
+.venn-outline {
+  pointer-events: none;
+}
+
+/* Each of the 7 regions: hover elevates ONLY that part */
+.venn-region {
   cursor: pointer;
-  transition: transform 0.18s ease, filter 0.18s ease;
+  fill-opacity: 0.45;
+  transition: transform 0.18s ease, filter 0.18s ease, fill-opacity 0.18s ease;
   transform-box: fill-box;
   transform-origin: center;
 }
 
-.venn-part.is-hover {
-  transform: scale(1.06);
+.venn-region.is-hover {
+  fill-opacity: 0.78;
+  transform: scale(1.05);
   filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.28));
+}
+
+/* Count badges: interactive (they trigger the region hover) but never elevate */
+.venn-badge {
+  cursor: pointer;
+}
+
+.venn-badge text {
+  pointer-events: none;
 }
 
 .venn-count {
@@ -30,7 +46,6 @@
   font-weight: 700;
   fill: #263238;
   font-family: var(--font-family-base);
-  pointer-events: none;
 }
 
 .venn-legend {

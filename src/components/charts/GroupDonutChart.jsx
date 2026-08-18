@@ -5,9 +5,10 @@ import { blendHex } from '../../utils/flags';
 import ChartTooltip from './ChartTooltip';
 import './GroupDonutChart.css';
 
-// data-coordinate → svg-pixel mapping (100px per unit, matches plotly ranges)
-const SX = (x) => (x + 2.3) * 100;
-const SY = (y) => (2.0 - y) * 100;
+// Fixed geometry (100px per data unit, mirrors plotly ranges)
+const A = { cx: 168, cy: 150, r: 105 };
+const B = { cx: 292, cy: 150, r: 105 };
+const C = { cx: 230, cy: 258, r: 105 };
 
 const EMPTY_STYLE = {
   display: 'flex',
@@ -28,35 +29,27 @@ const GroupDonutChart = () => {
     const engagement = new Set(d.filter((r) => r.flags.includes('ENGAGEMENT_TRAINING')).map((r) => r.name));
     const lowData = new Set(d.filter((r) => r.flags.includes('LOW_DATA')).map((r) => r.name));
 
-    const aOnly = [...integrity].filter((x) => !engagement.has(x) && !lowData.has(x)).length;
-    const bOnly = [...engagement].filter((x) => !integrity.has(x) && !lowData.has(x)).length;
-    const cOnly = [...lowData].filter((x) => !integrity.has(x) && !engagement.has(x)).length;
-    const ab = [...integrity].filter((x) => engagement.has(x) && !lowData.has(x)).length;
-    const ac = [...integrity].filter((x) => lowData.has(x) && !engagement.has(x)).length;
-    const bc = [...engagement].filter((x) => lowData.has(x) && !integrity.has(x)).length;
-    const abc = [...integrity].filter((x) => engagement.has(x) && lowData.has(x)).length;
-
     const C_A = BASE_FLAG_COLOR.INTEGRITY_AUDIT;
     const C_B = BASE_FLAG_COLOR.ENGAGEMENT_TRAINING;
     const C_C = BASE_FLAG_COLOR.LOW_DATA;
 
-    const circles = [
-      { id: 'A', cx: -0.62, cy: 0.50, color: C_A, label: BASE_FLAG_FA.INTEGRITY_AUDIT, total: integrity.size },
-      { id: 'B', cx: 0.62, cy: 0.50, color: C_B, label: BASE_FLAG_FA.ENGAGEMENT_TRAINING, total: engagement.size },
-      { id: 'C', cx: 0.00, cy: -0.58, color: C_C, label: BASE_FLAG_FA.LOW_DATA, total: lowData.size },
-    ];
-
     const regions = [
-      { id: 'a', x: -1.05, y: 0.75, count: aOnly, name: BASE_FLAG_FA.INTEGRITY_AUDIT, color: C_A },
-      { id: 'b', x: 1.05, y: 0.75, count: bOnly, name: BASE_FLAG_FA.ENGAGEMENT_TRAINING, color: C_B },
-      { id: 'c', x: 0.00, y: -1.10, count: cOnly, name: BASE_FLAG_FA.LOW_DATA, color: C_C },
-      { id: 'ab', x: 0.00, y: 0.90, count: ab, name: 'مشکوک به داده کاذبِ کم‌حوصله', color: blendHex([C_A, C_B]) },
-      { id: 'ac', x: -0.68, y: -0.30, count: ac, name: 'فاقد ویزیت کافی (احتمالا مشکوک به داده کاذب)', color: blendHex([C_A, C_C]) },
-      { id: 'bc', x: 0.68, y: -0.30, count: bc, name: 'فاقد ویزیت کافی (احتمالا کم‌حوصله)', color: blendHex([C_B, C_C]) },
-      { id: 'abc', x: 0.00, y: 0.12, count: abc, name: 'فاقد ویزیت کافی (احتمالا کم‌حوصله و مشکوک به داده کاذب)', color: blendHex([C_A, C_B, C_C]) },
+      { id: 'a', count: [...integrity].filter((x) => !engagement.has(x) && !lowData.has(x)).length, name: BASE_FLAG_FA.INTEGRITY_AUDIT, color: C_A, bx: 125, by: 125 },
+      { id: 'b', count: [...engagement].filter((x) => !integrity.has(x) && !lowData.has(x)).length, name: BASE_FLAG_FA.ENGAGEMENT_TRAINING, color: C_B, bx: 335, by: 125 },
+      { id: 'c', count: [...lowData].filter((x) => !integrity.has(x) && !engagement.has(x)).length, name: BASE_FLAG_FA.LOW_DATA, color: C_C, bx: 230, by: 310 },
+      { id: 'ab', count: [...integrity].filter((x) => engagement.has(x) && !lowData.has(x)).length, name: 'مشکوک به داده کاذبِ کم‌حوصله', color: blendHex([C_A, C_B]), bx: 230, by: 110 },
+      { id: 'ac', count: [...integrity].filter((x) => lowData.has(x) && !engagement.has(x)).length, name: 'فاقد ویزیت کافی (احتمالا مشکوک به داده کاذب)', color: blendHex([C_A, C_C]), bx: 162, by: 230 },
+      { id: 'bc', count: [...engagement].filter((x) => lowData.has(x) && !integrity.has(x)).length, name: 'فاقد ویزیت کافی (احتمالا کم‌حوصله)', color: blendHex([C_B, C_C]), bx: 298, by: 230 },
+      { id: 'abc', count: [...integrity].filter((x) => engagement.has(x) && lowData.has(x)).length, name: 'فاقد ویزیت کافی (احتمالا کم‌حوصله و مشکوک به داده کاذب)', color: blendHex([C_A, C_B, C_C]), bx: 230, by: 188 },
     ];
 
-    return { circles, regions };
+    const circles = [
+      { ...A, id: 'A', color: C_A, label: BASE_FLAG_FA.INTEGRITY_AUDIT, total: integrity.size },
+      { ...B, id: 'B', color: C_B, label: BASE_FLAG_FA.ENGAGEMENT_TRAINING, total: engagement.size },
+      { ...C, id: 'C', color: C_C, label: BASE_FLAG_FA.LOW_DATA, total: lowData.size },
+    ];
+
+    return { regions, circles };
   }, [d]);
 
   if (!d || d.length === 0) {
@@ -68,41 +61,86 @@ const GroupDonutChart = () => {
     );
   }
 
+  const hoverProps = (id) => ({
+    onMouseEnter: () => setHovered(id),
+    onMouseLeave: () => setHovered(null),
+  });
+
+  const regionClass = (id) => `venn-region${hovered === id ? ' is-hover' : ''}`;
   const hoveredRegion = model.regions.find((r) => r.id === hovered);
-  const hoveredCircle = model.circles.find((c) => c.id === hovered);
 
   return (
     <div className="glass u-container u-container--md chart-container">
       <h3 className="chart-title">تقاطع گروه‌های رفتاری</h3>
       <div className="venn-wrapper">
         <svg viewBox="0 0 460 410" className="venn-svg">
+          <defs>
+            <clipPath id="gv-clip-A"><circle cx={A.cx} cy={A.cy} r={A.r} /></clipPath>
+            <clipPath id="gv-clip-B"><circle cx={B.cx} cy={B.cy} r={B.r} /></clipPath>
+            <clipPath id="gv-clip-C"><circle cx={C.cx} cy={C.cy} r={C.r} /></clipPath>
+            <mask id="gv-mask-a" maskUnits="userSpaceOnUse" x="0" y="0" width="460" height="410">
+              <rect width="460" height="410" fill="white" />
+              <circle cx={B.cx} cy={B.cy} r={B.r} fill="black" />
+              <circle cx={C.cx} cy={C.cy} r={C.r} fill="black" />
+            </mask>
+            <mask id="gv-mask-b" maskUnits="userSpaceOnUse" x="0" y="0" width="460" height="410">
+              <rect width="460" height="410" fill="white" />
+              <circle cx={A.cx} cy={A.cy} r={A.r} fill="black" />
+              <circle cx={C.cx} cy={C.cy} r={C.r} fill="black" />
+            </mask>
+            <mask id="gv-mask-c" maskUnits="userSpaceOnUse" x="0" y="0" width="460" height="410">
+              <rect width="460" height="410" fill="white" />
+              <circle cx={A.cx} cy={A.cy} r={A.r} fill="black" />
+              <circle cx={B.cx} cy={B.cy} r={B.r} fill="black" />
+            </mask>
+            <mask id="gv-mask-notA" maskUnits="userSpaceOnUse" x="0" y="0" width="460" height="410">
+              <rect width="460" height="410" fill="white" />
+              <circle cx={A.cx} cy={A.cy} r={A.r} fill="black" />
+            </mask>
+            <mask id="gv-mask-notB" maskUnits="userSpaceOnUse" x="0" y="0" width="460" height="410">
+              <rect width="460" height="410" fill="white" />
+              <circle cx={B.cx} cy={B.cy} r={B.r} fill="black" />
+            </mask>
+            <mask id="gv-mask-notC" maskUnits="userSpaceOnUse" x="0" y="0" width="460" height="410">
+              <rect width="460" height="410" fill="white" />
+              <circle cx={C.cx} cy={C.cy} r={C.r} fill="black" />
+            </mask>
+          </defs>
+
+          {/* halos */}
           {model.circles.map((c) => (
-            <circle key={`halo-${c.id}`} cx={SX(c.cx)} cy={SY(c.cy)} r={112} fill={c.color} opacity={0.10} />
+            <circle key={`halo-${c.id}`} cx={c.cx} cy={c.cy} r={c.r * 1.07} fill={c.color} opacity={0.10} className="venn-static" />
           ))}
+
+          {/* the 7 true regions — each hoverable on its own */}
+          <circle {...A} className={regionClass('a')} fill={model.regions[0].color} mask="url(#gv-mask-a)" {...hoverProps('a')} />
+          <circle {...B} className={regionClass('b')} fill={model.regions[1].color} mask="url(#gv-mask-b)" {...hoverProps('b')} />
+          <circle {...C} className={regionClass('c')} fill={model.regions[2].color} mask="url(#gv-mask-c)" {...hoverProps('c')} />
+          <g clipPath="url(#gv-clip-A)">
+            <circle {...B} className={regionClass('ab')} fill={model.regions[3].color} mask="url(#gv-mask-notC)" {...hoverProps('ab')} />
+          </g>
+          <g clipPath="url(#gv-clip-A)">
+            <circle {...C} className={regionClass('ac')} fill={model.regions[4].color} mask="url(#gv-mask-notB)" {...hoverProps('ac')} />
+          </g>
+          <g clipPath="url(#gv-clip-B)">
+            <circle {...C} className={regionClass('bc')} fill={model.regions[5].color} mask="url(#gv-mask-notA)" {...hoverProps('bc')} />
+          </g>
+          <g clipPath="url(#gv-clip-A)">
+            <g clipPath="url(#gv-clip-B)">
+              <circle {...C} className={regionClass('abc')} fill={model.regions[6].color} {...hoverProps('abc')} />
+            </g>
+          </g>
+
+          {/* circle outlines (non-interactive) */}
           {model.circles.map((c) => (
-            <circle
-              key={c.id}
-              className={`venn-part${hovered === c.id ? ' is-hover' : ''}`}
-              cx={SX(c.cx)}
-              cy={SY(c.cy)}
-              r={105}
-              fill={c.color}
-              opacity={0.38}
-              stroke={c.color}
-              strokeWidth={3}
-              onMouseEnter={() => setHovered(c.id)}
-              onMouseLeave={() => setHovered(null)}
-            />
+            <circle key={`outline-${c.id}`} cx={c.cx} cy={c.cy} r={c.r} fill="none" stroke={c.color} strokeWidth={3} className="venn-outline" />
           ))}
+
+          {/* count badges: hovering elevates the REGION, never the badge */}
           {model.regions.map((r) => (
-            <g
-              key={r.id}
-              className={`venn-part${hovered === r.id ? ' is-hover' : ''}`}
-              onMouseEnter={() => setHovered(r.id)}
-              onMouseLeave={() => setHovered(null)}
-            >
-              <circle cx={SX(r.x)} cy={SY(r.y)} r={18} fill="rgba(255,255,255,0.92)" stroke={r.color} strokeWidth={2.5} />
-              <text x={SX(r.x)} y={SY(r.y) + 5} textAnchor="middle" className="venn-count">{r.count}</text>
+            <g key={`badge-${r.id}`} className="venn-badge" {...hoverProps(r.id)}>
+              <circle cx={r.bx} cy={r.by} r={18} fill="rgba(255,255,255,0.92)" stroke={r.color} strokeWidth={2.5} />
+              <text x={r.bx} y={r.by + 5} textAnchor="middle" className="venn-count">{r.count}</text>
             </g>
           ))}
         </svg>
@@ -115,10 +153,10 @@ const GroupDonutChart = () => {
           </div>
         ))}
       </div>
-      {(hoveredRegion || hoveredCircle) && (
+      {hoveredRegion && (
         <ChartTooltip
-          title={hoveredRegion ? hoveredRegion.name : hoveredCircle.label}
-          rows={[{ label: 'تعداد پزشکان', value: hoveredRegion ? hoveredRegion.count : hoveredCircle.total }]}
+          title={hoveredRegion.name}
+          rows={[{ label: 'تعداد پزشکان', value: hoveredRegion.count }]}
         />
       )}
     </div>
