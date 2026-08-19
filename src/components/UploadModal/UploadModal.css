@@ -217,7 +217,7 @@
 .upload-modal-table-wrapper {
   width: 100%;
   overflow: auto;
-  max-height: 20rem;
+  max-height: 30rem;
   border-radius: var(--border-radius-item-md);
   border: var(--border-width-hairline) solid color-mix(in srgb, var(--color-gray8) 30%, transparent);
 }
