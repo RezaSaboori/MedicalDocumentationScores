@@ -151,3 +151,26 @@ export const deleteUploadedDataset = async (id) => {
   const filtered = datasets.filter(d => d.id !== id);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
 };
+
+// ==========================================
+// Residents List Management (one-time upload, editable)
+// ==========================================
+const RESIDENTS_KEY = 'medical_documentation_residents_list';
+
+export const saveResidentsList = (list, fileName = null) => {
+  localStorage.setItem(RESIDENTS_KEY, JSON.stringify({ list, fileName, savedAt: new Date().toISOString() }));
+};
+
+export const getResidentsList = () => {
+  try {
+    const data = localStorage.getItem(RESIDENTS_KEY);
+    return data ? JSON.parse(data) : { list: [], fileName: null };
+  } catch (e) {
+    console.error('Failed to parse residents list', e);
+    return { list: [], fileName: null };
+  }
+};
+
+export const clearResidentsList = () => {
+  localStorage.removeItem(RESIDENTS_KEY);
+};

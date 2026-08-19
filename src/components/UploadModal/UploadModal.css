@@ -1,0 +1,201 @@
+.upload-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+}
+
+.upload-modal {
+  width: 100%;
+  max-width: 72rem;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 1rem;
+}
+
+.upload-modal__header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.upload-modal__title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.upload-modal__close {
+  background: transparent;
+  border: none;
+  font-size: 1.6rem;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  line-height: 1;
+}
+.upload-modal__close:hover { opacity: 1; }
+
+.upload-modal__body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.upload-modal__footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+/* Warning banner for missing residents file */
+.residents-warning {
+  padding: 0.85rem 1rem;
+  border-radius: 0.6rem;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px dashed rgba(255, 193, 7, 0.6);
+  background: rgba(255, 193, 7, 0.12);
+}
+
+/* Drag & drop zones */
+.dropzone {
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 0.75rem;
+  padding: 1.75rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.dropzone:hover,
+.dropzone--active {
+  border-color: var(--color-primary, #2563eb);
+  background: rgba(37, 99, 235, 0.08);
+}
+.dropzone__hint {
+  font-size: 0.8rem;
+  opacity: 0.75;
+  margin-top: 0.35rem;
+}
+.dropzone__filename {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+  word-break: break-all;
+}
+
+/* Residents card */
+.residents-card {
+  border-radius: 0.75rem;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+.residents-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.residents-card__title {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.residents-card__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Data table (shared for residents + preview) */
+.data-table-wrapper {
+  overflow: auto;
+  max-height: 20rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  text-align: right;
+}
+.data-table th,
+.data-table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
+}
+.data-table th {
+  position: sticky;
+  top: 0;
+  background: rgba(255, 255, 255, 0.06);
+  font-weight: 600;
+  z-index: 1;
+}
+.data-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.data-table input[type="text"],
+.data-table select {
+  width: 100%;
+  padding: 0.25rem 0.4rem;
+  border-radius: 0.3rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.15);
+  font-size: 0.8rem;
+}
+
+/* Category badges */
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+.badge--faculty { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; }
+.badge--resident { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+
+/* Buttons */
+.btn-sm {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.75rem;
+  border-radius: 0.4rem;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.btn-sm:hover { opacity: 0.85; }
+.btn-sm--ghost {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+.btn-sm--danger { background: rgba(239, 68, 68, 0.8); color: #fff; }
+.btn-sm--success { background: rgba(34, 197, 94, 0.85); color: #fff; }
+.btn-sm--primary { background: var(--color-primary, #2563eb); color: #fff; }
+.btn-sm:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.error-banner {
+  padding: 0.75rem 1rem;
+  border-radius: 0.6rem;
+  font-size: 0.85rem;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
