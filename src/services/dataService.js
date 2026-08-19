@@ -91,12 +91,14 @@ const loadDashboardData = async (mode) => {
   const paths = CSV_PATHS[mode] || CSV_PATHS[DASHBOARD_MODES.RESIDENTS];
   try {
     const currentRaw = await parseCsv(paths.current);
+
     let previousRaw = [];
     try {
       previousRaw = await parseCsv(paths.previous);
     } catch (e) {
       console.warn('Previous month CSV not found or failed to parse:', e);
     }
+
     return {
       current: currentRaw.map(mapRow).filter(isValidRow),
       previous: previousRaw.map(mapRow).filter(isValidRow),
@@ -105,6 +107,50 @@ const loadDashboardData = async (mode) => {
     console.error('Failed to load dashboard data:', error);
     return { current: [], previous: [] };
   }
+};
+
+// ==========================================
+// Uploaded Datasets Management
+// ==========================================
+const STORAGE_KEY = 'medical_documentation_uploaded_datasets';
+
+export const saveUploadedDataset = async (records) => {
+  const existingDatasets = getUploadedDatasets();
+  const summary = {
+    totalPhysicians: records.length,
+    facultyCount: records.filter(r => r.category === 'faculty').length,
+    residentCount: records.filter(r => r.category === 'resident').length,
+    avgPDI: records.reduce((sum, r) => sum + r.PDI, 0) / (records.length || 1),
+    avgPDI_noF: records.reduce((sum, r) => sum + r.PDI_noF, 0) / (records.length || 1),
+  };
+
+  const newDataset = {
+    id: crypto.randomUUID(),
+    name: `گزارش بارگذاری شده ${new Date().toLocaleDateString('fa-IR')}`,
+    date: new Date().toISOString(),
+    records,
+    summary,
+  };
+
+  const updatedDatasets = [newDataset, ...existingDatasets];
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedDatasets));
+  return newDataset;
+};
+
+export const getUploadedDatasets = () => {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch (e) {
+    console.error('Failed to parse uploaded datasets', e);
+    return [];
+  }
+};
+
+export const deleteUploadedDataset = async (id) => {
+  const datasets = getUploadedDatasets();
+  const filtered = datasets.filter(d => d.id !== id);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
 };
 
 // ==========================================
