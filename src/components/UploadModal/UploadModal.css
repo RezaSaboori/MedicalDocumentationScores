@@ -1,9 +1,10 @@
 /* ==========================================================================
-   Upload Modal — follows theme.css tokens + glass.css surfaces.
+   Upload Modal — theme.css tokens + glass.css surfaces.
    Pattern inspired by NCIBB auth-modal-panel (header / body / footer + pill tabs).
+   Compound selectors (.x.u-container) override theme.css .u-container defaults.
    ========================================================================== */
 
-/* ── Overlay (blur backdrop, like NCIBB Modal backdrop="blur") ── */
+/* ── Overlay — project backdrop blur, light tint like NCIBB ── */
 .upload-modal-overlay {
   position: fixed;
   inset: 0;
@@ -12,29 +13,35 @@
   align-items: center;
   justify-content: center;
   padding: var(--spacing-lg);
-  background: color-mix(in srgb, var(--color-gray12) 40%, transparent);
-  backdrop-filter: blur(var(--glass-backdrop-blur)) saturate(var(--glass-backdrop-saturate));
-  -webkit-backdrop-filter: blur(var(--glass-backdrop-blur)) saturate(var(--glass-backdrop-saturate));
+  background: color-mix(in srgb, var(--color-gray12) 25%, transparent);
+  backdrop-filter: var(--glass-backdrop-filter);
+  -webkit-backdrop-filter: var(--glass-backdrop-filter);
 }
 
-/* ── Panel: glass-transparent + u-container--xl ── */
-.upload-modal-panel {
-  width: min(100%, 72rem);
-  max-height: 92vh;
-  overflow: hidden;
-  isolation: isolate; /* clips the ::before blur layer inside the panel */
+/* ── Panel: glass-transparent + u-container--xl, capped width, self-contained scroll ── */
+.upload-modal-panel.u-container {
+  width: min(100%, 60rem);
+  max-height: min(92vh, 62rem);
+  overflow: hidden;            /* body scrolls, not the panel */
+  align-items: stretch;        /* children fill panel width consistently */
+  isolation: isolate;          /* clips glass-transparent ::before inside panel */
   color: var(--color-gray12);
+  /* token overrides (sanctioned by theme.css) for tighter, auth-modal-like rhythm */
+  --p: var(--spacing-lg);
+  --gap: var(--spacing-md);
+  --radius: var(--border-radius-container-sm);
 }
 
-/* ── Header ── */
+/* ── Header (full width) ── */
 .upload-modal-header {
   flex: 0 0 auto;
+  width: 100%;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
   gap: 0;
-  padding-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-xs);
 }
 
 .upload-modal-title {
@@ -66,8 +73,9 @@
   color: var(--color-gray11);
 }
 
-/* ── Body (scrollable) ── */
+/* ── Body — the only scrolling region ── */
 .upload-modal-body {
+  width: 100%;
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
@@ -77,13 +85,13 @@
   gap: var(--spacing-md);
 }
 
-/* ── Pill tablist (ورود داده / دیتابیس) — same pattern as NCIBB auth tabs ── */
+/* ── Pill tablist (ورود داده / دیتابیس) ── */
 .upload-modal-tablist {
   flex: 0 0 auto;
+  width: 100%;
   display: flex;
   flex-direction: row;
   align-items: center;
-  width: 100%;
   gap: 4px;
   padding: 4px;
   border-radius: var(--border-radius-pill);
@@ -112,10 +120,14 @@
   cursor: default;
 }
 
-/* ── Inner sections: neutralize u-container scroll so only body scrolls ── */
-.upload-modal-section {
+/* ── Inner sections (u-container--lg) — consistent width + tighter tokens ── */
+.upload-modal-section.u-container {
+  width: 100%;
   flex: 0 0 auto;
   overflow: visible;
+  --p: var(--spacing-md);
+  --gap: var(--spacing-md);
+  --radius: var(--border-radius-container-xs);
 }
 
 .upload-modal-section-title {
@@ -131,18 +143,24 @@
 }
 
 /* ── Warning / error banners ── */
-.upload-modal-warning {
+.upload-modal-warning.u-container,
+.upload-modal-error.u-container {
+  width: 100%;
   flex: 0 0 auto;
-  border: var(--border-width-thin) dashed color-mix(in srgb, var(--color-orange) 65%, transparent);
-  background: color-mix(in srgb, var(--color-orange) 12%, transparent);
+  --p: var(--spacing-md);
+  --gap: var(--spacing-sm);
+  --radius: var(--border-radius-item-xl);
   font-size: var(--font-size-sm);
 }
 
+.upload-modal-warning {
+  border: var(--border-width-thin) dashed color-mix(in srgb, var(--color-orange) 65%, transparent);
+  background: color-mix(in srgb, var(--color-orange) 12%, transparent);
+}
+
 .upload-modal-error {
-  flex: 0 0 auto;
   border: var(--border-width-thin) solid color-mix(in srgb, var(--color-red) 55%, transparent);
   background: color-mix(in srgb, var(--color-red) 12%, transparent);
-  font-size: var(--font-size-sm);
 }
 
 .upload-modal-saved {
@@ -152,17 +170,20 @@
 }
 
 .upload-modal-empty {
+  width: 100%;
   font-size: var(--font-size-sm);
   color: var(--color-gray8);
   text-align: center;
-  padding: var(--spacing-md);
+  padding: var(--spacing-sm);
 }
 
 /* ── Dropzone ── */
 .upload-modal-dropzone {
+  width: 100%;
+  box-sizing: border-box;
   border: var(--border-width-normal) dashed color-mix(in srgb, var(--color-gray7) 55%, transparent);
   border-radius: var(--border-radius-item-lg);
-  padding: var(--spacing-xl) var(--spacing-md);
+  padding: var(--spacing-lg) var(--spacing-md);
   text-align: center;
   cursor: pointer;
   font-size: var(--font-size-sm);
@@ -194,6 +215,7 @@
 
 /* ── Tables ── */
 .upload-modal-table-wrapper {
+  width: 100%;
   overflow: auto;
   max-height: 20rem;
   border-radius: var(--border-radius-item-md);
@@ -225,7 +247,7 @@
   background: color-mix(in srgb, var(--color-blue) 5%, transparent);
 }
 
-/* ── Inputs ─ */
+/* ── Inputs ── */
 .upload-modal-input {
   width: 100%;
   padding: var(--spacing-xs) var(--spacing-sm);
@@ -297,18 +319,20 @@
   color: var(--color-red);
 }
 
-/* ── Footer ── */
+/* ── Footer (full width) ── */
 .upload-modal-footer {
   flex: 0 0 auto;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: var(--spacing-sm);
-  padding-top: var(--spacing-sm);
+  padding-top: var(--spacing-xs);
 }
 
 /* ── Dataset rows (database tab) ── */
 .upload-modal-dataset {
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
