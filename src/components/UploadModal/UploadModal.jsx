@@ -5,6 +5,8 @@ import {
   saveResidentsList,
   getResidentsList,
   clearResidentsList,
+  getUploadedDatasets,
+  deleteUploadedDataset,
 } from '../../services/dataService';
 import PreviewTable from './PreviewTable';
 import './UploadModal.css';
@@ -17,7 +19,11 @@ const SaveIcon = () => (
   </svg>
 );
 
+const TABS = { ENTRY: 'entry', DATABASE: 'database' };
+
 export const UploadModal = ({ isOpen, onClose, onDataProcessed }) => {
+  const [tab, setTab] = useState(TABS.ENTRY);
+
   const [file, setFile] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [preview, setPreview] = useState({ residents: [], faculty: [] });
@@ -26,6 +32,8 @@ export const UploadModal = ({ isOpen, onClose, onDataProcessed }) => {
   const [residentsData, setResidentsData] = useState([]);
   const [residentsFileName, setResidentsFileName] = useState(null);
   const [residentsSaved, setResidentsSaved] = useState(false);
+
+  const [datasets, setDatasets] = useState([]);
 
   const [isDraggingMain, setIsDraggingMain] = useState(false);
   const [isDraggingResidents, setIsDraggingResidents] = useState(false);
@@ -41,6 +49,10 @@ export const UploadModal = ({ isOpen, onClose, onDataProcessed }) => {
       setError(null);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && tab === TABS.DATABASE) setDatasets(getUploadedDatasets());
+  }, [isOpen, tab]);
 
   const resetState = () => {
     setFile(null);
@@ -137,7 +149,6 @@ export const UploadModal = ({ isOpen, onClose, onDataProcessed }) => {
     }
   }, [file, residentsData]);
 
-  // ----- Preview edit/remove -----
   const updatePreviewRow = (group, index, next) => {
     setPreview(prev => {
       const rows = [...prev[group]];
@@ -163,145 +174,219 @@ export const UploadModal = ({ isOpen, onClose, onDataProcessed }) => {
     }
   };
 
+  const handleDeleteDataset = async (id) => {
+    await deleteUploadedDataset(id);
+    setDatasets(getUploadedDatasets());
+  };
+
   if (!isOpen) return null;
 
   const hasResidents = residentsData.length > 0;
+  const hasPreview = preview.residents.length > 0 || preview.faculty.length > 0;
 
   return (
     <div className="upload-modal-overlay" onClick={onClose}>
-      <div className="glass-transparent upload-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="upload-modal__header">
-          <h2 className="upload-modal__title">بارگذاری و پردازش داده‌های پرونده الکترونیک</h2>
-          <button className="upload-modal__close" onClick={onClose}>&times;</button>
-        </div>
+      <div
+        className="glass-transparent upload-modal-panel u-container u-container--xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* ── HEADER ── */}
+        <header className="upload-modal-header">
+          <span className="upload-modal-title">بارگذاری و پردازش داده‌های پرونده الکترونیک</span>
+          <button className="upload-modal-close-btn" onClick={onClose} aria-label="بستن">&times;</button>
+        </header>
 
-        <div className="upload-modal__body">
-          {!hasResidents && (
-            <div className="residents-warning">
-              ⚠️ فایل لیست دستیاران هنوز بارگذاری نشده است. برای تفکیک دقیق و تعیین سال دستیاری، آن را انتخاب یا رها کنید.
-            </div>
-          )}
-
-          {error && <div className="error-banner">{error}</div>}
-
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.9rem' }}>
-              فایل گزارش عملکرد (XLSX)
-            </label>
-            <div
-              className={`dropzone ${isDraggingMain ? 'dropzone--active' : ''}`}
-              onClick={() => mainInputRef.current?.click()}
-              onDragOver={(e) => { e.preventDefault(); setIsDraggingMain(true); }}
-              onDragLeave={() => setIsDraggingMain(false)}
-              onDrop={onMainDrop}
-            >
-              <div>فایل را اینجا رها کنید یا برای انتخاب کلیک کنید</div>
-              <div className="dropzone__hint">فرمت‌های مجاز: XLSX, XLS</div>
-              {file && <div className="dropzone__filename">📄 {file.name}</div>}
-            </div>
-            <input ref={mainInputRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }} onChange={(e) => handleMainFile(e.target.files[0])} />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.9rem' }}>
-              فایل لیست دستیاران (CSV) — یک‌بار بارگذاری
-            </label>
-
-            {!hasResidents ? (
-              <div
-                className={`dropzone ${isDraggingResidents ? 'dropzone--active' : ''}`}
-                onClick={() => residentsInputRef.current?.click()}
-                onDragOver={(e) => { e.preventDefault(); setIsDraggingResidents(true); }}
-                onDragLeave={() => setIsDraggingResidents(false)}
-                onDrop={onResidentsDrop}
-              >
-                <div>فایل CSV دستیاران را اینجا رها کنید یا کلیک کنید</div>
-                <div className="dropzone__hint">ستون‌ها: «نام»، «نام خانوادگی»، «سال دستیاری»</div>
-              </div>
-            ) : (
-              <div className="residents-card">
-                <div className="residents-card__header">
-                  <div className="residents-card__title">
-                    ✅ لیست دستیاران {residentsFileName ? `(${residentsFileName})` : ''} — {residentsData.length} رکورد
-                  </div>
-                  <div className="residents-card__actions">
-                    {residentsSaved && <span className="residents-saved">✔ ذخیره شد</span>}
-                    <button className="btn-sm btn-sm--success" onClick={confirmSaveResidents} title="تأیید و ذخیره لیست دستیاران">
-                      <SaveIcon /> ذخیره
-                    </button>
-                    <button className="btn-sm btn-sm--ghost" onClick={() => residentsInputRef.current?.click()}>
-                      بارگذاری مجدد
-                    </button>
-                    <button className="btn-sm btn-sm--danger" onClick={removeResidents}>حذف لیست</button>
-                  </div>
-                </div>
-
-                <div className="data-table-wrapper">
-                  <table className="data-table">
-                    <thead>
-                      <tr><th>#</th><th>نام</th><th>سال دستیاری</th><th>عملیات</th></tr>
-                    </thead>
-                    <tbody>
-                      {residentsData.map((row, idx) => (
-                        <tr key={idx}>
-                          <td>{idx + 1}</td>
-                          <td>
-                            <input type="text" value={row.name} onChange={(e) => updateResidentRow(idx, 'name', e.target.value)} />
-                          </td>
-                          <td>
-                            <input type="text" value={row.year} onChange={(e) => updateResidentRow(idx, 'year', e.target.value)} />
-                          </td>
-                          <td>
-                            <button className="btn-sm btn-sm--danger" onClick={() => removeResidentRow(idx)}>حذف</button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            <input ref={residentsInputRef} type="file" accept=".csv" style={{ display: 'none' }} onChange={(e) => handleResidentsFile(e.target.files[0])} />
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        {/* ── BODY ── */}
+        <div className="upload-modal-body custom-scrollbar">
+          {/* Pill tablist — ورود داده / دیتابیس */}
+          <div className="upload-modal-tablist glass" role="tablist" aria-label="بخش‌های بارگذاری">
             <button
-              className="btn-sm btn-sm--primary"
-              style={{ padding: '0.55rem 1.5rem', fontSize: '0.85rem' }}
-              onClick={processFiles}
-              disabled={isProcessing || !file}
+              role="tab"
+              type="button"
+              aria-selected={tab === TABS.ENTRY}
+              className={`upload-modal-tab${tab === TABS.ENTRY ? ' upload-modal-tab--active blue-glass' : ''}`}
+              onClick={() => setTab(TABS.ENTRY)}
             >
-              {isProcessing ? 'در حال پردازش...' : 'پردازش و پیش‌نمایش'}
+              ورود داده
+            </button>
+            <button
+              role="tab"
+              type="button"
+              aria-selected={tab === TABS.DATABASE}
+              className={`upload-modal-tab${tab === TABS.DATABASE ? ' upload-modal-tab--active blue-glass' : ''}`}
+              onClick={() => setTab(TABS.DATABASE)}
+            >
+              دیتابیس
             </button>
           </div>
 
-          <PreviewTable
-            title="دستیاران (فراگیران)"
-            rows={preview.residents}
-            onRowChange={(i, next) => updatePreviewRow('residents', i, next)}
-            onRowRemove={(i) => removePreviewRow('residents', i)}
-          />
+          {tab === TABS.ENTRY ? (
+            <>
+              {!hasResidents && (
+                <div className="upload-modal-warning u-container u-container--md">
+                  ⚠️ فایل لیست دستیاران بارگذاری نشده است؛ برای تعیین سال دستیاری آن را انتخاب یا رها کنید.
+                  <div
+                    className={`upload-modal-dropzone upload-modal-dropzone--compact ${isDraggingResidents ? 'upload-modal-dropzone--active' : ''}`}
+                    onClick={() => residentsInputRef.current?.click()}
+                    onDragOver={(e) => { e.preventDefault(); setIsDraggingResidents(true); }}
+                    onDragLeave={() => setIsDraggingResidents(false)}
+                    onDrop={onResidentsDrop}
+                  >
+                    فایل CSV دستیاران را اینجا رها کنید یا کلیک کنید
+                    <div className="upload-modal-dropzone__hint">ستون‌ها: «نام»، «نام خانوادگی»، «سال دستیاری»</div>
+                  </div>
+                </div>
+              )}
 
-          <PreviewTable
-            title="هیئت علمی (ترکیب فراگیران)"
-            rows={preview.faculty}
-            onRowChange={(i, next) => updatePreviewRow('faculty', i, next)}
-            onRowRemove={(i) => removePreviewRow('faculty', i)}
-          />
+              {hasResidents && (
+                <div className="upload-modal-empty">
+                  لیست دستیاران فعال است ({residentsData.length} رکورد) — مشاهده و ویرایش در زبانهٔ «دیتابیس».
+                </div>
+              )}
+
+              {error && <div className="upload-modal-error u-container u-container--md">{error}</div>}
+
+              <section className="glass u-container u-container--lg upload-modal-section">
+                <div className="upload-modal-section-title">فایل گزارش عملکرد (XLSX)</div>
+                <div
+                  className={`upload-modal-dropzone ${isDraggingMain ? 'upload-modal-dropzone--active' : ''}`}
+                  onClick={() => mainInputRef.current?.click()}
+                  onDragOver={(e) => { e.preventDefault(); setIsDraggingMain(true); }}
+                  onDragLeave={() => setIsDraggingMain(false)}
+                  onDrop={onMainDrop}
+                >
+                  فایل را اینجا رها کنید یا برای انتخاب کلیک کنید
+                  <div className="upload-modal-dropzone__hint">فرمت‌های مجاز: XLSX, XLS</div>
+                  {file && <div className="upload-modal-dropzone__filename">📄 {file.name}</div>}
+                </div>
+              </section>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  className="upload-modal-btn blue-glass upload-modal-btn--solid"
+                  onClick={processFiles}
+                  disabled={isProcessing || !file}
+                >
+                  {isProcessing ? 'در حال پردازش...' : 'پردازش و پیش‌نمایش'}
+                </button>
+              </div>
+
+              <PreviewTable
+                title="دستیاران (فراگیران)"
+                rows={preview.residents}
+                onRowChange={(i, next) => updatePreviewRow('residents', i, next)}
+                onRowRemove={(i) => removePreviewRow('residents', i)}
+              />
+
+              <PreviewTable
+                title="هیئت علمی (ترکیب فراگیران)"
+                rows={preview.faculty}
+                onRowChange={(i, next) => updatePreviewRow('faculty', i, next)}
+                onRowRemove={(i) => removePreviewRow('faculty', i)}
+              />
+            </>
+          ) : (
+            <>
+              {/* Residents year data */}
+              <section className="glass u-container u-container--lg upload-modal-section">
+                <div className="upload-modal-header" style={{ paddingBottom: 0 }}>
+                  <span className="upload-modal-section-title">
+                    سال دستیاری رزیدنت‌ها {residentsFileName ? `(${residentsFileName})` : ''} — {residentsData.length} رکورد
+                  </span>
+                  <div className="upload-modal-section-actions">
+                    {residentsSaved && <span className="upload-modal-saved">✔ ذخیره شد</span>}
+                    <button className="upload-modal-btn upload-modal-btn--sm green-glass upload-modal-btn--solid" onClick={confirmSaveResidents} title="تأیید و ذخیره لیست دستیاران">
+                      <SaveIcon /> ذخیره
+                    </button>
+                    <button className="upload-modal-btn upload-modal-btn--sm upload-modal-btn--ghost" onClick={() => residentsInputRef.current?.click()}>
+                      بارگذاری مجدد
+                    </button>
+                    <button className="upload-modal-btn upload-modal-btn--sm upload-modal-btn--danger" onClick={removeResidents}>
+                      حذف لیست
+                    </button>
+                  </div>
+                </div>
+
+                {hasResidents ? (
+                  <div className="upload-modal-table-wrapper custom-scrollbar">
+                    <table className="data-table">
+                      <thead>
+                        <tr><th>#</th><th>نام</th><th>سال دستیاری</th><th>عملیات</th></tr>
+                      </thead>
+                      <tbody>
+                        {residentsData.map((row, idx) => (
+                          <tr key={idx}>
+                            <td>{idx + 1}</td>
+                            <td>
+                              <input className="upload-modal-input" type="text" value={row.name} onChange={(e) => updateResidentRow(idx, 'name', e.target.value)} />
+                            </td>
+                            <td>
+                              <input className="upload-modal-input" type="text" value={row.year} onChange={(e) => updateResidentRow(idx, 'year', e.target.value)} />
+                            </td>
+                            <td>
+                              <button className="upload-modal-btn upload-modal-btn--sm upload-modal-btn--danger" onClick={() => removeResidentRow(idx)}>حذف</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div
+                    className={`upload-modal-dropzone ${isDraggingResidents ? 'upload-modal-dropzone--active' : ''}`}
+                    onClick={() => residentsInputRef.current?.click()}
+                    onDragOver={(e) => { e.preventDefault(); setIsDraggingResidents(true); }}
+                    onDragLeave={() => setIsDraggingResidents(false)}
+                    onDrop={onResidentsDrop}
+                  >
+                    فایل CSV دستیاران را اینجا رها کنید یا کلیک کنید
+                  </div>
+                )}
+              </section>
+
+              {/* Historical datasets */}
+              <section className="glass u-container u-container--lg upload-modal-section">
+                <div className="upload-modal-section-title">دیتاست‌های ذخیره‌شدهٔ قبلی</div>
+                {datasets.length === 0 ? (
+                  <div className="upload-modal-empty">هنوز دیتاستی ذخیره نشده است.</div>
+                ) : (
+                  datasets.map((d) => (
+                    <div className="upload-modal-dataset" key={d.id}>
+                      <div>
+                        <div>{d.name}</div>
+                        <div className="upload-modal-dataset__meta">
+                          <span>دستیار: {d.summary?.residentCount ?? 0}</span>
+                          <span>هیئت علمی: {d.summary?.facultyCount ?? 0}</span>
+                          <span>میانگین PDI دستیاران: {Number(d.summary?.residentsAvgPDI || 0).toFixed(1)}</span>
+                          <span>میانگین PDI اساتید: {Number(d.summary?.facultyAvgPDI || 0).toFixed(1)}</span>
+                        </div>
+                      </div>
+                      <button className="upload-modal-btn upload-modal-btn--sm upload-modal-btn--danger" onClick={() => handleDeleteDataset(d.id)}>
+                        حذف
+                      </button>
+                    </div>
+                  ))
+                )}
+              </section>
+            </>
+          )}
+
+          {/* Hidden file inputs shared by both tabs */}
+          <input ref={mainInputRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }} onChange={(e) => handleMainFile(e.target.files[0])} />
+          <input ref={residentsInputRef} type="file" accept=".csv" style={{ display: 'none' }} onChange={(e) => handleResidentsFile(e.target.files[0])} />
         </div>
 
-        <div className="upload-modal__footer">
-          <button className="btn-sm btn-sm--ghost" style={{ padding: '0.5rem 1rem' }} onClick={onClose}>انصراف</button>
+        {/* ── FOOTER ── */}
+        <footer className="upload-modal-footer">
+          <button className="upload-modal-btn upload-modal-btn--cancel" onClick={onClose}>انصراف</button>
           <button
-            className="btn-sm btn-sm--success"
-            style={{ padding: '0.5rem 1.25rem' }}
+            className="upload-modal-btn green-glass upload-modal-btn--solid"
             onClick={handleSave}
-            disabled={!preview.residents.length && !preview.faculty.length}
+            disabled={!hasPreview}
           >
-            تایید و ذخیره در پایگاه داده
+            <SaveIcon /> تایید و ذخیره
           </button>
-        </div>
+        </footer>
       </div>
     </div>
   );

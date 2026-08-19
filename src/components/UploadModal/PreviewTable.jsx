@@ -13,9 +13,9 @@ const PreviewTable = ({ title, rows, onRowChange, onRowRemove }) => {
   const saveEdit = () => { onRowChange(editingIndex, buffer); cancelEdit(); };
 
   return (
-    <div>
-      <div className="preview-table__title">{title} ({rows.length} رکورد)</div>
-      <div className="data-table-wrapper" style={{ maxHeight: '22rem' }}>
+    <section className="glass u-container u-container--lg upload-modal-section">
+      <div className="upload-modal-section-title">{title} ({rows.length} رکورد)</div>
+      <div className="upload-modal-table-wrapper custom-scrollbar">
         <table className="data-table">
           <thead>
             <tr>
@@ -34,30 +34,30 @@ const PreviewTable = ({ title, rows, onRowChange, onRowRemove }) => {
                 {editingIndex === idx ? (
                   <>
                     <td>
-                      <input type="text" value={buffer.name || ''} onChange={(e) => setBuffer(b => ({ ...b, name: e.target.value }))} />
+                      <input className="upload-modal-input" type="text" value={buffer.name || ''} onChange={(e) => setBuffer(b => ({ ...b, name: e.target.value }))} />
                     </td>
                     <td>
-                      <select value={buffer.category || 'resident'} onChange={(e) => setBuffer(b => ({ ...b, category: e.target.value }))}>
+                      <select className="upload-modal-input" value={buffer.category || 'resident'} onChange={(e) => setBuffer(b => ({ ...b, category: e.target.value }))}>
                         <option value="resident">دستیار</option>
                         <option value="faculty">هیئت علمی</option>
                       </select>
                     </td>
                     <td>
-                      <input type="text" value={buffer.year ?? ''} onChange={(e) => setBuffer(b => ({ ...b, year: e.target.value }))} />
+                      <input className="upload-modal-input" type="text" value={buffer.year ?? ''} onChange={(e) => setBuffer(b => ({ ...b, year: e.target.value }))} />
                     </td>
                     <td>{row.V}</td>
                     <td>{Number(row.PDI).toFixed(2)}</td>
                     <td>{row.flags}</td>
                     <td>
-                      <button className="btn-sm btn-sm--success" onClick={saveEdit}>ذخیره</button>{' '}
-                      <button className="btn-sm btn-sm--ghost" onClick={cancelEdit}>انصراف</button>
+                      <button className="upload-modal-btn upload-modal-btn--sm green-glass upload-modal-btn--solid" onClick={saveEdit}>ذخیره</button>{' '}
+                      <button className="upload-modal-btn upload-modal-btn--sm upload-modal-btn--ghost" onClick={cancelEdit}>انصراف</button>
                     </td>
                   </>
                 ) : (
                   <>
                     <td>{row.name}</td>
                     <td>
-                      <span className={`badge ${row.category === 'faculty' ? 'badge--faculty' : 'badge--resident'}`}>
+                      <span className={`upload-modal-badge ${row.category === 'faculty' ? 'upload-modal-badge--faculty' : 'upload-modal-badge--resident'}`}>
                         {CATEGORY_FA[row.category] || row.category}
                       </span>
                     </td>
@@ -66,8 +66,8 @@ const PreviewTable = ({ title, rows, onRowChange, onRowRemove }) => {
                     <td>{Number(row.PDI).toFixed(2)}</td>
                     <td>{row.flags}</td>
                     <td>
-                      <button className="btn-sm btn-sm--ghost" onClick={() => startEdit(idx)}>ویرایش</button>{' '}
-                      <button className="btn-sm btn-sm--danger" onClick={() => onRowRemove(idx)}>حذف</button>
+                      <button className="upload-modal-btn upload-modal-btn--sm upload-modal-btn--ghost" onClick={() => startEdit(idx)}>ویرایش</button>{' '}
+                      <button className="upload-modal-btn upload-modal-btn--sm upload-modal-btn--danger" onClick={() => onRowRemove(idx)}>حذف</button>
                     </td>
                   </>
                 )}
@@ -76,7 +76,7 @@ const PreviewTable = ({ title, rows, onRowChange, onRowRemove }) => {
           </tbody>
         </table>
       </div>
-    </div>
+    </section>
   );
 };
 

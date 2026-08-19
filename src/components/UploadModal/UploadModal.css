@@ -1,212 +1,328 @@
+/* ==========================================================================
+   Upload Modal — follows theme.css tokens + glass.css surfaces.
+   Pattern inspired by NCIBB auth-modal-panel (header / body / footer + pill tabs).
+   ========================================================================== */
+
+/* ── Overlay (blur backdrop, like NCIBB Modal backdrop="blur") ── */
 .upload-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(4px);
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
-  padding: 1rem;
+  padding: var(--spacing-lg);
+  background: color-mix(in srgb, var(--color-gray12) 40%, transparent);
+  backdrop-filter: blur(var(--glass-backdrop-blur)) saturate(var(--glass-backdrop-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-backdrop-blur)) saturate(var(--glass-backdrop-saturate));
 }
 
-.upload-modal {
-  width: 100%;
-  max-width: 72rem;
+/* ── Panel: glass-transparent + u-container--xl ── */
+.upload-modal-panel {
+  width: min(100%, 72rem);
   max-height: 92vh;
+  overflow: hidden;
+  isolation: isolate; /* clips the ::before blur layer inside the panel */
+  color: var(--color-gray12);
+}
+
+/* ── Header ── */
+.upload-modal-header {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0;
+  padding-bottom: var(--spacing-sm);
+}
+
+.upload-modal-title {
+  flex: 1;
+  text-align: right;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.upload-modal-close-btn {
+  flex-shrink: 0;
+  width: 2.1rem;
+  height: 2.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--border-radius-pill);
+  background-color: var(--color-gray11);
+  color: var(--color-gray1);
+  font-size: var(--font-size-lg);
+  line-height: 1;
+  cursor: pointer;
+  transition: opacity var(--motion-duration-fast) var(--motion-easing-easeOut);
+}
+.upload-modal-close-btn:hover { opacity: 0.8; }
+.dark .upload-modal-close-btn {
+  background-color: var(--color-gray2);
+  color: var(--color-gray11);
+}
+
+/* ── Body (scrollable) ── */
+.upload-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  border-radius: 1rem;
+  gap: var(--spacing-md);
 }
 
-.upload-modal__header {
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+/* ── Pill tablist (ورود داده / دیتابیس) — same pattern as NCIBB auth tabs ── */
+.upload-modal-tablist {
+  flex: 0 0 auto;
   display: flex;
-  justify-content: space-between;
+  flex-direction: row;
   align-items: center;
+  width: 100%;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--border-radius-pill);
+  box-sizing: border-box;
 }
 
-.upload-modal__title {
-  font-size: 1.15rem;
-  font-weight: 700;
-  margin: 0;
-}
-
-.upload-modal__close {
-  background: transparent;
-  border: none;
-  font-size: 1.6rem;
-  cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.2s;
-  line-height: 1;
-}
-.upload-modal__close:hover { opacity: 1; }
-
-.upload-modal__body {
-  padding: 1.5rem;
-  overflow-y: auto;
+.upload-modal-tab {
   flex: 1;
   display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
+  align-items: center;
+  justify-content: center;
+  padding: 6px var(--spacing-md);
+  border-radius: var(--border-radius-pill);
+  border: none;
+  background: transparent;
+  font-family: var(--font-family-persian);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray8);
+  cursor: pointer;
+  transition: color var(--motion-duration-normal) var(--motion-easing-easeInOut);
+}
+.upload-modal-tab:hover { color: var(--color-blue); }
+.upload-modal-tab--active {
+  color: var(--color-gray1);
+  cursor: default;
 }
 
-.upload-modal__footer {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
+/* ── Inner sections: neutralize u-container scroll so only body scrolls ── */
+.upload-modal-section {
+  flex: 0 0 auto;
+  overflow: visible;
 }
 
-/* Warning banner for missing residents file */
-.residents-warning {
-  padding: 0.85rem 1rem;
-  border-radius: 0.6rem;
-  font-size: 0.85rem;
+.upload-modal-section-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+}
+
+.upload-modal-section-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  border: 1px dashed rgba(255, 193, 7, 0.6);
-  background: rgba(255, 193, 7, 0.12);
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
 }
 
-/* Drag & drop zones */
-.dropzone {
-  border: 2px dashed rgba(255, 255, 255, 0.3);
-  border-radius: 0.75rem;
-  padding: 1.75rem 1rem;
+/* ── Warning / error banners ── */
+.upload-modal-warning {
+  flex: 0 0 auto;
+  border: var(--border-width-thin) dashed color-mix(in srgb, var(--color-orange) 65%, transparent);
+  background: color-mix(in srgb, var(--color-orange) 12%, transparent);
+  font-size: var(--font-size-sm);
+}
+
+.upload-modal-error {
+  flex: 0 0 auto;
+  border: var(--border-width-thin) solid color-mix(in srgb, var(--color-red) 55%, transparent);
+  background: color-mix(in srgb, var(--color-red) 12%, transparent);
+  font-size: var(--font-size-sm);
+}
+
+.upload-modal-saved {
+  font-size: var(--font-size-xs);
+  color: var(--color-green);
+  font-weight: var(--font-weight-semibold);
+}
+
+.upload-modal-empty {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray8);
+  text-align: center;
+  padding: var(--spacing-md);
+}
+
+/* ── Dropzone ── */
+.upload-modal-dropzone {
+  border: var(--border-width-normal) dashed color-mix(in srgb, var(--color-gray7) 55%, transparent);
+  border-radius: var(--border-radius-item-lg);
+  padding: var(--spacing-xl) var(--spacing-md);
   text-align: center;
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  font-size: var(--font-size-sm);
+  color: var(--color-gray10);
+  transition:
+    border-color var(--motion-duration-normal) var(--motion-easing-easeInOut),
+    background var(--motion-duration-normal) var(--motion-easing-easeInOut);
 }
-.dropzone:hover,
-.dropzone--active {
-  border-color: var(--color-primary, #2563eb);
-  background: rgba(37, 99, 235, 0.08);
+.upload-modal-dropzone:hover,
+.upload-modal-dropzone--active {
+  border-color: var(--color-blue);
+  background: color-mix(in srgb, var(--color-blue) 8%, transparent);
 }
-.dropzone__hint {
-  font-size: 0.8rem;
-  opacity: 0.75;
-  margin-top: 0.35rem;
+.upload-modal-dropzone--compact {
+  padding: var(--spacing-md);
+  margin-top: var(--spacing-sm);
 }
-.dropzone__filename {
-  font-size: 0.85rem;
-  font-weight: 600;
-  margin-top: 0.5rem;
+.upload-modal-dropzone__hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-gray8);
+  margin-top: var(--spacing-xs);
+}
+.upload-modal-dropzone__filename {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  margin-top: var(--spacing-sm);
   word-break: break-all;
 }
 
-/* Residents card */
-.residents-card {
-  border-radius: 0.75rem;
-  padding: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-.residents-card__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-.residents-card__title {
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-.residents-card__actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-/* Data table (shared for residents + preview) */
-.data-table-wrapper {
+/* ── Tables ── */
+.upload-modal-table-wrapper {
   overflow: auto;
   max-height: 20rem;
-  border-radius: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--border-radius-item-md);
+  border: var(--border-width-hairline) solid color-mix(in srgb, var(--color-gray8) 30%, transparent);
 }
+
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.8rem;
+  font-size: var(--font-size-sm);
   text-align: right;
 }
 .data-table th,
 .data-table td {
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: var(--border-width-hairline) solid color-mix(in srgb, var(--color-gray8) 20%, transparent);
   white-space: nowrap;
 }
 .data-table th {
   position: sticky;
   top: 0;
-  background: rgba(255, 255, 255, 0.06);
-  font-weight: 600;
   z-index: 1;
+  background: color-mix(in srgb, var(--color-gray3) 45%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-weight: var(--font-weight-semibold);
 }
 .data-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: color-mix(in srgb, var(--color-blue) 5%, transparent);
 }
-.data-table input[type="text"],
-.data-table select {
+
+/* ── Inputs ─ */
+.upload-modal-input {
   width: 100%;
-  padding: 0.25rem 0.4rem;
-  border-radius: 0.3rem;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(0, 0, 0, 0.15);
-  font-size: 0.8rem;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-item-sm);
+  border: var(--border-width-hairline) solid color-mix(in srgb, var(--color-gray8) 35%, transparent);
+  background: color-mix(in srgb, var(--color-gray1) 55%, transparent);
+  color: var(--color-gray12);
+  font-family: var(--font-family-persian);
+  font-size: var(--font-size-sm);
+}
+.upload-modal-input:focus {
+  outline: none;
+  border-color: var(--color-blue);
 }
 
-/* Category badges */
-.badge {
+/* ── Category badges ── */
+.upload-modal-badge {
   display: inline-block;
-  padding: 0.15rem 0.55rem;
-  border-radius: 9999px;
-  font-size: 0.7rem;
-  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: var(--border-radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
 }
-.badge--faculty { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; }
-.badge--resident { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+.upload-modal-badge--faculty {
+  background: color-mix(in srgb, var(--color-purple) 18%, transparent);
+  color: var(--color-purple);
+}
+.upload-modal-badge--resident {
+  background: color-mix(in srgb, var(--color-blue) 15%, transparent);
+  color: var(--color-blue);
+}
 
-/* Buttons */
-.btn-sm {
-  padding: 0.3rem 0.7rem;
-  font-size: 0.75rem;
-  border-radius: 0.4rem;
+/* ── Buttons ── */
+.upload-modal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
   border: none;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-.btn-sm:hover { opacity: 0.85; }
-.btn-sm--ghost {
+  border-radius: var(--border-radius-pill);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-family: var(--font-family-persian);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray12);
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: opacity var(--motion-duration-fast) var(--motion-easing-easeOut);
 }
-.btn-sm--danger { background: rgba(239, 68, 68, 0.8); color: #fff; }
-.btn-sm--success { background: rgba(34, 197, 94, 0.85); color: #fff; }
-.btn-sm--primary { background: var(--color-primary, #2563eb); color: #fff; }
-.btn-sm:disabled { opacity: 0.5; cursor: not-allowed; }
+.upload-modal-btn:hover { opacity: 0.85; }
+.upload-modal-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-.error-banner {
-  padding: 0.75rem 1rem;
-  border-radius: 0.6rem;
-  font-size: 0.85rem;
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.4);
+.upload-modal-btn--solid { color: #fff; }
+
+.upload-modal-btn--cancel {
+  border: var(--border-width-thin) solid color-mix(in srgb, var(--color-gray8) 40%, transparent);
 }
 
-.preview-table__title {
-  font-weight: 600;
-  font-size: 0.9rem;
-  margin: 0.25rem 0 0.5rem;
+.upload-modal-btn--sm {
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: var(--font-size-xs);
 }
 
-.residents-saved {
-  font-size: 0.75rem;
-  color: #4ade80;
+.upload-modal-btn--ghost {
+  border: var(--border-width-hairline) solid color-mix(in srgb, var(--color-gray8) 40%, transparent);
+}
+
+.upload-modal-btn--danger {
+  background: color-mix(in srgb, var(--color-red) 18%, transparent);
+  color: var(--color-red);
+}
+
+/* ── Footer ── */
+.upload-modal-footer {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+}
+
+/* ── Dataset rows (database tab) ── */
+.upload-modal-dataset {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-item-md);
+  border: var(--border-width-hairline) solid color-mix(in srgb, var(--color-gray8) 25%, transparent);
+  font-size: var(--font-size-sm);
+}
+.upload-modal-dataset__meta {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  color: var(--color-gray8);
+  font-size: var(--font-size-xs);
+  margin-top: var(--spacing-xs);
 }
