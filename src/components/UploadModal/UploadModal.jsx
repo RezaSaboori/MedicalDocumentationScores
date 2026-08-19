@@ -9,6 +9,7 @@ import {
   deleteUploadedDataset,
 } from '../../services/dataService';
 import PreviewTable from './PreviewTable';
+import ResidentsTable from './ResidentsTable';
 import './UploadModal.css';
 
 const SaveIcon = () => (
@@ -41,6 +42,14 @@ export const UploadModal = ({ isOpen, onClose, onDataProcessed }) => {
   const mainInputRef = useRef(null);
   const residentsInputRef = useRef(null);
 
+  // Lock page scroll while the modal is open
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prevOverflow; };
+  }, [isOpen]);
+
   useEffect(() => {
     if (isOpen) {
       const stored = getResidentsList();
@@ -53,13 +62,6 @@ export const UploadModal = ({ isOpen, onClose, onDataProcessed }) => {
   useEffect(() => {
     if (isOpen && tab === TABS.DATABASE) setDatasets(getUploadedDatasets());
   }, [isOpen, tab]);
-
-  const resetState = () => {
-    setFile(null);
-    setPreview({ residents: [], faculty: [] });
-    setError(null);
-    if (mainInputRef.current) mainInputRef.current.value = '';
-  };
 
   // ----- Main XLSX -----
   const handleMainFile = (selectedFile) => {
@@ -110,11 +112,11 @@ export const UploadModal = ({ isOpen, onClose, onDataProcessed }) => {
     if (residentsInputRef.current) residentsInputRef.current.value = '';
   };
 
-  const updateResidentRow = (index, field, value) => {
+  const applyResidentRow = (index, next) => {
     setResidentsData(prev => {
-      const next = [...prev];
-      next[index] = { ...next[index], [field]: value };
-      return next;
+      const rows = [...prev];
+      rows[index] = { ...rows[index], ...next };
+      return rows;
     });
     setResidentsSaved(false);
   };
@@ -168,10 +170,29 @@ export const UploadModal = ({ isOpen, onClose, onDataProcessed }) => {
       const dataset = await saveUploadedDataset(preview);
       onDataProcessed(dataset);
       onClose();
-      resetState();
+      // keep saved data; only clear session buffers
+      setFile(null);
+      setPreview({ residents: [], faculty: [] });
+      if (mainInputRef.current) mainInputRef.current.value = '';
     } catch (err) {
       setError('خطا در ذخیره‌سازی داده‌ها.');
     }
+  };
+
+  // ----- Cancel: discard ALL new uploaded/processed session data -----
+  const handleCancel = () => {
+    setFile(null);
+    setPreview({ residents: [], faculty: [] });
+    setError(null);
+    setIsProcessing(false);
+    if (mainInputRef.current) mainInputRef.current.value = '';
+    if (residentsInputRef.current) residentsInputRef.current.value = '';
+    // revert residents to the last SAVED state (discard unsaved edits)
+    const stored = getResidentsList();
+    setResidentsData(stored.list || []);
+    setResidentsFileName(stored.fileName || null);
+    setResidentsSaved(false);
+    onClose();
   };
 
   const handleDeleteDataset = async (id) => {
@@ -185,20 +206,12 @@ export const UploadModal = ({ isOpen, onClose, onDataProcessed }) => {
   const hasPreview = preview.residents.length > 0 || preview.faculty.length > 0;
 
   return (
-    <div className="upload-modal-overlay" onClick={onClose}>
-      <div
-        className="glass-transparent upload-modal-panel u-container u-container--xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* ── HEADER ── */}
+    <div className="upload-modal-overlay">
+      <div className="glass-transparent upload-modal-panel u-container u-container--xl">
+        {/* ── HEADER: title + toggle + close ── */}
         <header className="upload-modal-header">
           <span className="upload-modal-title">بارگذاری و پردازش داده‌های پرونده الکترونیک</span>
-          <button className="upload-modal-close-btn" onClick={onClose} aria-label="بستن">&times;</button>
-        </header>
 
-        {/* ── BODY ── */}
-        <div className="upload-modal-body custom-scrollbar">
-          {/* Pill tablist — ورود داده / دیتابیس */}
           <div className="upload-modal-tablist glass" role="tablist" aria-label="بخش‌های بارگذاری">
             <button
               role="tab"
@@ -220,6 +233,11 @@ export const UploadModal = ({ isOpen, onClose, onDataProcessed }) => {
             </button>
           </div>
 
+          <button className="upload-modal-close-btn" onClick={handleCancel} aria-label="بستن">&times;</button>
+        </header>
+
+        {/* ── BODY (the only scrolling region) ── */}
+        <div className="upload-modal-body custom-scrollbar">
           {tab === TABS.ENTRY ? (
             <>
               {!hasResidents && (
@@ -289,48 +307,16 @@ export const UploadModal = ({ isOpen, onClose, onDataProcessed }) => {
             <>
               {/* Residents year data */}
               <section className="glass u-container u-container--lg upload-modal-section">
-                <div className="upload-modal-header" style={{ paddingBottom: 0 }}>
-                  <span className="upload-modal-section-title">
-                    سال دستیاری رزیدنت‌ها {residentsFileName ? `(${residentsFileName})` : ''} — {residentsData.length} رکورد
-                  </span>
-                  <div className="upload-modal-section-actions">
-                    {residentsSaved && <span className="upload-modal-saved">✔ ذخیره شد</span>}
-                    <button className="upload-modal-btn upload-modal-btn--sm green-glass upload-modal-btn--solid" onClick={confirmSaveResidents} title="تأیید و ذخیره لیست دستیاران">
-                      <SaveIcon /> ذخیره
-                    </button>
-                    <button className="upload-modal-btn upload-modal-btn--sm upload-modal-btn--ghost" onClick={() => residentsInputRef.current?.click()}>
-                      بارگذاری مجدد
-                    </button>
-                    <button className="upload-modal-btn upload-modal-btn--sm upload-modal-btn--danger" onClick={removeResidents}>
-                      حذف لیست
-                    </button>
-                  </div>
+                <div className="upload-modal-section-title">
+                  سال دستیاری رزیدنت‌ها {residentsFileName ? `(${residentsFileName})` : ''} — {residentsData.length} رکورد
                 </div>
 
                 {hasResidents ? (
-                  <div className="upload-modal-table-wrapper custom-scrollbar">
-                    <table className="data-table">
-                      <thead>
-                        <tr><th>#</th><th>نام</th><th>سال دستیاری</th><th>عملیات</th></tr>
-                      </thead>
-                      <tbody>
-                        {residentsData.map((row, idx) => (
-                          <tr key={idx}>
-                            <td>{idx + 1}</td>
-                            <td>
-                              <input className="upload-modal-input" type="text" value={row.name} onChange={(e) => updateResidentRow(idx, 'name', e.target.value)} />
-                            </td>
-                            <td>
-                              <input className="upload-modal-input" type="text" value={row.year} onChange={(e) => updateResidentRow(idx, 'year', e.target.value)} />
-                            </td>
-                            <td>
-                              <button className="upload-modal-btn upload-modal-btn--sm upload-modal-btn--danger" onClick={() => removeResidentRow(idx)}>حذف</button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  <ResidentsTable
+                    rows={residentsData}
+                    onRowChange={applyResidentRow}
+                    onRowRemove={removeResidentRow}
+                  />
                 ) : (
                   <div
                     className={`upload-modal-dropzone ${isDraggingResidents ? 'upload-modal-dropzone--active' : ''}`}
@@ -342,6 +328,25 @@ export const UploadModal = ({ isOpen, onClose, onDataProcessed }) => {
                     فایل CSV دستیاران را اینجا رها کنید یا کلیک کنید
                   </div>
                 )}
+
+                {/* Section footer: the three action buttons */}
+                <footer className="upload-modal-section-footer">
+                  {residentsSaved && <span className="upload-modal-saved">✔ ذخیره شد</span>}
+                  <button
+                    className="upload-modal-btn upload-modal-btn--sm green-glass upload-modal-btn--solid"
+                    onClick={confirmSaveResidents}
+                    disabled={!hasResidents}
+                    title="تأیید و ذخیره لیست دستیاران"
+                  >
+                    <SaveIcon /> ذخیره
+                  </button>
+                  <button className="upload-modal-btn upload-modal-btn--sm upload-modal-btn--ghost" onClick={() => residentsInputRef.current?.click()}>
+                    بارگذاری مجدد
+                  </button>
+                  <button className="upload-modal-btn upload-modal-btn--sm upload-modal-btn--danger" onClick={removeResidents} disabled={!hasResidents}>
+                    حذف لیست
+                  </button>
+                </footer>
               </section>
 
               {/* Historical datasets */}
@@ -378,7 +383,7 @@ export const UploadModal = ({ isOpen, onClose, onDataProcessed }) => {
 
         {/* ── FOOTER ── */}
         <footer className="upload-modal-footer">
-          <button className="upload-modal-btn upload-modal-btn--cancel" onClick={onClose}>انصراف</button>
+          <button className="upload-modal-btn upload-modal-btn--cancel" onClick={handleCancel}>انصراف</button>
           <button
             className="upload-modal-btn green-glass upload-modal-btn--solid"
             onClick={handleSave}

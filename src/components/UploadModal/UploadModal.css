@@ -1,10 +1,9 @@
 /* ==========================================================================
    Upload Modal — theme.css tokens + glass.css surfaces.
-   Pattern inspired by NCIBB auth-modal-panel (header / body / footer + pill tabs).
-   Compound selectors (.x.u-container) override theme.css .u-container defaults.
+   NCIBB auth-modal-panel pattern: header (title+tabs+close) / body / footer.
    ========================================================================== */
 
-/* ── Overlay — project backdrop blur, light tint like NCIBB ── */
+/* ── Overlay: light dim + slight blur/brightness over the whole page ── */
 .upload-modal-overlay {
   position: fixed;
   inset: 0;
@@ -13,26 +12,25 @@
   align-items: center;
   justify-content: center;
   padding: var(--spacing-lg);
-  background: color-mix(in srgb, var(--color-gray12) 25%, transparent);
-  backdrop-filter: var(--glass-backdrop-filter);
-  -webkit-backdrop-filter: var(--glass-backdrop-filter);
+  background: color-mix(in srgb, var(--color-gray12) 20%, transparent);
+  backdrop-filter: blur(0.1px) brightness(1.1);
+  -webkit-backdrop-filter: blur(0.1px) brightness(1.1);
 }
 
-/* ── Panel: glass-transparent + u-container--xl, capped width, self-contained scroll ── */
+/* ── Panel: 75vw, glass blur ONLY under this surface (glass-transparent) ── */
 .upload-modal-panel.u-container {
-  width: min(100%, 60rem);
-  max-height: min(92vh, 62rem);
-  overflow: hidden;            /* body scrolls, not the panel */
-  align-items: stretch;        /* children fill panel width consistently */
-  isolation: isolate;          /* clips glass-transparent ::before inside panel */
+  width: 75vw;
+  max-height: min(92vh, 64rem);
+  overflow: hidden;            /* only the body scrolls */
+  align-items: stretch;        /* uniform child widths */
+  isolation: isolate;
   color: var(--color-gray12);
-  /* token overrides (sanctioned by theme.css) for tighter, auth-modal-like rhythm */
   --p: var(--spacing-lg);
   --gap: var(--spacing-md);
   --radius: var(--border-radius-container-sm);
 }
 
-/* ── Header (full width) ── */
+/* ── Header: title + toggle + close ── */
 .upload-modal-header {
   flex: 0 0 auto;
   width: 100%;
@@ -40,7 +38,7 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  gap: 0;
+  gap: var(--spacing-md);
   padding-bottom: var(--spacing-xs);
 }
 
@@ -51,44 +49,10 @@
   font-weight: var(--font-weight-semibold);
 }
 
-.upload-modal-close-btn {
-  flex-shrink: 0;
-  width: 2.1rem;
-  height: 2.1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: var(--border-radius-pill);
-  background-color: var(--color-gray11);
-  color: var(--color-gray1);
-  font-size: var(--font-size-lg);
-  line-height: 1;
-  cursor: pointer;
-  transition: opacity var(--motion-duration-fast) var(--motion-easing-easeOut);
-}
-.upload-modal-close-btn:hover { opacity: 0.8; }
-.dark .upload-modal-close-btn {
-  background-color: var(--color-gray2);
-  color: var(--color-gray11);
-}
-
-/* ── Body — the only scrolling region ── */
-.upload-modal-body {
-  width: 100%;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-}
-
-/* ── Pill tablist (ورود داده / دیتابیس) ── */
+/* Toggle lives inside the header now */
 .upload-modal-tablist {
-  flex: 0 0 auto;
-  width: 100%;
+  flex: 0 1 22rem;
+  min-width: 13rem;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -120,7 +84,41 @@
   cursor: default;
 }
 
-/* ── Inner sections (u-container--lg) — consistent width + tighter tokens ── */
+.upload-modal-close-btn {
+  flex-shrink: 0;
+  width: 2.1rem;
+  height: 2.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--border-radius-pill);
+  background-color: var(--color-gray11);
+  color: var(--color-gray1);
+  font-size: var(--font-size-lg);
+  line-height: 1;
+  cursor: pointer;
+  transition: opacity var(--motion-duration-fast) var(--motion-easing-easeOut);
+}
+.upload-modal-close-btn:hover { opacity: 0.8; }
+.dark .upload-modal-close-btn {
+  background-color: var(--color-gray2);
+  color: var(--color-gray11);
+}
+
+/* ── Body: the single scrolling region, visible custom scrollbar ── */
+.upload-modal-body {
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+/* ── Inner sections ── */
 .upload-modal-section.u-container {
   width: 100%;
   flex: 0 0 auto;
@@ -135,11 +133,13 @@
   font-weight: var(--font-weight-semibold);
 }
 
-.upload-modal-section-actions {
+/* Section footer hosts the residents action buttons */
+.upload-modal-section-footer {
+  width: 100%;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--spacing-sm);
-  flex-wrap: wrap;
 }
 
 /* ── Warning / error banners ── */
@@ -213,11 +213,11 @@
   word-break: break-all;
 }
 
-/* ── Tables ── */
+/* ── Tables (visible custom scrollbar) ── */
 .upload-modal-table-wrapper {
   width: 100%;
   overflow: auto;
-  max-height: 30rem;
+  max-height: 20rem;
   border-radius: var(--border-radius-item-md);
   border: var(--border-width-hairline) solid color-mix(in srgb, var(--color-gray8) 30%, transparent);
 }
@@ -319,7 +319,7 @@
   color: var(--color-red);
 }
 
-/* ── Footer (full width) ── */
+/* ── Modal footer ── */
 .upload-modal-footer {
   flex: 0 0 auto;
   width: 100%;

@@ -25,7 +25,7 @@
 
 
 :root {
-  --glass-backdrop-filter: blur(10px) saturate(1.8) brightness(1.8);
+  --glass-backdrop-filter: blur(100px) saturate(180) brightness(1.8);
 }
 
 .glass::before,
