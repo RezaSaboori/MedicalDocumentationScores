@@ -199,3 +199,14 @@
   background: rgba(239, 68, 68, 0.15);
   border: 1px solid rgba(239, 68, 68, 0.4);
 }
+
+.preview-table__title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.residents-saved {
+  font-size: 0.75rem;
+  color: #4ade80;
+}

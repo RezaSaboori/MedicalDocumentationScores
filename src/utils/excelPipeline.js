@@ -23,6 +23,8 @@ const CONFIG = {
 
 const COLMAP = {
   'فراگیران': 'name',
+  'هیئت علمی': 'faculty',
+  'بخش آموزشی': 'section',
   'تعداد ویزیت': 'V',
   'تعداد پرونده تکمیل شده': 'D',
   'میانگین امتیاز کامل بودن متن': 'C',
@@ -35,176 +37,202 @@ const COLMAP = {
   'تعداد پرونده های Weak': 'W',
   'تعداد پرونده های مشکوک به تقلب': 'F',
   'تعداد پرونده های Empty': 'Z',
-  'بخش آموزشی': 'section',
-  'هیئت علمی': 'faculty',
 };
 
-export const parseAndProcessExcel = async (file, residentsData = []) => {
-  return new Promise((resolve, reject) => {
+const NUM_KEYS = ['V', 'D', 'C', 'U', 'avg_chars', 'avg_words', 'E', 'G', 'A', 'W', 'F', 'Z'];
+
+const normalize = (text) => String(text || '').replace(/\s+/g, ' ').trim();
+
+// Strips trailing ": 48/48" style counters from resident names
+const cleanName = (text) =>
+  normalize(text).replace(/\s*:\s*\d+\s*\/\s*\d+\s*$/, '').trim();
+
+const readSheet = (file) =>
+  new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+        const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
-        
-        let headerRowIndex = -1;
-        for (let i = 0; i < Math.min(15, rawData.length); i++) {
-          if (rawData[i].some(cell => String(cell).includes('فراگیران'))) {
-            headerRowIndex = i;
-            break;
-          }
-        }
-
-        if (headerRowIndex === -1) {
-          throw new Error('ستون "فراگیران" در فایل یافت نشد. لطفاً فایل صحیح را بارگذاری کنید.');
-        }
-
-        const headers = rawData[headerRowIndex].map(h => String(h).trim().replace(/^\ufeff/, ''));
-        const dataRows = rawData.slice(headerRowIndex + 1);
-        const parsedRecords = [];
-
-        for (const row of dataRows) {
-          const nameIdx = headers.indexOf('فراگیران');
-          const nameVal = String(row[nameIdx] || '').trim();
-          if (!nameVal || nameVal.includes('عنوان گزارش') || nameVal === 'میانگین') continue;
-
-          const cleanName = nameVal.replace(/\s*:\s*\d+\s*\/\s*\d+\s*$/, '').trim();
-          const record = { name: cleanName };
-          
-          for (const [colName, key] of Object.entries(COLMAP)) {
-            const idx = headers.indexOf(colName);
-            if (idx !== -1) {
-              let val = row[idx];
-              if (key !== 'name' && key !== 'section' && key !== 'faculty') {
-                record[key] = Number(val) || 0;
-              } else {
-                record[key] = String(val || '').trim();
-              }
-            }
-          }
-          parsedRecords.push(record);
-        }
-
-        const mergedMap = new Map();
-        for (const rec of parsedRecords) {
-          const existing = mergedMap.get(rec.name);
-          if (existing) {
-            for (const key of Object.keys(rec)) {
-              if (key !== 'name' && key !== 'section' && key !== 'faculty') {
-                existing[key] = (existing[key] || 0) + (rec[key] || 0);
-              } else if ((key === 'section' || key === 'faculty') && !existing[key] && rec[key]) {
-                existing[key] = rec[key];
-              }
-            }
-          } else {
-            mergedMap.set(rec.name, { ...rec });
-          }
-        }
-
-        const validRecords = Array.from(mergedMap.values()).filter(r => r.V > 0 || r.D > 0 || r.N > 0);
-
-        const tempRecords = validRecords.map(r => {
-          const N = (r.E || 0) + (r.G || 0) + (r.A || 0) + (r.W || 0) + (r.F || 0) + (r.Z || 0);
-          const N_noF = (r.E || 0) + (r.G || 0) + (r.A || 0) + (r.W || 0) + (r.Z || 0);
-          const V_safe = r.V || 1;
-          const N_safe = N || 1;
-          const N_noF_safe = N_noF || 1;
-
-          const COV = Math.min(1, Math.max(0, (r.D || 0) / V_safe));
-          const SUB = ((r.E || 0) + (r.G || 0) + (r.A || 0)) / N_safe;
-          const rho_Z = (r.Z || 0) / N_safe;
-          const rho_F = (r.F || 0) / N_safe;
-          const SUB_noF = ((r.E || 0) + (r.G || 0) + (r.A || 0)) / N_noF_safe;
-          const rho_Z_noF = (r.Z || 0) / N_noF_safe;
-          const RICH = Math.min(1, Math.max(0, (r.avg_words || 0) / CONFIG.rich_min_words));
-          
-          const q_num = CONFIG.w_excellent * (r.E || 0) + CONFIG.w_good * (r.G || 0) + CONFIG.w_acceptable * (r.A || 0) + CONFIG.w_weak * (r.W || 0) + CONFIG.w_empty * (r.Z || 0) + CONFIG.w_fraud * (r.F || 0);
-          const WQS = Math.min(1, Math.max(0, q_num / N_safe));
-          const QYV = Math.max(0, q_num / V_safe);
-
-          const q_num_noF = CONFIG.w_excellent * (r.E || 0) + CONFIG.w_good * (r.G || 0) + CONFIG.w_acceptable * (r.A || 0) + CONFIG.w_weak * (r.W || 0) + CONFIG.w_empty * (r.Z || 0);
-          const WQS_noF = Math.min(1, Math.max(0, q_num_noF / N_noF_safe));
-          const QYV_noF = Math.max(0, q_num_noF / V_safe);
-
-          return { ...r, N, N_noF, V_safe, N_safe, N_noF_safe, COV, SUB, rho_Z, rho_F, SUB_noF, rho_Z_noF, RICH, q_num, WQS, QYV, q_num_noF, WQS_noF, QYV_noF };
-        });
-
-        const mean = (arr) => arr.reduce((a, b) => a + b, 0) / (arr.length || 1);
-        const meanWQS = mean(tempRecords.map(t => t.WQS));
-        const meanCOV = mean(tempRecords.map(t => t.COV));
-        const meanWQS_noF = mean(tempRecords.map(t => t.WQS_noF));
-
-        const ebAdjust = (val, visits, k, meanVal) => (visits * val + k * meanVal) / (visits + k);
-
-        const validForLAQ = tempRecords.filter(t => t.V > 0);
-        let slope = 0, intercept = 0;
-        if (validForLAQ.length >= 2) {
-          const x = validForLAQ.map(t => Math.log(t.V));
-          const y = validForLAQ.map(t => ebAdjust(t.WQS, t.V, CONFIG.shrink_k, meanWQS));
-          const n = x.length;
-          const sumX = x.reduce((a, b) => a + b, 0);
-          const sumY = y.reduce((a, b) => a + b, 0);
-          const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
-          const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0);
-          const denom = (n * sumX2 - sumX * sumX);
-          if (denom !== 0) {
-            slope = (n * sumXY - sumX * sumY) / denom;
-            intercept = (sumY - slope * sumX) / n;
-          }
-        }
-
-        const laqValues = validForLAQ.map(t => {
-          const wqs_adj = ebAdjust(t.WQS, t.V, CONFIG.shrink_k, meanWQS);
-          return wqs_adj - (intercept + slope * Math.log(t.V));
-        }).sort((a, b) => a - b);
-        const laq75 = laqValues.length > 0 ? laqValues[Math.floor(laqValues.length * 0.75)] : 0;
-
-        const finalRecords = tempRecords.map(t => {
-          const WQS_adj = ebAdjust(t.WQS, t.V, CONFIG.shrink_k, meanWQS);
-          const COV_adj = ebAdjust(t.COV, t.V, CONFIG.shrink_k, meanCOV);
-          const WQS_expected_for_load = t.V > 0 ? intercept + slope * Math.log(t.V) : WQS_adj;
-          const LAQ = t.V > 0 ? WQS_adj - WQS_expected_for_load : 0;
-          const INT = Math.min(1, Math.max(0, 1 - CONFIG.int_fraud_penalty * (t.rho_F || 0) - CONFIG.int_empty_penalty * (t.rho_Z || 0)));
-          const eps = 1e-9;
-          
-          const PDI = 100 * (Math.pow(Math.max(eps, COV_adj), CONFIG.pdi_cov) * Math.pow(Math.max(eps, WQS_adj), CONFIG.pdi_wqs) * Math.pow(Math.max(eps, INT), CONFIG.pdi_int) * Math.pow(Math.max(eps, t.RICH), CONFIG.pdi_rich));
-
-          const WQS_noF_adj = ebAdjust(t.WQS_noF, t.V, CONFIG.shrink_k, meanWQS_noF);
-          const INT_noF = Math.min(1, Math.max(0, 1 - CONFIG.int_empty_penalty * (t.rho_Z_noF || 0)));
-          const PDI_noF = 100 * (Math.pow(Math.max(eps, COV_adj), CONFIG.pdi_cov) * Math.pow(Math.max(eps, WQS_noF_adj), CONFIG.pdi_wqs) * Math.pow(Math.max(eps, INT_noF), CONFIG.pdi_int) * Math.pow(Math.max(eps, t.RICH), CONFIG.pdi_rich));
-
-          const flagsArr = [];
-          if (t.V < CONFIG.flag_low_visits) flagsArr.push('LOW_DATA');
-          if ((t.rho_F || 0) > CONFIG.flag_fraud_rate) flagsArr.push('INTEGRITY_AUDIT');
-          if ((t.rho_Z || 0) > CONFIG.flag_empty_rate) flagsArr.push('ENGAGEMENT_TRAINING');
-          if (LAQ >= laq75 && t.V >= CONFIG.flag_exemplar_min_visits && !flagsArr.includes('INTEGRITY_AUDIT')) {
-            flagsArr.push('EXEMPLAR');
-          }
-
-          let category = 'resident';
-          if (t.faculty && String(t.faculty).trim() !== '') category = 'faculty';
-
-          let year = null;
-          if (category === 'resident' && residentsData.length > 0) {
-            const normalizedSearch = t.name.replace(/\s+/g, ' ').trim();
-            const resident = residentsData.find(res => res.name.replace(/\s+/g, ' ').trim() === normalizedSearch);
-            if (resident) year = resident.year;
-          }
-
-          return { ...t, WQS_adj, COV_adj, WQS_expected_for_load, LAQ, INT, PDI, WQS_noF_adj, INT_noF, PDI_noF, flags: flagsArr.length > 0 ? flagsArr.join('|') : 'OK', category, year };
-        });
-
-        finalRecords.sort((a, b) => b.PDI - a.PDI);
-        resolve(finalRecords);
-      } catch (error) {
-        reject(error);
+        resolve(XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' }));
+      } catch (err) {
+        reject(err);
       }
     };
-    reader.onerror = (error) => reject(error);
+    reader.onerror = reject;
     reader.readAsArrayBuffer(file);
   });
+
+const findHeaderRow = (rawData) => {
+  for (let i = 0; i < Math.min(15, rawData.length); i++) {
+    if (rawData[i].some(cell => String(cell).includes('فراگیران'))) return i;
+  }
+  return -1;
+};
+
+// Groups raw rows by the given key field and sums numeric columns.
+const mergeByName = (rows, keyField) => {
+  const map = new Map();
+  for (const row of rows) {
+    const key = row[keyField];
+    if (!key) continue;
+    const existing = map.get(key);
+    if (existing) {
+      for (const n of NUM_KEYS) existing[n] += row[n] || 0;
+      if (!existing.section && row.section) existing.section = row.section;
+    } else {
+      const base = { name: key, section: row.section || '' };
+      for (const n of NUM_KEYS) base[n] = row[n] || 0;
+      map.set(key, base);
+    }
+  }
+  return Array.from(map.values());
+};
+
+// DIKW enrichment + empirical Bayes + LAQ + flags, computed WITHIN each group.
+const enrichGroup = (records, category, residentsData = []) => {
+  const tempRecords = records.map(r => {
+    const N = r.E + r.G + r.A + r.W + r.F + r.Z;
+    const N_noF = r.E + r.G + r.A + r.W + r.Z;
+    const V_safe = r.V || 1;
+    const N_safe = N || 1;
+    const N_noF_safe = N_noF || 1;
+
+    const COV = Math.min(1, Math.max(0, r.D / V_safe));
+    const rho_Z = r.Z / N_safe;
+    const rho_F = r.F / N_safe;
+    const rho_Z_noF = r.Z / N_noF_safe;
+    const RICH = Math.min(1, Math.max(0, (r.avg_words || 0) / CONFIG.rich_min_words));
+
+    const q_num =
+      CONFIG.w_excellent * r.E + CONFIG.w_good * r.G + CONFIG.w_acceptable * r.A +
+      CONFIG.w_weak * r.W + CONFIG.w_empty * r.Z + CONFIG.w_fraud * r.F;
+    const WQS = Math.min(1, Math.max(0, q_num / N_safe));
+
+    const q_num_noF =
+      CONFIG.w_excellent * r.E + CONFIG.w_good * r.G + CONFIG.w_acceptable * r.A +
+      CONFIG.w_weak * r.W + CONFIG.w_empty * r.Z;
+    const WQS_noF = Math.min(1, Math.max(0, q_num_noF / N_noF_safe));
+
+    return { ...r, N, N_noF, COV, rho_Z, rho_F, rho_Z_noF, RICH, WQS, WQS_noF };
+  });
+
+  const mean = (arr) => arr.reduce((a, b) => a + b, 0) / (arr.length || 1);
+  const meanWQS = mean(tempRecords.map(t => t.WQS));
+  const meanCOV = mean(tempRecords.map(t => t.COV));
+  const meanWQS_noF = mean(tempRecords.map(t => t.WQS_noF));
+
+  const ebAdjust = (val, visits, k, meanVal) => (visits * val + k * meanVal) / (visits + k);
+
+  const validForLAQ = tempRecords.filter(t => t.V > 0);
+  let slope = 0, intercept = 0;
+  if (validForLAQ.length >= 2) {
+    const x = validForLAQ.map(t => Math.log(t.V));
+    const y = validForLAQ.map(t => ebAdjust(t.WQS, t.V, CONFIG.shrink_k, meanWQS));
+    const n = x.length;
+    const sumX = x.reduce((a, b) => a + b, 0);
+    const sumY = y.reduce((a, b) => a + b, 0);
+    const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
+    const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0);
+    const denom = n * sumX2 - sumX * sumX;
+    if (denom !== 0) {
+      slope = (n * sumXY - sumX * sumY) / denom;
+      intercept = (sumY - slope * sumX) / n;
+    }
+  }
+
+  const laqValues = validForLAQ
+    .map(t => ebAdjust(t.WQS, t.V, CONFIG.shrink_k, meanWQS) - (intercept + slope * Math.log(t.V)))
+    .sort((a, b) => a - b);
+  const laq75 = laqValues.length ? laqValues[Math.floor(laqValues.length * 0.75)] : 0;
+
+  const finalRecords = tempRecords.map(t => {
+    const WQS_adj = ebAdjust(t.WQS, t.V, CONFIG.shrink_k, meanWQS);
+    const COV_adj = ebAdjust(t.COV, t.V, CONFIG.shrink_k, meanCOV);
+    const WQS_expected_for_load = t.V > 0 ? intercept + slope * Math.log(t.V) : WQS_adj;
+    const LAQ = t.V > 0 ? WQS_adj - WQS_expected_for_load : 0;
+    const INT = Math.min(1, Math.max(0, 1 - CONFIG.int_fraud_penalty * t.rho_F - CONFIG.int_empty_penalty * t.rho_Z));
+    const eps = 1e-9;
+
+    const PDI = 100 * (
+      Math.pow(Math.max(eps, COV_adj), CONFIG.pdi_cov) *
+      Math.pow(Math.max(eps, WQS_adj), CONFIG.pdi_wqs) *
+      Math.pow(Math.max(eps, INT), CONFIG.pdi_int) *
+      Math.pow(Math.max(eps, t.RICH), CONFIG.pdi_rich)
+    );
+
+    const WQS_noF_adj = ebAdjust(t.WQS_noF, t.V, CONFIG.shrink_k, meanWQS_noF);
+    const INT_noF = Math.min(1, Math.max(0, 1 - CONFIG.int_empty_penalty * t.rho_Z_noF));
+    const PDI_noF = 100 * (
+      Math.pow(Math.max(eps, COV_adj), CONFIG.pdi_cov) *
+      Math.pow(Math.max(eps, WQS_noF_adj), CONFIG.pdi_wqs) *
+      Math.pow(Math.max(eps, INT_noF), CONFIG.pdi_int) *
+      Math.pow(Math.max(eps, t.RICH), CONFIG.pdi_rich)
+    );
+
+    const flagsArr = [];
+    if (t.V < CONFIG.flag_low_visits) flagsArr.push('LOW_DATA');
+    if (t.rho_F > CONFIG.flag_fraud_rate) flagsArr.push('INTEGRITY_AUDIT');
+    if (t.rho_Z > CONFIG.flag_empty_rate) flagsArr.push('ENGAGEMENT_TRAINING');
+    if (LAQ >= laq75 && t.V >= CONFIG.flag_exemplar_min_visits && !flagsArr.includes('INTEGRITY_AUDIT')) {
+      flagsArr.push('EXEMPLAR');
+    }
+
+    let year = null;
+    if (category === 'resident' && residentsData.length) {
+      const match = residentsData.find(res => normalize(res.name) === normalize(t.name));
+      if (match) year = match.year;
+    }
+
+    return {
+      ...t,
+      WQS_adj, COV_adj, WQS_expected_for_load, LAQ, INT, PDI,
+      WQS_noF_adj, INT_noF, PDI_noF,
+      flags: flagsArr.length ? flagsArr.join('|') : 'OK',
+      category,
+      year,
+    };
+  });
+
+  finalRecords.sort((a, b) => b.PDI - a.PDI);
+  return finalRecords;
+};
+
+// Returns BOTH groups: residents (grouped by فراگیران) and
+// faculty (grouped by هیئت علمی = combination of their residents).
+export const parseAndProcessExcel = async (file, residentsData = []) => {
+  const rawData = await readSheet(file);
+  const headerRowIndex = findHeaderRow(rawData);
+  if (headerRowIndex === -1) {
+    throw new Error('ستون «فراگیران» در فایل یافت نشد. لطفاً فایل صحیح را بارگذاری کنید.');
+  }
+
+  const headers = rawData[headerRowIndex].map(h => normalize(String(h)).replace(/^\ufeff/, ''));
+  const dataRows = rawData.slice(headerRowIndex + 1);
+
+  const parsedRows = [];
+  for (const row of dataRows) {
+    const record = {};
+    for (const [colName, key] of Object.entries(COLMAP)) {
+      const idx = headers.indexOf(colName);
+      if (idx === -1) continue;
+      const val = row[idx];
+      if (key === 'name' || key === 'faculty' || key === 'section') {
+        record[key] = normalize(String(val || ''));
+      } else {
+        record[key] = Number(val) || 0;
+      }
+    }
+    record.name = cleanName(record.name);
+
+    if (!record.name || record.name.includes('عنوان گزارش') || record.name === 'میانگین' || record.name === '---') continue;
+    parsedRows.push(record);
+  }
+
+  const residents = enrichGroup(mergeByName(parsedRows, 'name'), 'resident', residentsData);
+  const faculty = enrichGroup(mergeByName(parsedRows, 'faculty'), 'faculty');
+
+  return { residents, faculty };
 };
 
 export const parseResidentsCSV = async (file) => {

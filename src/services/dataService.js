@@ -113,21 +113,24 @@ const loadDashboardData = async (mode) => {
 // Uploaded Datasets Management
 // ==========================================
 
-export const saveUploadedDataset = async (records) => {
+export const saveUploadedDataset = async ({ residents = [], faculty = [] }) => {
   const existingDatasets = getUploadedDatasets();
+
+  const avg = (rows, key) => rows.reduce((sum, r) => sum + (r[key] || 0), 0) / (rows.length || 1);
+
   const summary = {
-    totalPhysicians: records.length,
-    facultyCount: records.filter(r => r.category === 'faculty').length,
-    residentCount: records.filter(r => r.category === 'resident').length,
-    avgPDI: records.reduce((sum, r) => sum + r.PDI, 0) / (records.length || 1),
-    avgPDI_noF: records.reduce((sum, r) => sum + r.PDI_noF, 0) / (records.length || 1),
+    residentCount: residents.length,
+    facultyCount: faculty.length,
+    residentsAvgPDI: avg(residents, 'PDI'),
+    facultyAvgPDI: avg(faculty, 'PDI'),
   };
 
   const newDataset = {
     id: crypto.randomUUID(),
     name: `گزارش بارگذاری شده ${new Date().toLocaleDateString('fa-IR')}`,
     date: new Date().toISOString(),
-    records,
+    residents,
+    faculty,
     summary,
   };
 
