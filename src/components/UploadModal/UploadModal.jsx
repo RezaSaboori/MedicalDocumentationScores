@@ -101,4 +101,4 @@ const UploadModal = ({ isOpen, onClose, onDataUploaded }) => {
   );
 };
 
-export default UploadModal;
+export { UploadModal };
