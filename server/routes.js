@@ -7,7 +7,13 @@ export const createRouter = (db) => {
   router.post('/api/upload', async (req, res) => {
     try {
       const { documents, aggregated, period, startDate, endDate } = req.body;
-      
+
+      if (!period || period === 'unknown') {
+        return res.status(400).json({
+          error: 'دوره زمانی از تاریخ داده استخراج نشد.',
+        });
+      }
+
       const existing = await db.get('SELECT id FROM snapshots WHERE period = ?', period);
       if (existing) {
         return res.status(400).json({ error: 'این بازه زمانی قبلاً در پایگاه داده ثبت شده است.' });

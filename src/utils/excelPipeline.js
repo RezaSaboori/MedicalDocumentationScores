@@ -439,8 +439,17 @@ export const parseAndProcessExcel = async (file, residentsData = []) => {
     combo_status: row[colMap('وضعیت ترکیبی')] || ''
   }));
 
-  // Derive period from max date (e.g., '1405/04/31' -> '1405/04')
-  const period = maxDate ? maxDate.substring(0, 7) : 'unknown';
+  const toPeriod = (dateStr) => {
+    const match = String(dateStr || '').match(/^(\d{4})[\/\-](\d{1,2})/);
+
+    if (!match) {
+      return 'unknown';
+    }
+
+    return `${match[1]}/${match[2].padStart(2, '0')}`;
+  };
+
+  const period = toPeriod(maxDate);
 
   return { documents, residents, faculty, period, startDate: minDate, endDate: maxDate };
 };
