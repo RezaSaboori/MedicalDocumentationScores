@@ -408,7 +408,41 @@ export const parseAndProcessExcel = async (file, residentsData = []) => {
   const residents = enrichGroup(mergeByName(parsedRows, 'name'), 'resident', residentsData);
   const faculty = enrichGroup(mergeByName(parsedRows, 'faculty'), 'faculty');
 
-  return { residents, faculty };
+  // Extract raw documents for database storage
+  const colMap = (name) => {
+    const idx = colIdx(name);
+    return idx !== -1 ? idx : null;
+  };
+
+  const documents = dataRows.map(row => ({
+    visit_id: row[colMap('شناسه مراجعه')] || '',
+    patient_name: row[colMap('نام کامل بیمار')] || '',
+    national_id: row[colMap('کدملی بیمار')] || '',
+    mobile: row[colMap('موبایل بیمار')] || '',
+    doctor_name: row[colMap('نام کامل پزشک')] || '',
+    doctor_national_id: row[colMap('کدملی پزشک')] || '',
+    doctor_medical_code: row[colMap('کد نظام‌پزشکی پزشک')] || '',
+    afrad: row[idxAfrad] || '',
+    center_name: row[colMap('نام مرکز')] || '',
+    clinic_name: row[colMap('نام کلینیک')] || '',
+    clinic_unique_id: row[colMap('شناسه یکتا کلینیک')] || '',
+    electronic_record: row[colMap('پرونده الکترونیک')] || '',
+    status: row[colMap('وضعیت')] || '',
+    date: row[colMap('تاریخ')] || '',
+    quality_score: parseNum(row[colMap('امتیاز کیفیت پرونده')]),
+    fraud_count: parseNum(row[colMap('تعداد پرونده های مشکوک به تقلب')]),
+    completeness: parseNum(row[colMap('امتیاز کامل بودن متن')]),
+    density: parseNum(row[colMap('امتیاز تراکم اطلاعاتی متن')]),
+    non_repetition: parseNum(row[colMap('امتیاز عدم تکرار کلمات')]),
+    total_chars: parseNum(row[colMap('تعداد کل کاراکترهای متن')]),
+    total_words: parseNum(row[colMap('تعداد کل کلمات متن')]),
+    combo_status: row[colMap('وضعیت ترکیبی')] || ''
+  }));
+
+  // Derive period from max date (e.g., '1405/04/31' -> '1405/04')
+  const period = maxDate ? maxDate.substring(0, 7) : 'unknown';
+
+  return { documents, residents, faculty, period, startDate: minDate, endDate: maxDate };
 };
 
 export const parseResidentsCSV = async (file) => {

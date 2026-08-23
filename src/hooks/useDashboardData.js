@@ -1,79 +1,63 @@
-import { useState, useEffect, useCallback, useMemo, useDeferredValue } from 'react';
-import { fetchDashboardData } from '../services/dataService';
-import { BASE_FLAG_FA, DASHBOARD_MODES } from '../utils/constants';
+import { useState, useEffect } from 'react';
+import { fetchDashboardData, fetchSnapshots } from '../services/dataService';
 
-const createInitialFilters = () => ({
-  selectedFlags: Object.keys(BASE_FLAG_FA),
-  selectedYear: 'all',
-});
-
-export const useDashboardData = () => {
-  const [mode, setModeState] = useState(DASHBOARD_MODES.RESIDENTS);
-  const [rawData, setRawData] = useState({ current: [], previous: [] });
-  const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState(createInitialFilters);
-
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const result = await fetchDashboardData(mode);
-      setRawData(result);
-    } catch (error) {
-      console.error('Failed to load dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [mode]);
+export const useDashboardData = (selectedPeriod) => {
+  const [residents, setResidents] = useState([]);
+  const [faculty, setFaculty] = useState([]);
+  const [snapshots, setSnapshots] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [currentSnapshot, setCurrentSnapshot] = useState(null);
+  const [previousSnapshot, setPreviousSnapshot] = useState(null);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    fetchSnapshots().then(setSnapshots).catch(console.error);
+  }, []);
 
-  const setMode = (nextMode) => {
-    if (nextMode === mode) return;
-    setModeState(nextMode);
-    setFilters(createInitialFilters());
-  };
+  useEffect(() => {
+    if (!selectedPeriod) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    fetchDashboardData(selectedPeriod)
+      .then((result) => {
+        const currentRes = result.current.data.filter(d => d.category === 'resident');
+        const currentFac = result.current.data.filter(d => d.category === 'faculty');
+        
+        const prevRes = result.previous?.data.filter(d => d.category === 'resident') || [];
+        const prevFac = result.previous?.data.filter(d => d.category === 'faculty') || [];
 
-  const availableYears = useMemo(() => {
-    const years = new Set(rawData.current.map(d => d.year).filter(Boolean));
-    return Array.from(years).sort((a, b) => a - b);
-  }, [rawData]);
+        // Scenario B: Calculate deltas comparing current period with previous period
+        const mergeComparison = (current, previous) => {
+          return current.map(c => {
+            const prev = previous.find(p => p.name === c.name);
+            return {
+              ...c,
+              comparison: prev ? {
+                PDI: prev.PDI,
+                PDI_noF: prev.PDI_noF,
+                WQS_adj: prev.WQS_adj,
+                LAQ: prev.LAQ,
+                INT: prev.INT,
+                V: prev.V,
+                delta_PDI: c.PDI - prev.PDI,
+                delta_PDI_noF: c.PDI_noF - prev.PDI_noF,
+                delta_WQS: c.WQS_adj - prev.WQS_adj,
+                delta_V: c.V - prev.V
+              } : null
+            };
+          });
+        };
 
-  const filteredData = useMemo(() => {
-    let d = rawData.current;
-    let prev = rawData.previous;
+        setResidents(mergeComparison(currentRes, prevRes));
+        setFaculty(mergeComparison(currentFac, prevFac));
+        setCurrentSnapshot(result.current.snapshot);
+        setPreviousSnapshot(result.previous?.snapshot || null);
+      })
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [selectedPeriod]);
 
-    if (filters.selectedYear && filters.selectedYear !== 'all') {
-      d = d.filter(row => String(row.year) === String(filters.selectedYear));
-      prev = prev.filter(row => String(row.year) === String(filters.selectedYear));
-    }
-
-    if (filters.selectedFlags && filters.selectedFlags.length > 0) {
-      d = d.filter(row => row.flags.some(f => filters.selectedFlags.includes(f)));
-      prev = prev.filter(row => row.flags.some(f => filters.selectedFlags.includes(f)));
-    }
-
-    return { current: d, previous: prev };
-  }, [rawData, filters]);
-
-  const updateFilters = (newFilters) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
-  };
-
-  // Charts/KPIs/table read the DEFERRED copy so their heavy re-renders never
-  // block urgent UI (mode toggle slide, dropdown open/select). Inputs stay
-  // instant; visualization catches up asynchronously.
-  const deferredData = useDeferredValue(filteredData);
-
-  return {
-    data: deferredData,
-    rawData,
-    loading,
-    filters,
-    availableYears,
-    updateFilters,
-    mode,
-    setMode,
-  };
+  return { residents, faculty, snapshots, loading, error, currentSnapshot, previousSnapshot };
 };
