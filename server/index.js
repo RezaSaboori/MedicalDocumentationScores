@@ -21,7 +21,7 @@ const getFreePort = () =>
   });
 
 const startServer = async () => {
-  const db = await initializeDB();
+  const db = initializeDB();
   app.use(createRouter(db));
 
   const PORT = Number(process.env.PORT) || (await getFreePort());

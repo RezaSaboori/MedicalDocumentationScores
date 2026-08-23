@@ -1,5 +1,4 @@
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
+import { DatabaseSync } from 'node:sqlite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -8,13 +7,10 @@ const __dirname = path.dirname(__filename);
 
 const dbPath = path.join(__dirname, 'database.sqlite');
 
-export const initializeDB = async () => {
-  const db = await open({
-    filename: dbPath,
-    driver: sqlite3.Database,
-  });
+export const initializeDB = () => {
+  const db = new DatabaseSync(dbPath);
 
-  await db.exec(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS snapshots (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       period TEXT NOT NULL UNIQUE,

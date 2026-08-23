@@ -24,7 +24,7 @@ const updateEnvPort = (port) => {
   fs.writeFileSync(envPath, content);
 };
 
-const server = spawn('node', ['server/index.js'], {
+const server = spawn('node', ['--experimental-sqlite', 'server/index.js'], {
   stdio: ['inherit', 'pipe', 'inherit'],
 });
 
