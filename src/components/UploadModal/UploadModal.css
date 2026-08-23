@@ -3,7 +3,9 @@
    NCIBB auth-modal-panel pattern: header (title+tabs+close) / body / footer.
    ========================================================================== */
 
-/* ── Overlay: light dim + slight blur/brightness over the whole page ── */
+/* ── Overlay: pure positioning layer — NO backdrop-filter here.
+   An ancestor with backdrop-filter becomes the panel's "backdrop root"
+   and would hide the page from the panel's glass blur/saturate. ── */
 .upload-modal-overlay {
   position: fixed;
   inset: 0;
@@ -12,22 +14,31 @@
   align-items: center;
   justify-content: center;
   padding: var(--spacing-lg);
-  background: color-mix(in srgb, var(--color-gray12) 20%, transparent);
-  backdrop-filter: blur(0.1px) brightness(1.1);
-  -webkit-backdrop-filter: blur(0.1px) brightness(1.1);
+  background: transparent;
 }
 
-/* ── Panel: 75vw, glass blur ONLY under this surface (glass-transparent) ── */
+/* ── Page-level effect: SIBLING of the panel, painted below it ── */
+.upload-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--color-gray12) 20%, transparent);
+  backdrop-filter: blur(2px) brightness(1.1);
+  -webkit-backdrop-filter: blur(2px) brightness(1.1);
+}
+
+/* ── Panel: 75vw, glass blur ONLY under this surface ── */
 .upload-modal-panel.u-container {
+  flex: 0 1 auto;          /* stops .u-container flex-grow from stretching the panel */
   width: 75vw;
+  max-width: 75vw;
   max-height: min(92vh, 64rem);
-  overflow: hidden;            /* only the body scrolls */
-  align-items: stretch;        /* uniform child widths */
+  overflow: hidden;        /* only the body scrolls */
+  align-items: stretch;    /* uniform child widths */
   isolation: isolate;
   color: var(--color-gray12);
   --p: var(--spacing-lg);
   --gap: var(--spacing-md);
-  --radius: var(--border-radius-container-sm);
+  --radius: var(--border-radius-container-lg);
 }
 
 /* ── Header: title + toggle + close ── */
@@ -39,7 +50,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--spacing-md);
-  padding-bottom: var(--spacing-xs);
+  padding: var(--spacing-sm);
 }
 
 .upload-modal-title {
@@ -86,8 +97,9 @@
 
 .upload-modal-close-btn {
   flex-shrink: 0;
-  width: 2.1rem;
-  height: 2.1rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding-bottom: 5px ;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -115,7 +127,8 @@
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: var(--spacing-lg);
+  padding: var(--spacing-md);
 }
 
 /* ── Inner sections ── */
@@ -123,9 +136,9 @@
   width: 100%;
   flex: 0 0 auto;
   overflow: visible;
-  --p: var(--spacing-md);
+  --p: var(--spacing-xl);
   --gap: var(--spacing-md);
-  --radius: var(--border-radius-container-xs);
+  --radius: var(--border-radius-container-md);
 }
 
 .upload-modal-section-title {
@@ -140,6 +153,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: var(--spacing-sm);
+  
 }
 
 /* ── Warning / error banners ── */
@@ -218,8 +232,6 @@
   width: 100%;
   overflow: auto;
   max-height: 20rem;
-  border-radius: var(--border-radius-item-md);
-  border: var(--border-width-hairline) solid color-mix(in srgb, var(--color-gray8) 30%, transparent);
 }
 
 .data-table {
@@ -327,7 +339,8 @@
   align-items: center;
   justify-content: flex-end;
   gap: var(--spacing-sm);
-  padding-top: var(--spacing-xs);
+  padding: var(--spacing-sm);
+
 }
 
 /* ── Dataset rows (database tab) ── */

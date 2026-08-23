@@ -31,7 +31,7 @@ const DashboardLayout = () => {
         <button 
           onClick={() => setIsUploadModalOpen(true)}
           className="btn btn-primary"
-          style={{ marginRight: '1rem', padding: '0.5rem 1rem', borderRadius: '0.5rem', background: 'var(--color-primary, #2563eb)', color: 'white', border: 'none', cursor: 'pointer' }}
+          style={{ marginRight: '1rem', padding: '0.5rem 1rem', borderRadius: '5remn', background: 'var(--color-primary, #2563eb)', color: 'white', border: 'none', cursor: 'pointer' }}
         >
           بارگذاری فایل جدید
         </button>
