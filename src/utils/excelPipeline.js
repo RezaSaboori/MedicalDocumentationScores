@@ -439,6 +439,17 @@ export const parseAndProcessExcel = async (file, residentsData = []) => {
     combo_status: row[colMap('وضعیت ترکیبی')] || ''
   }));
 
+  let minDate = null;
+  let maxDate = null;
+
+  for (const doc of documents) {
+    const dStr = normalize(doc.date);
+
+    if (!dStr) continue;
+    if (!minDate || dStr < minDate) minDate = dStr;
+    if (!maxDate || dStr > maxDate) maxDate = dStr;
+  }
+
   const toPeriod = (dateStr) => {
     const match = String(dateStr || '').match(/^(\d{4})[\/\-](\d{1,2})/);
 
