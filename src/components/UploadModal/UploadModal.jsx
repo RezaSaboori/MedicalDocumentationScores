@@ -1,39 +1,91 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { uploadDataToServer } from '../../services/dataService';
 import { parseAndProcessExcel, parseResidentsCSV } from '../../utils/excelPipeline';
 import { useDashboard } from '../../context/DashboardContext';
+import PreviewTable from './PreviewTable';
+import ResidentsTable from './ResidentsTable';
 import './UploadModal.css';
 
+const TABS = { UPLOAD: 'upload', DATABASE: 'database' };
+
 export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }) => {
-  const { refresh } = useDashboard();
+  const { refresh, snapshots } = useDashboard();
+
+  const [tab, setTab] = useState(TABS.UPLOAD);
 
   const [excelFile, setExcelFile] = useState(null);
   const [residentsFile, setResidentsFile] = useState(null);
+  const [residentsList, setResidentsList] = useState([]);
+
+  const [processed, setProcessed] = useState(null);
+  const [previewResidents, setPreviewResidents] = useState([]);
+  const [previewFaculty, setPreviewFaculty] = useState([]);
+
+  const [dragExcel, setDragExcel] = useState(false);
+  const [dragResidents, setDragResidents] = useState(false);
+
+  const [parsing, setParsing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
+  const excelInputRef = useRef(null);
+  const residentsInputRef = useRef(null);
+
   const visible = isOpen === undefined ? true : Boolean(isOpen);
+
+  useEffect(() => {
+    if (visible) {
+      setTab(TABS.UPLOAD);
+      setError(null);
+      setSuccess(false);
+    }
+  }, [visible]);
 
   if (!visible) return null;
 
-  const handleFileChange = (e, type) => {
-    const file = e.target.files[0];
+  const applyProcessed = (result) => {
+    setProcessed(result);
+    setPreviewResidents(result.residents);
+    setPreviewFaculty(result.faculty);
+  };
 
-    if (type === 'excel') {
-      setExcelFile(file);
-    }
-
-    if (type === 'residents') {
-      setResidentsFile(file);
-    }
-
+  const handleExcelFile = async (file) => {
+    if (!file) return;
+    setExcelFile(file);
     setError(null);
+    setParsing(true);
+    try {
+      applyProcessed(await parseAndProcessExcel(file, residentsList));
+    } catch (err) {
+      setProcessed(null);
+      setPreviewResidents([]);
+      setPreviewFaculty([]);
+      setError(err.message || 'خطا در پردازش فایل اکسل.');
+    } finally {
+      setParsing(false);
+    }
+  };
+
+  const handleResidentsFile = async (file) => {
+    if (!file) return;
+    setResidentsFile(file);
+    setError(null);
+    setParsing(true);
+    try {
+      const list = await parseResidentsCSV(file);
+      setResidentsList(list);
+      if (excelFile) applyProcessed(await parseAndProcessExcel(excelFile, list));
+    } catch (err) {
+      setError(err.message || 'خطا در پردازش فایل CSV رزیدنت‌ها.');
+    } finally {
+      setParsing(false);
+    }
   };
 
   const handleSubmit = async () => {
-    if (!excelFile) {
-      setError('لطفاً فایل اکسل وضعیت پرونده‌ها را انتخاب کنید.');
+    if (!processed || !excelFile) {
+      setError('لطفاً ابتدا فایل اکسل وضعیت پرونده‌ها را انتخاب کنید.');
       return;
     }
 
@@ -41,100 +93,178 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
     setError(null);
 
     try {
-      let residentsData = [];
-
-      if (residentsFile) {
-        residentsData = await parseResidentsCSV(residentsFile);
-      }
-
-      const processed = await parseAndProcessExcel(excelFile, residentsData);
-
-      const payload = {
+      await uploadDataToServer({
         documents: processed.documents,
-        aggregated: {
-          residents: processed.residents,
-          faculty: processed.faculty,
-        },
+        aggregated: { residents: previewResidents, faculty: previewFaculty },
         period: processed.period,
         startDate: processed.startDate,
         endDate: processed.endDate,
-      };
-
-      await uploadDataToServer(payload);
+      });
 
       setSuccess(true);
-      setExcelFile(null);
-      setResidentsFile(null);
 
-      if (refresh) {
-        await refresh();
-      }
-
-      if (onDataUploaded) {
-        onDataUploaded();
-      }
-
-      if (onDataProcessed) {
-        onDataProcessed();
-      }
+      if (refresh) await refresh();
+      if (onDataUploaded) onDataUploaded();
+      if (onDataProcessed) onDataProcessed();
 
       setTimeout(() => {
         setSuccess(false);
         onClose();
       }, 1200);
     } catch (err) {
-      console.error(err);
-      setError(err.message || 'خطا در پردازش یا ذخیره‌سازی داده‌ها در پایگاه داده.');
+      setError(err.message || 'خطا در ذخیره‌سازی داده‌ها در پایگاه داده.');
     } finally {
       setLoading(false);
     }
   };
 
+  const dropzoneProps = (type) => ({
+    onClick: () => (type === 'excel' ? excelInputRef.current : residentsInputRef.current)?.click(),
+    onDragOver: (e) => {
+      e.preventDefault();
+      (type === 'excel' ? setDragExcel : setDragResidents)(true);
+    },
+    onDragLeave: () => (type === 'excel' ? setDragExcel : setDragResidents)(false),
+    onDrop: (e) => {
+      e.preventDefault();
+      (type === 'excel' ? setDragExcel : setDragResidents)(false);
+      const file = e.dataTransfer.files?.[0];
+      if (type === 'excel') handleExcelFile(file);
+      else handleResidentsFile(file);
+    },
+  });
+
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <h2>بارگذاری داده‌های جدید</h2>
+    <div className="upload-modal-overlay">
+      <div className="upload-modal-backdrop" onClick={onClose} />
 
-        <div className="form-group">
-          <label>فایل اکسل وضعیت پرونده‌ها:</label>
-          <input
-            type="file"
-            accept=".xlsx,.xls"
-            onChange={(e) => handleFileChange(e, 'excel')}
-          />
+      <div className="upload-modal-panel glass u-container">
+        <div className="upload-modal-header">
+          <div className="upload-modal-title">بارگذاری داده‌های جدید</div>
+
+          <div className="upload-modal-tablist glass" role="tablist">
+            <button
+              className={`upload-modal-tab ${tab === TABS.UPLOAD ? 'upload-modal-tab--active' : ''}`}
+              onClick={() => setTab(TABS.UPLOAD)}
+            >
+              فایل جدید
+            </button>
+            <button
+              className={`upload-modal-tab ${tab === TABS.DATABASE ? 'upload-modal-tab--active' : ''}`}
+              onClick={() => setTab(TABS.DATABASE)}
+            >
+              پایگاه داده
+            </button>
+          </div>
+
+          <button className="upload-modal-close-btn" onClick={onClose} aria-label="بستن">
+            ×
+          </button>
         </div>
 
-        <div className="form-group">
-          <label>فایل CSV رزیدنت‌ها (اختیاری):</label>
-          <input
-            type="file"
-            accept=".csv"
-            onChange={(e) => handleFileChange(e, 'residents')}
-          />
+        <div className="upload-modal-body custom-scrollbar">
+          {tab === TABS.UPLOAD ? (
+            <>
+              <section className="upload-modal-section glass u-container">
+                <div className="upload-modal-section-title">فایل اکسل وضعیت پرونده‌ها</div>
+                <div
+                  className={`upload-modal-dropzone ${dragExcel ? 'upload-modal-dropzone--active' : ''}`}
+                  {...dropzoneProps('excel')}
+                >
+                  <div>برای انتخاب فایل کلیک کنید یا فایل را اینجا رها کنید</div>
+                  <div className="upload-modal-dropzone__hint">فرمت مجاز: xlsx / xls</div>
+                  {excelFile && <div className="upload-modal-dropzone__filename">{excelFile.name}</div>}
+                  {parsing && <div className="upload-modal-dropzone__hint">در حال پردازش...</div>}
+                </div>
+                <input
+                  ref={excelInputRef}
+                  type="file"
+                  accept=".xlsx,.xls"
+                  style={{ display: 'none' }}
+                  onChange={(e) => handleExcelFile(e.target.files?.[0])}
+                />
+              </section>
+
+              <section className="upload-modal-section glass u-container">
+                <div className="upload-modal-section-title">فایل CSV رزیدنت‌ها (اختیاری)</div>
+                <div
+                  className={`upload-modal-dropzone upload-modal-dropzone--compact ${dragResidents ? 'upload-modal-dropzone--active' : ''}`}
+                  {...dropzoneProps('residents')}
+                >
+                  <div>برای انتخاب فایل کلیک کنید یا فایل را اینجا رها کنید</div>
+                  <div className="upload-modal-dropzone__hint">فرمت مجاز: csv</div>
+                  {residentsFile && <div className="upload-modal-dropzone__filename">{residentsFile.name}</div>}
+                </div>
+                <input
+                  ref={residentsInputRef}
+                  type="file"
+                  accept=".csv"
+                  style={{ display: 'none' }}
+                  onChange={(e) => handleResidentsFile(e.target.files?.[0])}
+                />
+                {residentsList.length > 0 && (
+                  <ResidentsTable
+                    rows={residentsList}
+                    onRowChange={(idx, buffer) =>
+                      setResidentsList(prev => prev.map((r, i) => (i === idx ? { ...r, ...buffer } : r)))
+                    }
+                    onRowRemove={(idx) => setResidentsList(prev => prev.filter((_, i) => i !== idx))}
+                  />
+                )}
+              </section>
+
+              <PreviewTable
+                title="پیش‌نمایش فراگیران"
+                rows={previewResidents}
+                onRowChange={(idx, buffer) =>
+                  setPreviewResidents(prev => prev.map((r, i) => (i === idx ? { ...r, ...buffer } : r)))
+                }
+                onRowRemove={(idx) => setPreviewResidents(prev => prev.filter((_, i) => i !== idx))}
+              />
+
+              <PreviewTable
+                title="پیش‌نمایش هیئت علمی"
+                rows={previewFaculty}
+                onRowChange={(idx, buffer) =>
+                  setPreviewFaculty(prev => prev.map((r, i) => (i === idx ? { ...r, ...buffer } : r)))
+                }
+                onRowRemove={(idx) => setPreviewFaculty(prev => prev.filter((_, i) => i !== idx))}
+              />
+
+              {error && <div className="upload-modal-error u-container">{error}</div>}
+            </>
+          ) : (
+            <section className="upload-modal-section glass u-container">
+              <div className="upload-modal-section-title">بازه‌های زمانی ذخیره‌شده</div>
+              {(!snapshots || snapshots.length === 0) && (
+                <div className="upload-modal-empty">هیچ داده‌ای در پایگاه داده ذخیره نشده است.</div>
+              )}
+              {(snapshots || []).map((s) => (
+                <div key={s.id} className="upload-modal-dataset">
+                  <div>
+                    <div>{s.period}</div>
+                    <div className="upload-modal-dataset__meta">
+                      <span>شروع: {s.start_date || '—'}</span>
+                      <span>پایان: {s.end_date || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </section>
+          )}
         </div>
 
-        {error && (
-          <div className="error-msg" style={{ color: 'red', margin: '10px 0', fontSize: '14px' }}>
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="success-msg" style={{ color: 'green', margin: '10px 0', fontSize: '14px' }}>
-            داده‌ها با موفقیت در پایگاه داده ذخیره شد.
-          </div>
-        )}
-
-        <div
-          className="modal-actions"
-          style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}
-        >
-          <button onClick={onClose} disabled={loading}>
+        <div className="upload-modal-footer">
+          {success && <span className="upload-modal-saved">داده‌ها با موفقیت در پایگاه داده ذخیره شد.</span>}
+          <button className="upload-modal-btn upload-modal-btn--cancel" onClick={onClose} disabled={loading}>
             انصراف
           </button>
-
-          <button onClick={handleSubmit} disabled={loading || !excelFile}>
-            {loading ? 'در حال پردازش و ذخیره...' : 'ذخیره در پایگاه داده'}
+          <button
+            className="upload-modal-btn blue-glass upload-modal-btn--solid"
+            onClick={handleSubmit}
+            disabled={loading || parsing || !excelFile}
+          >
+            {loading ? 'در حال ذخیره‌سازی...' : 'ذخیره در پایگاه داده'}
           </button>
         </div>
       </div>
