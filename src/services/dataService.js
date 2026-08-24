@@ -25,3 +25,9 @@ export const fetchDashboardData = async (period) => {
   if (!res.ok) throw new Error('خطا در دریافت اطلاعات داشبورد');
   return res.json();
 };
+
+export const fetchResidents = async (period) => {
+  const res = await fetch(`${API_BASE}/api/residents/${period}`);
+  if (!res.ok) return [];
+  return res.json();
+};

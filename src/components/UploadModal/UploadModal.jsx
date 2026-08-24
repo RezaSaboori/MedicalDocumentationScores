@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { uploadDataToServer } from '../../services/dataService';
+import { uploadDataToServer, fetchResidents } from '../../services/dataService';
 import { parseAndProcessExcel, parseResidentsCSV } from '../../utils/excelPipeline';
 import { useDashboard } from '../../context/DashboardContext';
 import PreviewTable from './PreviewTable';
@@ -28,6 +28,13 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [dbResidents, setDbResidents] = useState([]);
+
+  useEffect(() => {
+    if (tab === TABS.DATABASE && selectedPeriod) {
+      fetchResidents(selectedPeriod).then(setDbResidents);
+    }
+  }, [tab, selectedPeriod]);
 
   const excelInputRef = useRef(null);
   const residentsInputRef = useRef(null);
@@ -99,6 +106,7 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
         period: processed.period,
         startDate: processed.startDate,
         endDate: processed.endDate,
+        residentsList: residentsList,
       });
 
       setSuccess(true);
@@ -250,6 +258,30 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
                   </div>
                 </div>
               ))}
+
+              {dbResidents.length > 0 && (
+                <section className="upload-modal-section glass u-container" style={{ marginTop: 'var(--spacing-lg)' }}>
+                  <div className="upload-modal-section-title">لیست رزیدنت‌های این بازه ({dbResidents.length})</div>
+                  <div className="upload-modal-table-wrapper custom-scrollbar">
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>نام</th>
+                          <th>سال دستیاری</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dbResidents.map((r, i) => (
+                          <tr key={i}>
+                            <td>{r.name}</td>
+                            <td>{r.year || '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
             </section>
           )}
         </div>

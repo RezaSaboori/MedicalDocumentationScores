@@ -32,6 +32,14 @@ export const initializeDB = () => {
       FOREIGN KEY(snapshot_id) REFERENCES snapshots(id)
     );
 
+    CREATE TABLE IF NOT EXISTS residents (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      snapshot_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      year TEXT,
+      FOREIGN KEY(snapshot_id) REFERENCES snapshots(id)
+    );
+
     CREATE TABLE IF NOT EXISTS aggregated_scores (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       snapshot_id INTEGER NOT NULL,

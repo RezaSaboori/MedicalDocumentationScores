@@ -81,6 +81,7 @@ export const DashboardProvider = ({ children }) => {
 
       return {
         ...row,
+        flags: row.flags || 'OK',
         rho_Z: row.Z / N_safe,
         rho_F: row.F / N_safe,
         COV: row.COV_adj || row.D / (row.V || 1),

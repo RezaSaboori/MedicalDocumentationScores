@@ -10,12 +10,8 @@ export const useModeIndicator = (containerRef, activeModeId, deps = []) => {
         ? container.querySelector(`#${activeModeId}`)
         : null;
 
-      if (!activeItem) {
+      if (!activeItem || activeItem.offsetWidth === 0) {
         container.style.setProperty("--active-indicator-opacity", "0");
-        setTimeout(() => {
-          container.style.setProperty("--active-indicator-width", "0px");
-          container.style.setProperty("--active-indicator-left", "0px");
-        }, 200);
         return;
       }
 
@@ -24,10 +20,15 @@ export const useModeIndicator = (containerRef, activeModeId, deps = []) => {
       container.style.setProperty("--active-indicator-left", `${activeItem.offsetLeft}px`);
     };
 
-    updateActiveIndicator();
+    // Use requestAnimationFrame to ensure layout is complete before measuring
+    const rafId = requestAnimationFrame(() => {
+      updateActiveIndicator();
+    });
+
     window.addEventListener("resize", updateActiveIndicator);
 
     return () => {
+      cancelAnimationFrame(rafId);
       window.removeEventListener("resize", updateActiveIndicator);
     };
   }, [activeModeId, containerRef, ...deps]);

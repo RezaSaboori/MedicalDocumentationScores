@@ -43,7 +43,12 @@ export const createRouter = (db) => {
           );
         }
 
-        const aggStmt = db.prepare(`
+      const residentsStmt = db.prepare('INSERT INTO residents (snapshot_id, name, year) VALUES (?, ?, ?)');
+      for (const res of (req.body.residentsList || [])) {
+        residentsStmt.run(snapshotId, res.name, res.year || null);
+      }
+
+      const aggStmt = db.prepare(`
           INSERT INTO aggregated_scores 
           (snapshot_id, category, name, faculty, section, group_fa, members_count, review_sign, V, D, C, U, avg_chars, avg_words, E, G, A, W, F, Z, W2, W1, combo_status, supervision_rate, quality_score, density_score, start_date, end_date, WQS_adj, COV_adj, LAQ, INT, PDI, PDI_noF, flags)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -99,6 +104,14 @@ export const createRouter = (db) => {
       current: { snapshot: currentSnapshot, data: currentData },
       previous: previousSnapshot ? { snapshot: previousSnapshot, data: previousData } : null
     });
+  });
+
+  router.get('/api/residents/:period', (req, res) => {
+    const { period } = req.params;
+    const snapshot = db.prepare('SELECT id FROM snapshots WHERE period = ?').get(period);
+    if (!snapshot) return res.json([]);
+    const residents = db.prepare('SELECT name, year FROM residents WHERE snapshot_id = ?').all(snapshot.id);
+    res.json(residents);
   });
 
   return router;
