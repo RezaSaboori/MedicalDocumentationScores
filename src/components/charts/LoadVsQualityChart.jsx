@@ -29,6 +29,20 @@ const LoadVsQualityChart = () => {
   );
 
   const maxN = useMemo(() => Math.max(1, ...d.map((r) => Number(r.N) || 0)), [d]);
+
+  const maxV = useMemo(() => Math.max(10, ...d.map((r) => Number(r.V) || 1)), [d]);
+
+  const xTickValues = useMemo(() => {
+    const limit = Math.ceil(maxV * 1.25);
+    const ticks = [];
+    for (let decade = 1; decade <= limit; decade *= 10) {
+      for (const m of [1, 2, 5]) {
+        const v = decade * m;
+        if (v <= limit) ticks.push(v);
+      }
+    }
+    return ticks;
+  }, [maxV]);
   const meanQ = useMemo(
     () => (d.length ? d.reduce((s, r) => s + (r.WQS_adj || 0), 0) / d.length : 0),
     [d]
@@ -65,7 +79,7 @@ const LoadVsQualityChart = () => {
       <div className="lvq-body" dir="ltr" style={{ height: 420 }}>
         <ResponsiveScatterPlot
           data={series}
-          xScale={{ type: 'log', base: 10, min: 1, max: 'auto' }}
+          xScale={{ type: 'log', base: 10, min: 1, max: Math.ceil(maxV * 1.25) }}
           yScale={{ type: 'linear', min: 'auto', max: 'auto' }}
           margin={{ top: 16, right: 24, bottom: 64, left: 64 }}
           colors={({ serieId }) => colorByGroup.get(serieId) ?? '#1f77b4'}
@@ -79,6 +93,7 @@ const LoadVsQualityChart = () => {
             legend: 'تعداد ویزیت (مقیاس لگاریتمی)',
             legendPosition: 'middle',
             legendOffset: 46,
+            tickValues: xTickValues,
           }}
           axisLeft={{
             legend: 'شاخص کیفیت وزن‌دار تعدیل‌شده (WQS_adj)',
