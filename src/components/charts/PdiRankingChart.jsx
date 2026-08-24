@@ -18,7 +18,7 @@ const PdiRankingChart = () => {
       .sort((a, b) => a.PDI - b.PDI)
       .map(row => ({
         name: row.name, PDI: row.PDI, group_fa: row.group_fa, V: row.V, LAQ: row.LAQ,
-        color: '#1f77b4',
+        color: GROUP_COLOR_MAP[row.group_fa] || '#1f77b4',
       }));
   }, [d]);
 
@@ -35,13 +35,13 @@ const PdiRankingChart = () => {
           labelSkipWidth={12} labelSkipHeight={12} labelTextColor="#ffffff"
           tooltip={({ data }) => (
             <ChartTooltip title={data.name} rows={[
-              { label: 'ویزیت', value: formatNumber(data.V) },
+              { label: 'گروه', value: data.group_fa }, { label: 'ویزیت', value: formatNumber(data.V) },
               { label: 'LAQ', value: data.LAQ?.toFixed(2) }, { label: 'PDI', value: data.PDI.toFixed(1) },
             ]} />
           )}
         />
       </div>
-      <ChartLegend items={[{ label: 'همه', color: '#1f77b4' }]} />
+      <ChartLegend items={[...new Set(chartData.map(r => r.group_fa))].map(g => ({ label: g, color: GROUP_COLOR_MAP[g] }))} />
     </div>
   );
 };

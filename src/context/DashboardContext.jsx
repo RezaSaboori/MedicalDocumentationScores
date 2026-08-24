@@ -79,11 +79,22 @@ export const DashboardProvider = ({ children }) => {
 
       const N_safe = N || 1;
 
+      const flagList = String(row.flags || 'OK').split('|');
+      const highF = flagList.includes('INTEGRITY_AUDIT');
+      const highZ = flagList.includes('ENGAGEMENT_TRAINING');
+
+      const group_fa =
+        highF && highZ ? 'بحرانی (هر دو)' :
+        highF ? 'مشکوک به داده کاذب' :
+        highZ ? 'کم‌حوصله' :
+        'سالم';
+
       return {
         ...row,
         N,
         N_noF: N - (row.F || 0),
         flags: row.flags || 'OK',
+        group_fa,
         rho_Z: row.Z / N_safe,
         rho_F: row.F / N_safe,
         COV: row.COV_adj || row.D / (row.V || 1),

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
 import { ResponsiveScatterPlot } from '@nivo/scatterplot';
 import { useDashboard } from '../../context/DashboardContext';
+import { GROUP_COLOR_MAP } from '../../utils/flags';
 import BubbleNodesLayer from './BubbleNodesLayer';
 import ChartLegend from './ChartLegend';
 import './IntegrityMapChart.css';
@@ -33,10 +34,14 @@ const IntegrityMapChart = () => {
     console.info('[IntegrityMap] data sample:', d.slice(0, 3).map((r) => ({ name: r.name, V: r.V, N: r.N })));
   }, [d]);
 
-  const series = useMemo(
-    () => [{ id: 'all', data: d.map((row) => ({ ...row, x: row.rho_Z, y: row.rho_F })) }],
-    [d]
-  );
+  const series = useMemo(() => {
+    const byGroup = new Map();
+    d.forEach((row) => {
+      if (!byGroup.has(row.group_fa)) byGroup.set(row.group_fa, []);
+      byGroup.get(row.group_fa).push({ ...row, x: row.rho_Z, y: row.rho_F });
+    });
+    return [...byGroup.entries()].map(([id, points]) => ({ id, data: points }));
+  }, [d]);
 
   const maxV = useMemo(() => Math.max(1, ...d.map((r) => Number(r.V) || 0)), [d]);
 
@@ -51,7 +56,7 @@ const IntegrityMapChart = () => {
           xScale={{ type: 'linear', min: 0, max: 1 }}
           yScale={{ type: 'linear', min: 0, max: 0.5 }}
           margin={{ top: 16, right: 24, bottom: 64, left: 64 }}
-          colors={() => '#1f77b4'}
+          colors={({ serieId }) => GROUP_COLOR_MAP[serieId] ?? '#1f77b4'}
           layers={[
             'grid',
             'axes',
@@ -72,7 +77,7 @@ const IntegrityMapChart = () => {
           }}
         />
       </div>
-      <ChartLegend items={[{ label: 'همه', color: '#1f77b4' }]} />
+      <ChartLegend items={series.map((s) => ({ label: s.id, color: GROUP_COLOR_MAP[s.id] }))} />
     </div>
   );
 };
