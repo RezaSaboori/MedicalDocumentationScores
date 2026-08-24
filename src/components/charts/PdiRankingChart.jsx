@@ -39,20 +39,24 @@ const PdiRankingChart = () => {
             'bars',
             (layerProps) => (
               <g key="value-labels">
-                {layerProps.bars.map((bar) => (
-                  <text
-                    key={bar.key}
-                    x={bar.x + bar.width + 6}
-                    y={bar.y + bar.height / 2}
-                    dominantBaseline="central"
-                    textAnchor="start"
-                    fontSize={11}
-                    fontWeight={600}
-                    fill="var(--color-gray12)"
-                  >
-                    {parseFloat(Number(bar.value).toFixed(2))}
-                  </text>
-                ))}
+                {layerProps.bars.map((bar) => {
+                  const val = Number(bar.data?.PDI ?? bar.data?.data?.PDI ?? bar.value);
+                  if (isNaN(val)) return null;
+                  return (
+                    <text
+                      key={bar.key}
+                      x={bar.x + bar.width + 6}
+                      y={bar.y + bar.height / 2}
+                      dominantBaseline="central"
+                      textAnchor="start"
+                      fontSize={11}
+                      fontWeight={600}
+                      fill="var(--color-gray12)"
+                    >
+                      {parseFloat(val.toFixed(2))}
+                    </text>
+                  );
+                })}
               </g>
             ),
           ]}
