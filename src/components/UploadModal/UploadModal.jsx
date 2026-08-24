@@ -9,7 +9,7 @@ import './UploadModal.css';
 const TABS = { UPLOAD: 'upload', DATABASE: 'database' };
 
 export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }) => {
-  const { refresh, snapshots } = useDashboard();
+  const { refresh, snapshots, selectedPeriod } = useDashboard();
 
   const [tab, setTab] = useState(TABS.UPLOAD);
 
