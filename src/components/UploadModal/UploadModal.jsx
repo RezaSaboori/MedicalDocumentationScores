@@ -47,6 +47,29 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
 
   const visible = isOpen === undefined ? true : Boolean(isOpen);
 
+  // ── UNCONDITIONAL HOOKS (Rules of Hooks compliance) ──────────────────────
+
+  const datasetYears = useMemo(
+    () => [...new Set((snapshots || []).map(s => String(s.period).split('/')[0]))].sort(),
+    [snapshots]
+  );
+
+  const datasetMonths = useMemo(() => {
+    const list = (snapshots || []).filter(s => yearFilter === 'all' || String(s.period).startsWith(`${yearFilter}/`));
+    return [...new Set(list.map(s => String(s.period).split('/')[1]))].sort();
+  }, [snapshots, yearFilter]);
+
+  const filteredSnapshots = useMemo(
+    () =>
+      (snapshots || []).filter(s => {
+        const [y, m] = String(s.period).split('/');
+        if (yearFilter !== 'all' && y !== yearFilter) return false;
+        if (monthFilter !== 'all' && m !== monthFilter) return false;
+        return true;
+      }),
+    [snapshots, yearFilter, monthFilter]
+  );
+
   // Lock page scroll while the modal is open
   useEffect(() => {
     if (!visible) return undefined;
@@ -69,7 +92,10 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
+  // ── EARLY RETURN ─────────────────────────────────────────────────────────
   if (!visible) return null;
+
+  // ── HANDLERS ─────────────────────────────────────────────────────────────
 
   const applyProcessed = (result) => {
     setProcessed(result);
@@ -177,27 +203,6 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
     }
   };
 
-  const datasetYears = useMemo(
-    () => [...new Set((snapshots || []).map(s => String(s.period).split('/')[0]))].sort(),
-    [snapshots]
-  );
-
-  const datasetMonths = useMemo(() => {
-    const list = (snapshots || []).filter(s => yearFilter === 'all' || String(s.period).startsWith(`${yearFilter}/`));
-    return [...new Set(list.map(s => String(s.period).split('/')[1]))].sort();
-  }, [snapshots, yearFilter]);
-
-  const filteredSnapshots = useMemo(
-    () =>
-      (snapshots || []).filter(s => {
-        const [y, m] = String(s.period).split('/');
-        if (yearFilter !== 'all' && y !== yearFilter) return false;
-        if (monthFilter !== 'all' && m !== monthFilter) return false;
-        return true;
-      }),
-    [snapshots, yearFilter, monthFilter]
-  );
-
   const yearOptions = ['همه سال‌ها', ...datasetYears.map(y => `سال ${y}`)];
   const monthOptions = ['همه ماه‌ها', ...datasetMonths.map(m => `ماه ${m}`)];
   const yearValue = yearFilter === 'all' ? 'همه سال‌ها' : `سال ${yearFilter}`;
@@ -207,6 +212,7 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
     setYearFilter(val === 'همه سال‌ها' ? 'all' : val.replace('سال ', ''));
     setMonthFilter('all');
   };
+  
   const handleMonthChange = (val) => {
     setMonthFilter(val === 'همه ماه‌ها' ? 'all' : val.replace('ماه ', ''));
   };
