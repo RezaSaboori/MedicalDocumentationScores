@@ -30,7 +30,6 @@ const BubbleNodesLayer = ({ nodes, sizeKey, maxValue, minR = 4, maxR = 17.5 }) =
 
   const handleMove = (event, node) => {
     const name = readField(node, 'name') ?? '';
-    const group = readField(node, 'group_fa') ?? '';
     const v = Number(readField(node, 'V')) || 0;
     const n = Number(readField(node, 'N')) || 0;
     const pdi = readField(node, 'PDI');
@@ -39,7 +38,6 @@ const BubbleNodesLayer = ({ nodes, sizeKey, maxValue, minR = 4, maxR = 17.5 }) =
       <ChartTooltip
         title={name}
         rows={[
-          { label: 'گروه', value: group },
           { label: 'ویزیت', value: v.toLocaleString('en-US') },
           { label: 'پرونده طبقه‌بندی‌شده', value: n.toLocaleString('en-US') },
           ...(pdi !== undefined ? [{ label: 'PDI', value: Number(pdi).toFixed(1) }] : []),

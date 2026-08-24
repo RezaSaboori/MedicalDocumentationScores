@@ -81,6 +81,8 @@ export const DashboardProvider = ({ children }) => {
 
       return {
         ...row,
+        N,
+        N_noF: N - (row.F || 0),
         flags: row.flags || 'OK',
         rho_Z: row.Z / N_safe,
         rho_F: row.F / N_safe,

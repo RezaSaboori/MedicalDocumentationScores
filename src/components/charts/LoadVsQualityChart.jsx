@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { ResponsiveScatterPlot } from '@nivo/scatterplot';
 import { useDashboard } from '../../context/DashboardContext';
-import { GROUP_COLOR_MAP } from '../../utils/flags';
 import BubbleNodesLayer from './BubbleNodesLayer';
 import ChartLegend from './ChartLegend';
 import './LoadVsQualityChart.css';
@@ -15,14 +14,10 @@ const LoadVsQualityChart = () => {
     console.info('[LoadVsQuality] data sample:', d.slice(0, 3).map((r) => ({ name: r.name, V: r.V, N: r.N })));
   }, [d]);
 
-  const series = useMemo(() => {
-    const byGroup = new Map();
-    d.forEach((row) => {
-      if (!byGroup.has(row.group_fa)) byGroup.set(row.group_fa, []);
-      byGroup.get(row.group_fa).push({ ...row, x: Math.max(row.V, 1), y: row.WQS_adj });
-    });
-    return [...byGroup.entries()].map(([id, points]) => ({ id, data: points }));
-  }, [d]);
+  const series = useMemo(
+    () => [{ id: 'all', data: d.map((row) => ({ ...row, x: Math.max(row.V, 1), y: row.WQS_adj })) }],
+    [d]
+  );
 
   const maxN = useMemo(() => Math.max(1, ...d.map((r) => Number(r.N) || 0)), [d]);
   const meanQ = useMemo(
@@ -64,7 +59,7 @@ const LoadVsQualityChart = () => {
           xScale={{ type: 'log', base: 10, max: 'auto' }}
           yScale={{ type: 'linear', min: 'auto', max: 'auto' }}
           margin={{ top: 16, right: 24, bottom: 64, left: 64 }}
-          colors={({ serieId }) => GROUP_COLOR_MAP[serieId] ?? '#1f77b4'}
+          colors={() => '#1f77b4'}
           layers={[
             'grid',
             'axes',
@@ -83,7 +78,7 @@ const LoadVsQualityChart = () => {
           }}
         />
       </div>
-      <ChartLegend items={series.map((s) => ({ label: s.id, color: GROUP_COLOR_MAP[s.id] }))} />
+      <ChartLegend items={[{ label: 'همه', color: '#1f77b4' }]} />
     </div>
   );
 };
