@@ -61,7 +61,7 @@ const LoadVsQualityChart = () => {
       <div className="lvq-body" dir="ltr" style={{ height: 420 }}>
         <ResponsiveScatterPlot
           data={series}
-          xScale={{ type: 'log', base: 10, max: 'auto' }}
+          xScale={{ type: 'log', base: 10, min: 1, max: 'auto' }}
           yScale={{ type: 'linear', min: 'auto', max: 'auto' }}
           margin={{ top: 16, right: 24, bottom: 64, left: 64 }}
           colors={({ serieId }) => GROUP_COLOR_MAP[serieId] ?? '#1f77b4'}

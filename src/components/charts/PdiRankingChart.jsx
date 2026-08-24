@@ -28,11 +28,34 @@ const PdiRankingChart = () => {
       <div className="pdi-body" style={{ minHeight: `${Math.max(400, chartData.length * 24)}px` }}>
         <ResponsiveBar
           data={chartData} keys={['PDI']} indexBy="name" layout="horizontal"
-          margin={{ top: 10, right: 40, bottom: 40, left: 140 }} padding={0.2}
+          margin={{ top: 10, right: 56, bottom: 40, left: 140 }} padding={0.2}
           colors={({ data }) => data.color}
           axisBottom={{ legend: 'PDI', legendPosition: 'middle', legendOffset: 30 }}
           axisLeft={{ tickSize: 0, tickPadding: 12 }}
-          labelSkipWidth={12} labelSkipHeight={12} labelTextColor="#ffffff"
+          label={() => ''}
+          layers={[
+            'grid',
+            'axes',
+            'bars',
+            (layerProps) => (
+              <g key="value-labels">
+                {layerProps.bars.map((bar) => (
+                  <text
+                    key={bar.key}
+                    x={bar.x + bar.width + 6}
+                    y={bar.y + bar.height / 2}
+                    dominantBaseline="central"
+                    textAnchor="start"
+                    fontSize={11}
+                    fontWeight={600}
+                    fill="var(--color-gray12)"
+                  >
+                    {parseFloat(Number(bar.value).toFixed(2))}
+                  </text>
+                ))}
+              </g>
+            ),
+          ]}
           tooltip={({ data }) => (
             <ChartTooltip title={data.name} rows={[
               { label: 'گروه', value: data.group_fa }, { label: 'ویزیت', value: formatNumber(data.V) },
