@@ -18,7 +18,7 @@ const PdiRankingChart = () => {
       .sort((a, b) => a.PDI - b.PDI)
       .map(row => ({
         name: row.name, PDI: row.PDI, group_fa: row.group_fa, V: row.V, LAQ: row.LAQ,
-        color: GROUP_COLOR_MAP[row.group_fa] || '#1f77b4',
+        color: row.group_color || '#1f77b4',
       }));
   }, [d]);
 
@@ -68,7 +68,7 @@ const PdiRankingChart = () => {
           )}
         />
       </div>
-      <ChartLegend items={[...new Set(chartData.map(r => r.group_fa))].map(g => ({ label: g, color: GROUP_COLOR_MAP[g] }))} />
+      <ChartLegend items={[...new Map(chartData.map(r => [r.group_fa, r.color])).entries()].map(([label, color]) => ({ label, color }))} />
     </div>
   );
 };

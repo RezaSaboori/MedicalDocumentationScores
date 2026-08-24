@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { fetchDashboardData, fetchSnapshots } from '../services/dataService';
 import { DASHBOARD_MODES, BASE_FLAG_FA } from '../utils/constants';
+import { flagGroupLabel, flagGroupColor } from '../utils/flagGroups';
 
 const DashboardContext = createContext(null);
 
@@ -79,15 +80,8 @@ export const DashboardProvider = ({ children }) => {
 
       const N_safe = N || 1;
 
-      const flagList = String(row.flags || 'OK').split('|');
-      const highF = flagList.includes('INTEGRITY_AUDIT');
-      const highZ = flagList.includes('ENGAGEMENT_TRAINING');
-
-      const group_fa =
-        highF && highZ ? 'بحرانی (هر دو)' :
-        highF ? 'مشکوک به داده کاذب' :
-        highZ ? 'کم‌حوصله' :
-        'سالم';
+      const group_fa = flagGroupLabel(row.flags);
+      const group_color = flagGroupColor(row.flags);
 
       return {
         ...row,
@@ -95,6 +89,7 @@ export const DashboardProvider = ({ children }) => {
         N_noF: N - (row.F || 0),
         flags: row.flags || 'OK',
         group_fa,
+        group_color,
         rho_Z: row.Z / N_safe,
         rho_F: row.F / N_safe,
         COV: row.COV_adj || row.D / (row.V || 1),

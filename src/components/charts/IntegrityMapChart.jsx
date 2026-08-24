@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { ResponsiveScatterPlot } from '@nivo/scatterplot';
 import { useDashboard } from '../../context/DashboardContext';
-import { GROUP_COLOR_MAP } from '../../utils/flags';
 import BubbleNodesLayer from './BubbleNodesLayer';
 import ChartLegend from './ChartLegend';
 import './IntegrityMapChart.css';
@@ -43,6 +42,11 @@ const IntegrityMapChart = () => {
     return [...byGroup.entries()].map(([id, points]) => ({ id, data: points }));
   }, [d]);
 
+  const colorByGroup = useMemo(
+    () => new Map(d.map((r) => [r.group_fa, r.group_color])),
+    [d]
+  );
+
   const maxV = useMemo(() => Math.max(1, ...d.map((r) => Number(r.V) || 0)), [d]);
 
   const percentTick = (value) => `${Math.round(value * 100)}٪`;
@@ -56,7 +60,7 @@ const IntegrityMapChart = () => {
           xScale={{ type: 'linear', min: 0, max: 1 }}
           yScale={{ type: 'linear', min: 0, max: 0.5 }}
           margin={{ top: 16, right: 24, bottom: 64, left: 64 }}
-          colors={({ serieId }) => GROUP_COLOR_MAP[serieId] ?? '#1f77b4'}
+          colors={({ serieId }) => colorByGroup.get(serieId) ?? '#1f77b4'}
           layers={[
             'grid',
             'axes',
@@ -77,7 +81,7 @@ const IntegrityMapChart = () => {
           }}
         />
       </div>
-      <ChartLegend items={series.map((s) => ({ label: s.id, color: GROUP_COLOR_MAP[s.id] }))} />
+      <ChartLegend items={series.map((s) => ({ label: s.id, color: colorByGroup.get(s.id) }))} />
     </div>
   );
 };
