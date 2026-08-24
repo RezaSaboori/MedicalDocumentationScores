@@ -51,6 +51,7 @@
   justify-content: space-between;
   gap: var(--spacing-md);
   padding: var(--spacing-sm);
+  position: relative;
 }
 
 .upload-modal-title {
@@ -62,6 +63,10 @@
 
 /* Toggle lives inside the header now */
 .upload-modal-tablist {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   flex: 0 1 22rem;
   min-width: 13rem;
   display: flex;
@@ -71,6 +76,38 @@
   padding: 4px;
   border-radius: var(--border-radius-pill);
   box-sizing: border-box;
+  isolation: isolate;
+}
+
+/* Blue-glass sliding indicator — identical to mode-toggle */
+.upload-modal-tablist::after {
+  content: "";
+  position: absolute;
+  top: 10%;
+  height: 80%;
+  left: 0;
+  width: var(--active-indicator-width, 0px);
+  transform: translateX(var(--active-indicator-left, 0px));
+  opacity: var(--active-indicator-opacity, 0);
+  transition:
+    transform var(--motion-duration-slow) var(--motion-easing-easeInOut),
+    width var(--motion-duration-slow) var(--motion-easing-easeInOut),
+    opacity var(--motion-duration-normal) var(--motion-easing-easeInOut);
+  display: block;
+  border-radius: var(--border-radius-pill);
+  background-color: color-mix(in srgb, var(--color-blue) 80%, transparent);
+  z-index: -1;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, #01eeff 20%, transparent),
+    inset 2px 1px 0px -1px color-mix(in srgb, #01eeff 90%, transparent),
+    inset -1.5px -1px 0px -1px color-mix(in srgb, #01eeff 80%, transparent),
+    inset -2px -6px 1px -5px color-mix(in srgb, #01eeff 60%, transparent),
+    inset -1px 2px 3px -1px color-mix(in srgb, #001130 25%, transparent),
+    inset 0px -4px 1px -2px color-mix(in srgb, #000820 15%, transparent),
+    inset 0px 3px 6px 0px color-mix(in srgb, #000820 10%, transparent);
+}
+.dark .upload-modal-tablist::after {
+  background-color: color-mix(in srgb, var(--color-blue) 90%, transparent);
 }
 
 .upload-modal-tab {
@@ -355,6 +392,24 @@
   border: var(--border-width-hairline) solid color-mix(in srgb, var(--color-gray8) 25%, transparent);
   font-size: var(--font-size-sm);
 }
+.upload-modal-dataset-filters {
+  width: 100%;
+  display: flex;
+  gap: var(--spacing-sm);
+}
+.upload-modal-dataset-filters > * { flex: 1; }
+
+.upload-modal-dataset--btn {
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  text-align: right;
+  cursor: pointer;
+}
+.upload-modal-dataset--btn:hover {
+  border-color: var(--color-blue);
+}
+
 .upload-modal-dataset__meta {
   display: flex;
   gap: var(--spacing-sm);

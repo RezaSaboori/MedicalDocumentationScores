@@ -128,9 +128,8 @@ export const createRouter = (db) => {
 
     db.exec('BEGIN TRANSACTION');
     try {
-      const stmt = db.prepare(
-        'INSERT INTO residents_master (name, year) VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET year = excluded.year'
-      );
+      db.exec('DELETE FROM residents_master');
+      const stmt = db.prepare('INSERT INTO residents_master (name, year) VALUES (?, ?)');
       for (const res of list) {
         stmt.run(res.name, res.year || null);
       }

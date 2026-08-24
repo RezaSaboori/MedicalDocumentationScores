@@ -28,12 +28,17 @@ const DashboardLayout = () => {
     <div className="page-content dashboard-wrapper">
       <div className="dashboard-header">
         <ModeToggle mode={mode} onModeChange={setMode} busy={loading} />
-        <button 
+        <button
           onClick={() => setIsUploadModalOpen(true)}
-          className="btn btn-primary"
-          style={{ marginRight: '1rem', padding: '0.5rem 1rem', borderRadius: '5remn', background: 'var(--color-primary, #2563eb)', color: 'white', border: 'none', cursor: 'pointer' }}
+          className="upload-fab glass"
+          title="بارگذاری فایل جدید"
+          aria-label="بارگذاری فایل جدید"
         >
-          بارگذاری فایل جدید
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <ellipse cx="12" cy="5" rx="9" ry="3" />
+            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+          </svg>
         </button>
       </div>
 

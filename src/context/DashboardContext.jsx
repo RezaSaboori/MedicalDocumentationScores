@@ -190,6 +190,7 @@ export const DashboardProvider = ({ children }) => {
     setSelectedPeriod,
     refresh,
     refreshResidentsMaster,
+    residentsMaster,
   };
 
   return <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>;
