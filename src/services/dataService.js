@@ -31,3 +31,22 @@ export const fetchResidents = async (period) => {
   if (!res.ok) return [];
   return res.json();
 };
+
+export const fetchResidentsMaster = async () => {
+  const res = await fetch(`${API_BASE}/api/residents-master`);
+  if (!res.ok) return [];
+  return res.json();
+};
+
+export const saveResidentsMaster = async (list) => {
+  const res = await fetch(`${API_BASE}/api/residents-master`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ residentsList: list }),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || 'خطا در ذخیره‌سازی لیست رزیدنت‌ها');
+  }
+  return res.json();
+};

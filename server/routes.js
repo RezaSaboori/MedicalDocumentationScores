@@ -44,8 +44,12 @@ export const createRouter = (db) => {
         }
 
       const residentsStmt = db.prepare('INSERT INTO residents (snapshot_id, name, year) VALUES (?, ?, ?)');
+      const masterUpsertStmt = db.prepare(
+        'INSERT INTO residents_master (name, year) VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET year = excluded.year'
+      );
       for (const res of (req.body.residentsList || [])) {
         residentsStmt.run(snapshotId, res.name, res.year || null);
+        masterUpsertStmt.run(res.name, res.year || null);
       }
 
       const aggStmt = db.prepare(`
@@ -112,6 +116,30 @@ export const createRouter = (db) => {
     if (!snapshot) return res.json([]);
     const residents = db.prepare('SELECT name, year FROM residents WHERE snapshot_id = ?').all(snapshot.id);
     res.json(residents);
+  });
+
+  router.get('/api/residents-master', (req, res) => {
+    const rows = db.prepare('SELECT name, year FROM residents_master ORDER BY name').all();
+    res.json(rows);
+  });
+
+  router.post('/api/residents-master', (req, res) => {
+    const list = Array.isArray(req.body) ? req.body : req.body.residentsList || [];
+
+    db.exec('BEGIN TRANSACTION');
+    try {
+      const stmt = db.prepare(
+        'INSERT INTO residents_master (name, year) VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET year = excluded.year'
+      );
+      for (const res of list) {
+        stmt.run(res.name, res.year || null);
+      }
+      db.exec('COMMIT');
+      res.json({ success: true, count: list.length });
+    } catch (err) {
+      db.exec('ROLLBACK');
+      res.status(500).json({ error: err.message });
+    }
   });
 
   return router;

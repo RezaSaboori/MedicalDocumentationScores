@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { uploadDataToServer, fetchResidents } from '../../services/dataService';
+import { uploadDataToServer, fetchResidents, saveResidentsMaster } from '../../services/dataService';
 import { parseAndProcessExcel, parseResidentsCSV } from '../../utils/excelPipeline';
 import { useDashboard } from '../../context/DashboardContext';
 import PreviewTable from './PreviewTable';
@@ -9,7 +9,7 @@ import './UploadModal.css';
 const TABS = { UPLOAD: 'upload', DATABASE: 'database' };
 
 export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }) => {
-  const { refresh, snapshots, selectedPeriod } = useDashboard();
+  const { refresh, snapshots, selectedPeriod, refreshResidentsMaster } = useDashboard();
 
   const [tab, setTab] = useState(TABS.UPLOAD);
 
@@ -82,6 +82,14 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
     try {
       const list = await parseResidentsCSV(file);
       setResidentsList(list);
+
+      try {
+        await saveResidentsMaster(list);
+        if (refreshResidentsMaster) await refreshResidentsMaster();
+      } catch (err) {
+        setError(err.message || 'خطا در ذخیره‌سازی لیست رزیدنت‌ها در پایگاه داده.');
+      }
+
       if (excelFile) applyProcessed(await parseAndProcessExcel(excelFile, list));
     } catch (err) {
       setError(err.message || 'خطا در پردازش فایل CSV رزیدنت‌ها.');

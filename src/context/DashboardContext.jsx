@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
-import { fetchDashboardData, fetchSnapshots } from '../services/dataService';
+import { fetchDashboardData, fetchSnapshots, fetchResidentsMaster } from '../services/dataService';
 import { DASHBOARD_MODES, BASE_FLAG_FA } from '../utils/constants';
 import { flagGroupLabel, flagGroupColor } from '../utils/flagGroups';
 
@@ -8,6 +8,7 @@ const DashboardContext = createContext(null);
 export const DashboardProvider = ({ children }) => {
   const [snapshots, setSnapshots] = useState([]);
   const [selectedPeriod, setSelectedPeriod] = useState(null);
+  const [residentsMaster, setResidentsMaster] = useState([]);
 
   const [rawCurrentData, setRawCurrentData] = useState([]);
   const [rawPreviousData, setRawPreviousData] = useState([]);
@@ -39,9 +40,18 @@ export const DashboardProvider = ({ children }) => {
     }
   }, []);
 
+  const refreshResidentsMaster = useCallback(async () => {
+    try {
+      setResidentsMaster(await fetchResidentsMaster());
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
   useEffect(() => {
     refresh();
-  }, [refresh]);
+    refreshResidentsMaster();
+  }, [refresh, refreshResidentsMaster]);
 
   useEffect(() => {
     if (!selectedPeriod) {
@@ -66,8 +76,23 @@ export const DashboardProvider = ({ children }) => {
   const { data, availableYears } = useMemo(() => {
     const dbCategory = mode === DASHBOARD_MODES.RESIDENTS ? 'resident' : 'faculty';
 
-    const currentModeData = rawCurrentData.filter((d) => d.category === dbCategory);
-    const previousModeData = rawPreviousData.filter((d) => d.category === dbCategory);
+    const yearByName = new Map(
+      residentsMaster.map((r) => [String(r.name || '').replace(/\s+/g, ' ').trim(), r.year])
+    );
+
+    const attachYear = (row) =>
+      row.category === 'resident'
+        ? {
+            ...row,
+            year:
+              yearByName.get(String(row.name || '').replace(/\s+/g, ' ').trim()) ??
+              row.year ??
+              null,
+          }
+        : row;
+
+    const currentModeData = rawCurrentData.filter((d) => d.category === dbCategory).map(attachYear);
+    const previousModeData = rawPreviousData.filter((d) => d.category === dbCategory).map(attachYear);
 
     const enrichRow = (row) => {
       const N =
@@ -145,7 +170,7 @@ export const DashboardProvider = ({ children }) => {
       },
       availableYears: years,
     };
-  }, [rawCurrentData, rawPreviousData, mode, filters]);
+  }, [rawCurrentData, rawPreviousData, mode, filters, residentsMaster]);
 
   const updateFilters = (newFilters) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
@@ -164,6 +189,7 @@ export const DashboardProvider = ({ children }) => {
     selectedPeriod,
     setSelectedPeriod,
     refresh,
+    refreshResidentsMaster,
   };
 
   return <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>;
