@@ -21,7 +21,7 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
 
   const [tab, setTab] = useState(TABS.UPLOAD);
   const tablistRef = useRef(null);
-  useModeIndicator(tablistRef, `upload-tab-${tab}`, [tab]);
+  useModeIndicator(tablistRef, `upload-tab-${tab}`, [tab, visible]);
 
   const [excelFile, setExcelFile] = useState(null);
   const [processed, setProcessed] = useState(null);
@@ -39,6 +39,7 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
   const [dragResidents, setDragResidents] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [fetchingDataset, setFetchingDataset] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
@@ -81,7 +82,7 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
     };
   }, [visible]);
 
-  // Seed residents rows from the master registry on open
+  // Seed residents rows from the master registry on open & clear upload state
   useEffect(() => {
     if (visible) {
       setTab(TABS.UPLOAD);
@@ -89,6 +90,12 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
       setError(null);
       setSuccess(false);
       setOpenedPeriod(null);
+      
+      // Clear previous upload session data
+      setExcelFile(null);
+      setProcessed(null);
+      setPreviewResidents([]);
+      setPreviewFaculty([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
@@ -189,7 +196,7 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
   };
 
   const handleOpenDataset = async (period) => {
-    setLoading(true);
+    setFetchingDataset(true);
     setError(null);
     try {
       const result = await fetchDashboardData(period);
@@ -200,7 +207,7 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
     } catch (err) {
       setError(err.message || 'خطا در دریافت داده‌های بازه زمانی.');
     } finally {
-      setLoading(false);
+      setFetchingDataset(false);
     }
   };
 
@@ -312,8 +319,12 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
                 />
               </section>
 
-              <PreviewTable title="پیش‌نمایش فراگیران" rows={previewResidents} {...previewHandlers(setPreviewResidents)} />
-              <PreviewTable title="پیش‌نمایش هیئت علمی" rows={previewFaculty} {...previewHandlers(setPreviewFaculty)} />
+              {processed && (
+                <>
+                  <PreviewTable title="پیش‌نمایش فراگیران" rows={previewResidents} {...previewHandlers(setPreviewResidents)} />
+                  <PreviewTable title="پیش‌نمایش هیئت علمی" rows={previewFaculty} {...previewHandlers(setPreviewFaculty)} />
+                </>
+              )}
 
               {error && <div className="upload-modal-error u-container">{error}</div>}
             </>
@@ -346,7 +357,7 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
                 <div className="upload-modal-dataset-filters">
                   <DropdownInput
                     dir="rtl"
-                    busy={loading}
+                    busy={fetchingDataset}
                     options={yearOptions}
                     value={yearValue}
                     onChange={handleYearChange}
@@ -355,7 +366,7 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
                   />
                   <DropdownInput
                     dir="rtl"
-                    busy={loading}
+                    busy={fetchingDataset}
                     options={monthOptions}
                     value={monthValue}
                     onChange={handleMonthChange}
