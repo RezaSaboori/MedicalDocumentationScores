@@ -48,7 +48,8 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
   const visible = isOpen === undefined ? true : Boolean(isOpen);
 
   // ── UNCONDITIONAL HOOKS (Rules of Hooks compliance) ──────────────────────
-
+  // These MUST be declared before the early return `if (!visible) return null;`
+  
   const datasetYears = useMemo(
     () => [...new Set((snapshots || []).map(s => String(s.period).split('/')[0]))].sort(),
     [snapshots]
@@ -203,6 +204,7 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
     }
   };
 
+  // ── DERIVED VALUES (Safe to declare after early return) ──────────────────
   const yearOptions = ['همه سال‌ها', ...datasetYears.map(y => `سال ${y}`)];
   const monthOptions = ['همه ماه‌ها', ...datasetMonths.map(m => `ماه ${m}`)];
   const yearValue = yearFilter === 'all' ? 'همه سال‌ها' : `سال ${yearFilter}`;
@@ -244,6 +246,7 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
     onRowRemove: (idx) => setter(prev => prev.filter((_, i) => i !== idx)),
   });
 
+  // ── RENDER ───────────────────────────────────────────────────────────────
   return (
     <div className="upload-modal-overlay">
       <div className="upload-modal-backdrop" onClick={onClose} />
