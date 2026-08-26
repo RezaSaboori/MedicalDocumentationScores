@@ -24,64 +24,139 @@
   font-size: var(--font-size-sm);
 }
 
-.qm-chart-wrapper {
-  position: relative;
-  width: 100%;
-  height: var(--qm-chart-height, 480px);
-}
+/* ── Rows ─────────────────────────────────────────────────────── */
+.qm-row { display: flex; align-items: stretch; }
 
-/* Keep the Nivo svg above the CSS zone overlay */
-.qm-chart-wrapper svg {
-  position: relative;
-  z-index: 1;
-}
-
-/* Threshold zones behind the score bars: exact plot area, 0..50 / 50..100.
-   The green half's left border is the 50 threshold line; the green half's
-   right edge is exactly the 100% position (max bar length). */
-.qm-score-zones {
-  position: absolute;
-  display: flex;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.qm-score-zones__bad {
-  flex: 1 1 50%;
-  background-color: #D64545;
-  opacity: 0.055;
-}
-
-.qm-score-zones__good {
-  flex: 1 1 50%;
-  background-color: #2E7D32;
-  opacity: 0.055;
-  border-left: 2.2px dashed #37474F;
-}
-
-/* Score-change labels column: lives in the reserved right gutter,
-   strictly outside the plot area. One equal-height cell per row. */
-.qm-score-changes {
-  position: absolute;
-  right: 0;
-  display: flex;
-  flex-direction: column;
-  pointer-events: none;
-  z-index: 2;
-}
-
-.qm-score-changes__cell {
-  flex: 1 1 0%;
+.qm-name {
   display: flex;
   align-items: center;
-  padding-left: 10px;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  font-family: var(--font-family-base);
+  justify-content: flex-end;
+  gap: 6px;
+  padding-right: var(--spacing-sm);
+  color: #263238;
+  flex-shrink: 0;
+}
+
+.qm-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Single separator line spanning BOTH panels, exactly at the 50-score boundary */
+.qm-rank { font-weight: 600; flex-shrink: 0; }
+
+/* Left panel: stacked quality mix bar (percent widths, always sum to 100%) */
+.qm-mixbar { flex: 1; display: flex; min-width: 0; }
+
+.qm-mixbar__seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.qm-mixbar__seg span { font-size: 10px; font-weight: 600; }
+
+/* Right panel: score bars over a fixed 0..100 zone background */
+.qm-score { position: relative; display: flex; flex-direction: column; }
+
+.qm-score__zones {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background: linear-gradient(
+    to right,
+    rgba(214, 69, 69, 0.055) 0%,
+    rgba(214, 69, 69, 0.055) 50%,
+    rgba(46, 125, 50, 0.055) 50%,
+    rgba(46, 125, 50, 0.055) 100%
+  );
+  pointer-events: none;
+}
+
+.qm-score__zones::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  border-left: 2.2px dashed #37474F;
+}
+
+.qm-score__rows { position: relative; display: flex; flex-direction: column; }
+
+.qm-scorebar-wrap {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.qm-scorebar {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.qm-scorebar__outside {
+  position: absolute;
+  color: #263238;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Score-change labels: fixed gutter, strictly outside the plot area */
+.qm-change {
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Axes (percent-positioned, aligned with the bar areas) ────── */
+.qm-axis { position: relative; margin-top: 2px; }
+
+.qm-axis__tick {
+  position: absolute;
+  top: 6px;
+  transform: translateX(-50%);
+  color: #263238;
+  white-space: nowrap;
+}
+
+.qm-axis__tick::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  height: 4px;
+  border-left: 1px solid #90A4AE;
+}
+
+.qm-axis__legend {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #263238;
+  white-space: nowrap;
+}
+
+/* ── Separator between acceptable / unacceptable rows ─────────── */
 .qm-separator {
   position: absolute;
   left: 0;
@@ -92,8 +167,15 @@
   z-index: 2;
 }
 
+/* ── Status pills / tooltip ───────────────────────────────────── */
 .qm-status { display: flex; justify-content: center; gap: var(--spacing-lg); margin-top: var(--spacing-md); font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); }
 .qm-status-item { padding: 4px 12px; border-radius: var(--border-radius-pill); background-color: var(--color-gray2); }
 .qm-status-bad { color: #C62828; }
 .qm-status-threshold { color: var(--color-gray10); }
 .qm-status-good { color: #1B5E20; }
+
+.qm-tooltip {
+  position: fixed;
+  z-index: 10000;
+  pointer-events: none;
+}
