@@ -1,4 +1,4 @@
-.qm-container { min-height: 600px; display: flex; flex-direction: column; }
+.qm-container { display: flex; flex-direction: column; }
 .qm-title { text-align: center; color: var(--color-gray12); margin: 0 0 4px 0; font-weight: var(--font-weight-semibold); }
 .qm-subtitle { text-align: center; color: var(--color-gray7); font-size: var(--font-size-sm); margin: 0 0 var(--spacing-md) 0; }
 .qm-empty { text-align: center; color: var(--color-gray8); margin-top: var(--spacing-xl); }

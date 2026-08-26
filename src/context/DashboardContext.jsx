@@ -75,8 +75,6 @@ export const DashboardProvider = ({ children }) => {
   }, [selectedPeriod]);
 
   const { data, availableYears, availableFaculties } = useMemo(() => {
-    const dbCategory = mode === DASHBOARD_MODES.RESIDENTS ? 'resident' : 'faculty';
-
     const yearByName = new Map(
       residentsMaster.map((r) => [String(r.name || '').replace(/\s+/g, ' ').trim(), r.year])
     );
@@ -96,9 +94,6 @@ export const DashboardProvider = ({ children }) => {
     // For resident mode: use resident data directly
     const residentData = rawCurrentData.filter((d) => d.category === 'resident').map(attachYear);
     const previousResidentData = rawPreviousData.filter((d) => d.category === 'resident').map(attachYear);
-    
-    const facultyData = rawCurrentData.filter((d) => d.category === 'faculty').map(attachYear);
-    const previousFacultyData = rawPreviousData.filter((d) => d.category === 'faculty').map(attachYear);
 
     // Extract unique faculty names from resident data
     const facultyNamesSet = new Set(
@@ -148,7 +143,9 @@ export const DashboardProvider = ({ children }) => {
 
     const applyFilters = (rows) => {
       return rows.filter((row) => {
+        // Year filter only applies in residents mode
         if (
+          mode === DASHBOARD_MODES.RESIDENTS &&
           filters.selectedYear !== 'all' &&
           row.year &&
           String(row.year) !== String(filters.selectedYear)
@@ -196,7 +193,7 @@ export const DashboardProvider = ({ children }) => {
       availableYears: years,
       availableFaculties: availableFacultyList,
     };
-    }, [rawCurrentData, rawPreviousData, mode, filters, residentsMaster]);
+  }, [rawCurrentData, rawPreviousData, mode, filters, residentsMaster]);
 
   const updateFilters = (newFilters) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));

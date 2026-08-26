@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import ReactDOM from "react-dom";
+import { SearchInput } from "./SearchInput";
 import "../inputs.css";
 
 export const DropdownInput = ({
@@ -57,9 +58,10 @@ export const DropdownInput = ({
     return () => document.removeEventListener("mousedown", handler, true);
   }, [open]);
 
-  const filteredOptions = searchable && searchQuery
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const filteredOptions = searchable && normalizedQuery
     ? options.filter((opt) => 
-        String(opt).toLowerCase().includes(searchQuery.toLowerCase())
+        String(opt).toLowerCase().includes(normalizedQuery)
       )
     : options;
 
@@ -141,17 +143,12 @@ export const DropdownInput = ({
       style={panelStyle}
     >
       {searchable && (
-        <div className="ui-dropdown__search">
-          <input
-            type="text"
-            className="ui-dropdown__search-input"
-            placeholder="جست‌وجو..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onClick={(e) => e.stopPropagation()}
-            autoFocus
-          />
-        </div>
+        <SearchInput
+          className="ui-dropdown__search-shell"
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="جست‌وجو..."
+        />
       )}
       <div className="ui-dropdown__list">
         {filteredOptions.map((opt) => (

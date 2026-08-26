@@ -44,15 +44,11 @@
   padding: var(--spacing-xs);
 }
 
-/* Faculty Filter with Clear Button */
-.filter-group--with-clear {
-  position: relative;
-}
-
+/* ── Faculty filter with clear button ────────────────────────── */
 .filter-with-clear {
   display: flex;
   align-items: stretch;
-  gap: 0.5rem;
+  gap: var(--spacing-sm);
 }
 
 .filter-with-clear .ui-dropdown {
@@ -60,27 +56,24 @@
 }
 
 .filter-clear-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  min-width: 36px;
-  height: 36px;
+  flex-shrink: 0;
+  width: var(--ui-input-height);
+  height: var(--ui-input-height);
   padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
+  border: var(--border-width-thin) solid var(--color-gray2);
+  border-radius: var(--border-radius-container-xs);
+  background-color: var(--color-gray1);
+  color: var(--color-red);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    border-color var(--motion-duration-normal) var(--motion-easing-easeInOut),
+    box-shadow var(--motion-duration-normal) var(--motion-easing-easeInOut);
 }
 
 .filter-clear-btn:hover {
-  background: rgba(239, 68, 68, 0.25);
-  border-color: rgba(239, 68, 68, 0.4);
-  transform: scale(1.05);
-}
-
-.filter-clear-btn:active {
-  transform: scale(0.95);
+  border-color: var(--color-red);
+  box-shadow: var(--elevation-2);
 }

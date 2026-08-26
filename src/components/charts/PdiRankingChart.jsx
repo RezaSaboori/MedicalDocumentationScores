@@ -25,7 +25,7 @@ const PdiRankingChart = () => {
   return (
     <div className="glass u-container u-container--md pdi-container">
       <h3 className="pdi-title">رتبه‌بندی شاخص ترکیبی مستندسازی پزشک (PDI)</h3>
-      <div className="pdi-body" style={{ minHeight: `${Math.max(400, chartData.length * 24)}px` }}>
+      <div className="pdi-body" style={{ height: `${chartData.length * 24}px` }}>
         <ResponsiveBar
           data={chartData} keys={['PDI']} indexBy="name" layout="horizontal"
           margin={{ top: 10, right: 56, bottom: 40, left: 140 }} padding={0.2}

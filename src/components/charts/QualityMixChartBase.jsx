@@ -76,7 +76,7 @@ const QualityMixChartBase = ({
   const layout = useMemo(() => {
     const rowCount = chartData.length;
     const { rowHeight, tickSize } = rowMetrics(rowCount);
-    const chartHeight = Math.max(640, 96 + 140 + rowHeight * rowCount);
+    const chartHeight = rowHeight * rowCount + MARGIN_TOP + MARGIN_BOTTOM;
     const innerHeight = chartHeight - MARGIN_TOP - MARGIN_BOTTOM;
     const step = rowCount > 0 ? innerHeight / rowCount : 0;
 
