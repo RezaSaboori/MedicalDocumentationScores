@@ -21,6 +21,7 @@ export const DashboardProvider = ({ children }) => {
   const [filters, setFilters] = useState({
     selectedYear: 'all',
     selectedFlags: Object.keys(BASE_FLAG_FA),
+    selectedFaculty: 'all',
   });
 
   const refresh = useCallback(async () => {
@@ -73,7 +74,7 @@ export const DashboardProvider = ({ children }) => {
       .finally(() => setLoading(false));
   }, [selectedPeriod]);
 
-  const { data, availableYears } = useMemo(() => {
+  const { data, availableYears, availableFaculties } = useMemo(() => {
     const dbCategory = mode === DASHBOARD_MODES.RESIDENTS ? 'resident' : 'faculty';
 
     const yearByName = new Map(
@@ -91,8 +92,32 @@ export const DashboardProvider = ({ children }) => {
           }
         : row;
 
-    const currentModeData = rawCurrentData.filter((d) => d.category === dbCategory).map(attachYear);
-    const previousModeData = rawPreviousData.filter((d) => d.category === dbCategory).map(attachYear);
+    // For faculty mode: use resident data filtered by supervising faculty
+    // For resident mode: use resident data directly
+    const residentData = rawCurrentData.filter((d) => d.category === 'resident').map(attachYear);
+    const previousResidentData = rawPreviousData.filter((d) => d.category === 'resident').map(attachYear);
+    
+    const facultyData = rawCurrentData.filter((d) => d.category === 'faculty').map(attachYear);
+    const previousFacultyData = rawPreviousData.filter((d) => d.category === 'faculty').map(attachYear);
+
+    // Extract unique faculty names from resident data
+    const facultyNamesSet = new Set(
+      residentData
+        .map((r) => r.faculty)
+        .filter((f) => f && String(f).trim() !== '')
+    );
+    const availableFacultyList = Array.from(facultyNamesSet).sort();
+
+    const currentModeData = mode === DASHBOARD_MODES.FACULTY 
+      ? (filters.selectedFaculty !== 'all' 
+          ? residentData.filter((r) => r.faculty === filters.selectedFaculty)
+          : residentData)
+      : residentData;
+    const previousModeData = mode === DASHBOARD_MODES.FACULTY
+      ? (filters.selectedFaculty !== 'all'
+          ? previousResidentData.filter((r) => r.faculty === filters.selectedFaculty)
+          : previousResidentData)
+      : previousResidentData;
 
     const enrichRow = (row) => {
       const N =
@@ -169,8 +194,9 @@ export const DashboardProvider = ({ children }) => {
         previous: filteredPrevious.map(enrichRow),
       },
       availableYears: years,
+      availableFaculties: availableFacultyList,
     };
-  }, [rawCurrentData, rawPreviousData, mode, filters, residentsMaster]);
+    }, [rawCurrentData, rawPreviousData, mode, filters, residentsMaster]);
 
   const updateFilters = (newFilters) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
@@ -185,6 +211,7 @@ export const DashboardProvider = ({ children }) => {
     filters,
     updateFilters,
     availableYears,
+    availableFaculties,
     snapshots,
     selectedPeriod,
     setSelectedPeriod,

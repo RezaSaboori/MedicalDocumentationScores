@@ -13,10 +13,12 @@ export const DropdownInput = ({
   onChange,
   displayValue,
   busy = false,
+  searchable = false,
 }) => {
   const [open, setOpen] = useState(false);
   const [hoveredOption, setHoveredOption] = useState(null);
   const [portalRoot, setPortalRoot] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const ref = useRef(null);
   const panelRef = useRef(null);
   const triggerRef = useRef(null);
@@ -41,7 +43,10 @@ export const DropdownInput = ({
   }, []);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setSearchQuery('');
+      return;
+    }
     const handler = (e) => {
       const target = e.target;
       if (ref.current?.contains(target) || panelRef.current?.contains(target)) return;
@@ -51,6 +56,12 @@ export const DropdownInput = ({
     document.addEventListener("mousedown", handler, true);
     return () => document.removeEventListener("mousedown", handler, true);
   }, [open]);
+
+  const filteredOptions = searchable && searchQuery
+    ? options.filter((opt) => 
+        String(opt).toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : options;
 
   const isSelected = (opt) =>
     multiple ? safeValue.includes(opt) : safeValue === opt;
@@ -129,8 +140,21 @@ export const DropdownInput = ({
       className={`ui-dropdown__panel${open ? " is-open" : ""}`}
       style={panelStyle}
     >
+      {searchable && (
+        <div className="ui-dropdown__search">
+          <input
+            type="text"
+            className="ui-dropdown__search-input"
+            placeholder="جست‌وجو..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            autoFocus
+          />
+        </div>
+      )}
       <div className="ui-dropdown__list">
-        {options.map((opt) => (
+        {filteredOptions.map((opt) => (
           <div
             key={opt}
             className={`ui-dropdown__item${
@@ -154,8 +178,8 @@ export const DropdownInput = ({
             {opt}
           </div>
         ))}
-        {options.length === 0 && (
-          <div className="ui-dropdown__item ui-dropdown__item--empty">No results</div>
+        {filteredOptions.length === 0 && (
+          <div className="ui-dropdown__item ui-dropdown__item--empty">نتیجه‌ای یافت نشد</div>
         )}
       </div>
     </div>

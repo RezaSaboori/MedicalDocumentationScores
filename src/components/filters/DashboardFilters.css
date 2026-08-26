@@ -43,3 +43,44 @@
   color: var(--color-gray12);
   padding: var(--spacing-xs);
 }
+
+/* Faculty Filter with Clear Button */
+.filter-group--with-clear {
+  position: relative;
+}
+
+.filter-with-clear {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.filter-with-clear .ui-dropdown {
+  flex: 1;
+}
+
+.filter-clear-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-clear-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.4);
+  transform: scale(1.05);
+}
+
+.filter-clear-btn:active {
+  transform: scale(0.95);
+}

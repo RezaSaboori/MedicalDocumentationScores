@@ -11,13 +11,15 @@ const ChevronIcon = () => (
 );
 
 const DashboardFilters = () => {
-  const { filters, updateFilters, availableYears, mode, loading } = useDashboard();
+  const { filters, updateFilters, availableYears, availableFaculties, mode, loading } = useDashboard();
 
   const flagEntries = Object.entries(BASE_FLAG_FA);
   const totalFlags = flagEntries.length;
 
   const yearDropdownOptions = ['همه سال‌ها', ...availableYears.map(y => `سال ${y}`)];
   const flagDropdownOptions = flagEntries.map(([_, label]) => label);
+  const FACULTY_ALL_LABEL = 'همه اساتید';
+  const facultyDropdownOptions = [FACULTY_ALL_LABEL, ...(availableFaculties || [])];
 
   const handleFlagChange = (selectedLabels) => {
     const selectedValues = flagEntries
@@ -35,9 +37,27 @@ const DashboardFilters = () => {
     }
   };
 
+  const handleFacultyChange = (val) => {
+    if (val === FACULTY_ALL_LABEL) {
+      updateFilters({ selectedFaculty: 'all' });
+    } else {
+      updateFilters({ selectedFaculty: val });
+    }
+  };
+
+  const clearFacultyFilter = () => {
+    updateFilters({ selectedFaculty: 'all' });
+  };
+
   const yearValue = filters.selectedYear === 'all'
     ? 'همه سال‌ها'
     : `سال ${filters.selectedYear}`;
+
+  const facultyValue = filters.selectedFaculty === 'all'
+    ? FACULTY_ALL_LABEL
+    : filters.selectedFaculty;
+
+  const isFacultyFilterActive = filters.selectedFaculty !== 'all';
 
   const flagValue = flagEntries
     .filter(([value]) => filters.selectedFlags.includes(value))
@@ -74,6 +94,37 @@ const DashboardFilters = () => {
           chevronIcon={<ChevronIcon />}
           placeholder="انتخاب سال..."
         />
+      </div>
+      )}
+      {mode === DASHBOARD_MODES.FACULTY && (
+      <div className="filter-group filter-group--with-clear">
+        <label className="filter-label">فیلتر بر اساس هیئت علمی:</label>
+        <div className="filter-with-clear">
+          <DropdownInput
+            dir="rtl"
+            searchable
+            busy={loading}
+            options={facultyDropdownOptions}
+            value={facultyValue}
+            onChange={handleFacultyChange}
+            chevronIcon={<ChevronIcon />}
+            placeholder="انتخاب استاد..."
+          />
+          {isFacultyFilterActive && (
+            <button
+              type="button"
+              className="filter-clear-btn glass"
+              onClick={clearFacultyFilter}
+              title="حذف فیلتر"
+              aria-label="حذف فیلتر هیئت علمی"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
       )}
     </div>
