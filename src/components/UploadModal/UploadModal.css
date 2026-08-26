@@ -55,7 +55,6 @@
 }
 
 .upload-modal-title {
-  flex: 1;
   text-align: right;
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
@@ -63,10 +62,6 @@
 
 /* Toggle lives inside the header now */
 .upload-modal-tablist {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   flex: 0 1 22rem;
   min-width: 13rem;
   display: flex;

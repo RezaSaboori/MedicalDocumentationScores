@@ -19,6 +19,8 @@ const ChevronIcon = () => (
 export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }) => {
   const { refresh, snapshots, refreshResidentsMaster, residentsMaster } = useDashboard();
 
+  const visible = isOpen === undefined ? true : Boolean(isOpen);
+
   const [tab, setTab] = useState(TABS.UPLOAD);
   const tablistRef = useRef(null);
   useModeIndicator(tablistRef, `upload-tab-${tab}`, [tab, visible]);
@@ -45,8 +47,6 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
 
   const excelInputRef = useRef(null);
   const residentsInputRef = useRef(null);
-
-  const visible = isOpen === undefined ? true : Boolean(isOpen);
 
   // ── UNCONDITIONAL HOOKS (Rules of Hooks compliance) ──────────────────────
   // These MUST be declared before the early return `if (!visible) return null;`
