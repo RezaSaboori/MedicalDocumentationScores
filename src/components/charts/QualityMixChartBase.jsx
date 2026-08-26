@@ -20,10 +20,8 @@ const TITLE_BLOCK = 24;
 const TICK_SPACE = 21;
 const RANK_BADGE_SPACE = 34;
 const SCORE_PANEL_LEFT = 20;
-// Constant gutter, OUTSIDE the plot area, reserved for the score-change
-// labels. Never data-dependent so the axis geometry is stable under filters.
+// Constant right gutter, OUTSIDE the plot, reserved for score-change labels
 const SCORE_CHANGE_GUTTER = 72;
-const SCORE_LABEL_OFFSET = 12;
 
 const rowMetrics = (rowCount) => {
   if (rowCount <= 30) return { rowHeight: 36, tickSize: 12 };
@@ -160,46 +158,6 @@ const QualityMixChartBase = ({
     );
   };
 
-  // Score-change labels: inside the reserved right gutter, OUTSIDE the plot area
-  const ScoreChangesLayer = ({ yScale, innerWidth }) => (
-    <g>
-      {chartData.map(row => {
-        if (row.scoreChange == null && !hasComparison) return null;
-        const band = typeof yScale.bandwidth === 'function' ? yScale.bandwidth() : 0;
-        const y = (yScale(row.name) ?? 0) + band / 2;
-        const hasValue = row.scoreChange != null;
-        return (
-          <text
-            key={`sc-${row.name}`}
-            x={innerWidth + SCORE_LABEL_OFFSET}
-            y={y}
-            textAnchor="start"
-            dominantBaseline="central"
-            fontSize={Math.max(10, layout.tickSize - 1)}
-            fontWeight={600}
-            fill={hasValue ? changeColor(row.scoreChange, positiveColor) : '#90A4AE'}
-          >
-            {hasValue ? formatScoreChange(row.scoreChange) : 'n/a'}
-          </text>
-        );
-      })}
-    </g>
-  );
-
-  // Threshold zones on the FIXED 0..100 scale
-  const ScoreZonesLayer = ({ xScale, innerHeight }) => {
-    const x0 = xScale(0);
-    const xT = xScale(PDI_THRESHOLD);
-    const xEnd = xScale(SCORE_MAX);
-    return (
-      <g>
-        <rect x={x0} y={0} width={Math.max(0, xT - x0)} height={innerHeight} fill="#D64545" opacity={0.055} />
-        <rect x={xT} y={0} width={Math.max(0, xEnd - xT)} height={innerHeight} fill="#2E7D32" opacity={0.055} />
-        <line x1={xT} x2={xT} y1={0} y2={innerHeight} stroke="#37474F" strokeWidth={2.2} strokeDasharray="6 4" />
-      </g>
-    );
-  };
-
   const MixTooltip = ({ id, indexValue, value, data }) => (
     <ChartTooltip
       title={indexValue}
@@ -223,6 +181,10 @@ const QualityMixChartBase = ({
       ]}
     />
   );
+
+  // Nivo renders data[0] at the BOTTOM; the HTML change-label column is
+  // top-to-bottom, so reverse the order to keep rows aligned.
+  const reversedChangeRows = useMemo(() => [...chartData].reverse(), [chartData]);
 
   return (
     <div
@@ -268,6 +230,16 @@ const QualityMixChartBase = ({
         <div className="qm-panel qm-panel-right">
           <div className="qm-panel-title">امتیاز</div>
           <div className="qm-chart-wrapper">
+            {/* Threshold zones: pure CSS over the exact plot area (0..100).
+                The green edge == 100% == max bar length, by construction. */}
+            <div
+              className="qm-score-zones"
+              style={{ top: MARGIN_TOP, bottom: MARGIN_BOTTOM, left: SCORE_PANEL_LEFT, right: SCORE_CHANGE_GUTTER }}
+            >
+              <div className="qm-score-zones__bad" />
+              <div className="qm-score-zones__good" />
+            </div>
+
             <ResponsiveBar
               data={chartData}
               keys={['score']}
@@ -291,14 +263,29 @@ const QualityMixChartBase = ({
               }}
               axisLeft={{ renderTick: () => null }}
               tooltip={ScoreTooltip}
-              layers={[
-                'grid',
-                'axes',
-                'bars',
-                (layerProps) => <ScoreZonesLayer key="zones" {...layerProps} />,
-                (layerProps) => <ScoreChangesLayer key="score-changes" {...layerProps} />,
-              ]}
             />
+
+            {/* Score-change labels: HTML column in the reserved right gutter,
+                always OUTSIDE the plot area. One flex cell per row, centered,
+                matching Nivo's equal-height bands. */}
+            {hasComparison && (
+              <div
+                className="qm-score-changes"
+                style={{ top: MARGIN_TOP, bottom: MARGIN_BOTTOM, width: SCORE_CHANGE_GUTTER }}
+              >
+                {reversedChangeRows.map(row => (
+                  <div key={`sc-${row.name}`} className="qm-score-changes__cell">
+                    <span
+                      style={{
+                        color: row.scoreChange != null ? changeColor(row.scoreChange, positiveColor) : '#90A4AE',
+                      }}
+                    >
+                      {row.scoreChange != null ? formatScoreChange(row.scoreChange) : 'n/a'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
