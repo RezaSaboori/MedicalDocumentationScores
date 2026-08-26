@@ -103,17 +103,6 @@ export const DashboardProvider = ({ children }) => {
     );
     const availableFacultyList = Array.from(facultyNamesSet).sort();
 
-    const currentModeData = mode === DASHBOARD_MODES.FACULTY 
-      ? (filters.selectedFaculty !== 'all' 
-          ? residentData.filter((r) => r.faculty === filters.selectedFaculty)
-          : residentData)
-      : residentData;
-    const previousModeData = mode === DASHBOARD_MODES.FACULTY
-      ? (filters.selectedFaculty !== 'all'
-          ? previousResidentData.filter((r) => r.faculty === filters.selectedFaculty)
-          : previousResidentData)
-      : previousResidentData;
-
     const enrichRow = (row) => {
       const N =
         (row.E || 0) +
@@ -141,11 +130,10 @@ export const DashboardProvider = ({ children }) => {
       };
     };
 
-    const applyFilters = (rows) => {
+    const applyFilters = (rows, includeYear) => {
       return rows.filter((row) => {
-        // Year filter only applies in residents mode
         if (
-          mode === DASHBOARD_MODES.RESIDENTS &&
+          includeYear &&
           filters.selectedYear !== 'all' &&
           row.year &&
           String(row.year) !== String(filters.selectedYear)
@@ -162,14 +150,31 @@ export const DashboardProvider = ({ children }) => {
       });
     };
 
-    const filteredCurrent = applyFilters(currentModeData);
-    const filteredPrevious = applyFilters(previousModeData);
+    // Year filter only applies in residents mode (its dropdown is hidden in faculty mode)
+    const includeYear = mode === DASHBOARD_MODES.RESIDENTS;
 
-    const yearsSet = new Set(currentModeData.map((r) => r.year).filter(Boolean));
+    // Full resident sets: the ranking/comparison base.
+    // Ranks and month-over-month changes are always computed over ALL residents,
+    // exactly like the residents dashboard.
+    const allCurrent = applyFilters(residentData, includeYear);
+    const allPrevious = applyFilters(previousResidentData, includeYear);
+
+    // Display sets: faculty mode only narrows which residents are shown
+    const inFacultyScope = (rows) =>
+      mode === DASHBOARD_MODES.FACULTY && filters.selectedFaculty !== 'all'
+        ? rows.filter((r) => String(r.faculty || '').trim() === filters.selectedFaculty)
+        : rows;
+
+    const filteredCurrent = inFacultyScope(allCurrent);
+    const filteredPrevious = inFacultyScope(allPrevious);
+
+    const yearsSet = new Set(allCurrent.map((r) => r.year).filter(Boolean));
     const years = Array.from(yearsSet).sort();
 
+    const enrichedPrevious = filteredPrevious.map(enrichRow);
+
     const enrichedCurrent = filteredCurrent.map((c) => {
-      const prev = filteredPrevious.find((p) => p.name === c.name);
+      const prev = enrichedPrevious.find((p) => p.name === c.name);
       const enriched = enrichRow(c);
 
       return {
@@ -188,7 +193,9 @@ export const DashboardProvider = ({ children }) => {
     return {
       data: {
         current: enrichedCurrent,
-        previous: filteredPrevious.map(enrichRow),
+        previous: enrichedPrevious,
+        allCurrent: allCurrent.map(enrichRow),
+        allPrevious: allPrevious.map(enrichRow),
       },
       availableYears: years,
       availableFaculties: availableFacultyList,

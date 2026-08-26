@@ -9,6 +9,8 @@ const QualityMixNoFChart = () => {
     <QualityMixChartBase
       rows={data.current}
       previousRows={data.previous}
+      comparisonRows={data.allCurrent}
+      comparisonPreviousRows={data.allPrevious}
       scoreKey="PDI_noF"
       categories={QUALITY_CATEGORIES_NO_F}
       positiveColor="#15C062"

@@ -9,6 +9,8 @@ const QualityMixChart = () => {
     <QualityMixChartBase
       rows={data.current}
       previousRows={data.previous}
+      comparisonRows={data.allCurrent}
+      comparisonPreviousRows={data.allPrevious}
       scoreKey="PDI"
       categories={QUALITY_CATEGORIES}
       positiveColor="#049C49"

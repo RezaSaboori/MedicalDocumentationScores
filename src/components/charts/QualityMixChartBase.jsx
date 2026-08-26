@@ -29,15 +29,24 @@ const rowMetrics = (rowCount) => {
 const QualityMixChartBase = ({
   rows,
   previousRows,
+  comparisonRows,
+  comparisonPreviousRows,
   scoreKey,
   categories,
   title,
   subtitle,
   positiveColor = '#049C49',
 }) => {
+  // Ranks/changes are computed over the full resident sets when provided
+  // (faculty mode), so a supervised resident keeps the exact same numbers
+  // as in the residents dashboard; only the visible rows are filtered.
   const comparison = useMemo(
-    () => buildMonthComparison(rows, previousRows, scoreKey),
-    [rows, previousRows, scoreKey]
+    () => buildMonthComparison(
+      comparisonRows || rows,
+      comparisonPreviousRows || previousRows,
+      scoreKey
+    ),
+    [comparisonRows, comparisonPreviousRows, rows, previousRows, scoreKey]
   );
   const hasComparison = comparison.size > 0;
 
@@ -76,6 +85,7 @@ const QualityMixChartBase = ({
   const layout = useMemo(() => {
     const rowCount = chartData.length;
     const { rowHeight, tickSize } = rowMetrics(rowCount);
+    // Proportional height: every row keeps the same bar height regardless of count
     const chartHeight = rowHeight * rowCount + MARGIN_TOP + MARGIN_BOTTOM;
     const innerHeight = chartHeight - MARGIN_TOP - MARGIN_BOTTOM;
     const step = rowCount > 0 ? innerHeight / rowCount : 0;
