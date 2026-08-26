@@ -19,6 +19,10 @@ const MARGIN_BOTTOM = 40;
 const TITLE_BLOCK = 24;
 const TICK_SPACE = 21;
 const RANK_BADGE_SPACE = 34;
+const SCORE_PANEL_LEFT = 16;
+// Fixed gutter reserved OUTSIDE the plot area for the score-change labels
+// ("+19.6"). Constant, so the scale never changes when filters change.
+const SCORE_CHANGE_GUTTER = 64;
 
 const rowMetrics = (rowCount) => {
   if (rowCount <= 30) return { rowHeight: 36, tickSize: 12 };
@@ -93,14 +97,13 @@ const QualityMixChartBase = ({
     const longest = chartData.reduce((m, r) => (r.name.length > m.length ? r.name : m), '');
     const labelWidth = measureTextWidth(longest, `${tickSize}px IRANSansX, IRANSansXV, sans-serif`);
     const leftMargin = Math.ceil(labelWidth) + TICK_SPACE + (hasComparison ? RANK_BADGE_SPACE : 0);
-    const rightMargin = hasComparison ? 110 : 24; // room for score-change labels
 
     const aboveCount = chartData.filter(r => r.score >= PDI_THRESHOLD).length;
     const belowCount = rowCount - aboveCount;
     const sepTop = TITLE_BLOCK + MARGIN_TOP + aboveCount * step;
 
     return {
-      rowCount, tickSize, chartHeight, leftMargin, rightMargin,
+      rowCount, tickSize, chartHeight, leftMargin,
       aboveCount, belowCount, sepTop,
       showSeparator: aboveCount > 0 && belowCount > 0,
     };
@@ -156,7 +159,7 @@ const QualityMixChartBase = ({
     );
   };
 
-  // Score-change labels at the right edge of the score panel (no background, moved right)
+  // Score-change labels: drawn in the reserved right gutter, OUTSIDE the plot area
   const ScoreChangesLayer = ({ yScale, innerWidth }) => (
     <g>
       {chartData.map(row => {
@@ -167,7 +170,7 @@ const QualityMixChartBase = ({
         return (
           <text
             key={`sc-${row.name}`}
-            x={innerWidth + 24}
+            x={innerWidth + 10}
             y={y}
             textAnchor="start"
             dominantBaseline="central"
@@ -182,7 +185,7 @@ const QualityMixChartBase = ({
     </g>
   );
 
-  // Threshold zones derived from the scale (always end exactly at the 100٪ tick)
+  // Threshold zones on the FIXED 0..100 scale
   const ScoreZonesLayer = ({ xScale, innerHeight }) => {
     const x0 = xScale(0);
     const xT = xScale(PDI_THRESHOLD);
@@ -241,6 +244,8 @@ const QualityMixChartBase = ({
               layout="horizontal"
               margin={{ top: MARGIN_TOP, right: 16, bottom: MARGIN_BOTTOM, left: layout.leftMargin }}
               xScale={{ type: 'linear', min: 0, max: 1 }}
+              minValue={0}
+              maxValue={1}
               padding={0.15}
               theme={chartTheme}
               colors={({ id }) => categories[id]?.color || '#ccc'}
@@ -268,8 +273,10 @@ const QualityMixChartBase = ({
               keys={['score']}
               indexBy="name"
               layout="horizontal"
-              margin={{ top: MARGIN_TOP, right: layout.rightMargin, bottom: MARGIN_BOTTOM, left: 16 }}
+              margin={{ top: MARGIN_TOP, right: SCORE_CHANGE_GUTTER, bottom: MARGIN_BOTTOM, left: SCORE_PANEL_LEFT }}
               xScale={{ type: 'linear', min: 0, max: SCORE_MAX }}
+              minValue={0}
+              maxValue={SCORE_MAX}
               padding={0.15}
               theme={chartTheme}
               colors={({ data }) => data.barColor}

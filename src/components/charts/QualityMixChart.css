@@ -6,14 +6,14 @@
 .qm-panels {
   position: relative;
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm);
   direction: ltr;
   width: 100%;
 }
 
 .qm-panel { display: flex; flex-direction: column; min-width: 0; }
-.qm-panel-left { flex: 76 1 0%; }
-.qm-panel-right { flex: 24 1 0%; }
+.qm-panel-left { flex: 70 1 0%; }
+.qm-panel-right { flex: 30 1 0%; }
 
 .qm-panel-title {
   height: 20px;
