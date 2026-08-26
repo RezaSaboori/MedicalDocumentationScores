@@ -13,7 +13,7 @@
 
 .qm-panel { display: flex; flex-direction: column; min-width: 0; }
 .qm-panel-left { flex: 70 1 0%; }
-.qm-panel-right { flex: 30 1 0%; }
+.qm-panel-right { flex: 30 1 0%; min-width: 280px; }
 
 .qm-panel-title {
   height: 20px;
@@ -28,6 +28,11 @@
   position: relative;
   width: 100%;
   height: var(--qm-chart-height, 480px);
+}
+
+/* Never clip edge tick labels (0٪ / 100٪) or the change-label gutter */
+.qm-chart-wrapper svg {
+  overflow: visible;
 }
 
 /* Single separator line spanning BOTH panels, exactly at the 50-score boundary */

@@ -19,10 +19,11 @@ const MARGIN_BOTTOM = 40;
 const TITLE_BLOCK = 24;
 const TICK_SPACE = 21;
 const RANK_BADGE_SPACE = 34;
-const SCORE_PANEL_LEFT = 16;
-// Fixed gutter reserved OUTSIDE the plot area for the score-change labels
-// ("+19.6"). Constant, so the scale never changes when filters change.
-const SCORE_CHANGE_GUTTER = 64;
+const SCORE_PANEL_LEFT = 20;
+// Constant gutter, OUTSIDE the plot area, reserved for the score-change
+// labels. Never data-dependent so the axis geometry is stable under filters.
+const SCORE_CHANGE_GUTTER = 72;
+const SCORE_LABEL_OFFSET = 12;
 
 const rowMetrics = (rowCount) => {
   if (rowCount <= 30) return { rowHeight: 36, tickSize: 12 };
@@ -159,7 +160,7 @@ const QualityMixChartBase = ({
     );
   };
 
-  // Score-change labels: drawn in the reserved right gutter, OUTSIDE the plot area
+  // Score-change labels: inside the reserved right gutter, OUTSIDE the plot area
   const ScoreChangesLayer = ({ yScale, innerWidth }) => (
     <g>
       {chartData.map(row => {
@@ -170,7 +171,7 @@ const QualityMixChartBase = ({
         return (
           <text
             key={`sc-${row.name}`}
-            x={innerWidth + 10}
+            x={innerWidth + SCORE_LABEL_OFFSET}
             y={y}
             textAnchor="start"
             dominantBaseline="central"
@@ -243,7 +244,6 @@ const QualityMixChartBase = ({
               indexBy="name"
               layout="horizontal"
               margin={{ top: MARGIN_TOP, right: 16, bottom: MARGIN_BOTTOM, left: layout.leftMargin }}
-              xScale={{ type: 'linear', min: 0, max: 1 }}
               minValue={0}
               maxValue={1}
               padding={0.15}
@@ -274,7 +274,6 @@ const QualityMixChartBase = ({
               indexBy="name"
               layout="horizontal"
               margin={{ top: MARGIN_TOP, right: SCORE_CHANGE_GUTTER, bottom: MARGIN_BOTTOM, left: SCORE_PANEL_LEFT }}
-              xScale={{ type: 'linear', min: 0, max: SCORE_MAX }}
               minValue={0}
               maxValue={SCORE_MAX}
               padding={0.15}
