@@ -17,7 +17,6 @@ const FacultyImpactChart = ({ faculty }) => {
     fetchFacultyImpact(faculty)
       .then(res => {
         if (Array.isArray(res)) {
-          // Fallback for old API format
           setData(res);
           setGlobalMax(0.5);
           setReason(null);
@@ -42,7 +41,7 @@ const FacultyImpactChart = ({ faculty }) => {
       در حال محاسبه اثر استاد...
     </div>
   );
-  
+
   const hasEffectData = data.some(d => d.cohens_d !== null && d.cohens_d !== undefined);
 
   if (!hasEffectData) {
@@ -64,13 +63,13 @@ const FacultyImpactChart = ({ faculty }) => {
             ))}
             {rotatedList.map(d => (
               <li key={d.name} style={{ color: 'var(--color-gray9, #607d8b)', fontFamily: 'var(--font-family-base)', fontSize: '0.85rem', textAlign: 'right', lineHeight: 1.9 }}>
-                • رزیدنت «{d.name}» دارای چرخش است: {d.inMonths} ماه با «{faculty}» و {d.outMonths} ماه با سایر اساتید{d.otherFaculties.length > 0 ? ` (${d.otherFaculties.join('، ')})` : ''}.
+                • رزیدنت «{d.name}» دارای چرخش است: {d.inMonths} ماه با «{faculty}» و {d.outMonths} ماه با سایر اساتید{d.otherFaculties.length > 0 ? ` (${d.otherFaculties.join('، ')})` : ''}؛ اما مجموع ماه‌های ثبت‌شده ({d.inMonths + d.outMonths}) برای برآورد پراکندگی کافی نیست (حداقل ۳ ماه لازم است).
               </li>
             ))}
           </ul>
         )}
         <p style={{ color: 'var(--color-gray9, #607d8b)', fontFamily: 'var(--font-family-base)', fontSize: '0.8rem', textAlign: 'center', margin: 0 }}>
-          شرط محاسبه اثر: هر رزیدنت باید حداقل یک دوره با این استاد و حداقل یک دوره با سایر اساتید داشته باشد و حداقل دو رزیدنت چرخش‌دار وجود داشته باشد. (رزیدنت‌های دارای چرخش: {stats.rotatedResidents} از {stats.totalResidents})
+          شرط محاسبه اثر: هر رزیدنت باید حداقل یک دوره با این استاد و یک دوره بدون این استاد و در مجموع حداقل ۳ ماه داده داشته باشد. (رزیدنت‌های دارای چرخش: {stats.rotatedResidents} از {stats.totalResidents})
         </p>
       </div>
     );
@@ -83,14 +82,16 @@ const FacultyImpactChart = ({ faculty }) => {
     INT: 'INT (صحت)'
   };
 
-  const chartData = data.map(d => ({
-    metric: metricLabels[d.metric] || d.metric,
-    impact: d.cohens_d,
-    delta: d.delta,
-    n_in: d.n_in,
-    n_out: d.n_out,
-    n_residents: d.n_residents || 0
-  }));
+  const chartData = data
+    .filter(d => d.cohens_d !== null && d.cohens_d !== undefined)
+    .map(d => ({
+      metric: metricLabels[d.metric] || d.metric,
+      impact: d.cohens_d,
+      delta: d.delta,
+      n_in: d.n_in,
+      n_out: d.n_out,
+      n_residents: d.n_residents || 0
+    }));
 
   return (
     <div className="glass u-container u-container--md chart-container">

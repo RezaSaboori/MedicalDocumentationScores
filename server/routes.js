@@ -151,13 +151,23 @@ export const createRouter = (db) => {
     `).all();
 
     if (!rows || rows.length === 0) {
-      return res.json({ results: [], globalMaxEffect: 0.2, reason: 'داده‌ای در پایگاه ثبت نشده است.', totalResidents: 0, rotatedResidents: 0 });
+      return res.json({
+        results: [],
+        globalMaxEffect: 0.2,
+        reason: 'داده‌ای در پایگاه ثبت نشده است.',
+        totalResidents: 0,
+        rotatedResidents: 0,
+        diagnostics: []
+      });
     }
 
     const metrics = ['PDI', 'WQS_adj', 'LAQ', 'INT'];
     const normalize = (s) => String(s || '').replace(/\s+/g, ' ').trim();
+    const CAP = 3; // winsorize extreme per-resident effect sizes to keep the shared axis readable
 
-    // Group resident records by normalized name (built once, shared by all calculations)
+    const mean = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
+    const variance = (arr) => arr.reduce((a, b) => a + (b - mean(arr)) ** 2, 0) / (arr.length - 1);
+
     const residentsMap = {};
     rows.forEach(r => {
       const key = normalize(r.name);
@@ -165,102 +175,105 @@ export const createRouter = (db) => {
       residentsMap[key].push(r);
     });
 
-    const calcPairedEffect = (targetFaculty) => {
-      const results = {};
-      let facultyMax = 0;
-
-      metrics.forEach(m => {
-        const diffs = [];
-        let totalInMonths = 0;
-        let totalOutMonths = 0;
-        let validResidents = 0;
-
-        Object.values(residentsMap).forEach(resRecords => {
-          const inVals = resRecords.filter(r => r.faculty === targetFaculty).map(r => r[m]).filter(v => v != null && !isNaN(v));
-          const outVals = resRecords.filter(r => r.faculty !== targetFaculty).map(r => r[m]).filter(v => v != null && !isNaN(v));
-
-          // Only include residents who rotated with AND without this faculty
-          if (inVals.length > 0 && outVals.length > 0) {
-            const meanIn = inVals.reduce((a, b) => a + b, 0) / inVals.length;
-            const meanOut = outVals.reduce((a, b) => a + b, 0) / outVals.length;
-            diffs.push(meanIn - meanOut);
-            totalInMonths += inVals.length;
-            totalOutMonths += outVals.length;
-            validResidents++;
-          }
+    // Effect model: for EACH resident, standardize the months under this faculty
+    // against the months without this faculty (within-resident Cohen's d), then
+    // average across residents. Works even when the faculty supervised a single
+    // resident, as long as that resident has >= 3 recorded months in total.
+    const buildFacultyStats = (targetFaculty) => {
+      const residents = Object.entries(residentsMap)
+        .filter(([, recs]) => recs.some(r => r.faculty === targetFaculty))
+        .map(([name, recs]) => {
+          const inRecs = recs.filter(r => r.faculty === targetFaculty);
+          const outRecs = recs.filter(r => r.faculty !== targetFaculty);
+          return {
+            name,
+            inRecs,
+            outRecs,
+            inMonths: inRecs.length,
+            outMonths: outRecs.length,
+            rotated: outRecs.length > 0,
+            otherFaculties: [...new Set(outRecs.map(r => r.faculty).filter(Boolean))]
+          };
         });
 
-        if (validResidents < 2) {
-          results[m] = { delta: null, cohens_d: null, n_in: totalInMonths, n_out: totalOutMonths, n_residents: validResidents };
-        } else {
-          const meanDiff = diffs.reduce((a, b) => a + b, 0) / diffs.length;
-          const variance = diffs.reduce((a, b) => a + (b - meanDiff) ** 2, 0) / (diffs.length - 1);
-          const stdDev = Math.sqrt(variance);
-          const cohensD = stdDev > 0 ? meanDiff / stdDev : 0;
+      const results = metrics.map(m => {
+        const perResident = [];
+        let totalIn = 0;
+        let totalOut = 0;
 
-          results[m] = {
-            delta: Number(meanDiff.toFixed(4)),
-            cohens_d: Number(cohensD.toFixed(4)),
-            n_in: totalInMonths,
-            n_out: totalOutMonths,
-            n_residents: validResidents
-          };
-          if (Math.abs(cohensD) > facultyMax) facultyMax = Math.abs(cohensD);
+        residents.forEach(res => {
+          if (!res.rotated) return;
+
+          const inVals = res.inRecs.map(r => r[m]).filter(v => v != null && !isNaN(v));
+          const outVals = res.outRecs.map(r => r[m]).filter(v => v != null && !isNaN(v));
+          if (inVals.length === 0 || outVals.length === 0) return;
+
+          totalIn += inVals.length;
+          totalOut += outVals.length;
+
+          const n1 = inVals.length;
+          const n2 = outVals.length;
+          const df = n1 + n2 - 2;
+          if (df < 1) return; // >= 3 months required to estimate variability
+
+          const vIn = n1 > 1 ? variance(inVals) : 0;
+          const vOut = n2 > 1 ? variance(outVals) : 0;
+          const sd = Math.sqrt(((n1 - 1) * vIn + (n2 - 1) * vOut) / df);
+          if (sd <= 0) return;
+
+          const delta = mean(inVals) - mean(outVals);
+          const d = Math.max(-CAP, Math.min(CAP, delta / sd));
+          perResident.push({ delta, d });
+        });
+
+        if (perResident.length === 0) {
+          return { metric: m, delta: null, cohens_d: null, n_in: totalIn, n_out: totalOut, n_residents: 0 };
         }
+
+        return {
+          metric: m,
+          delta: Number(mean(perResident.map(p => p.delta)).toFixed(4)),
+          cohens_d: Number(mean(perResident.map(p => p.d)).toFixed(4)),
+          n_in: totalIn,
+          n_out: totalOut,
+          n_residents: perResident.length
+        };
       });
-      return { results, facultyMax };
+
+      const facultyMax = Math.max(0, ...results.map(r => Math.abs(r.cohens_d || 0)));
+      return { residents, results, facultyMax };
     };
 
-    // --- Diagnostic: why the effect may not be computable for this faculty ---
-    const supervisedResidents = Object.entries(residentsMap)
-      .filter(([, recs]) => recs.some(r => r.faculty === faculty))
-      .map(([name, recs]) => {
-        const inMonths = recs.filter(r => r.faculty === faculty).length;
-        const outMonths = recs.filter(r => r.faculty !== faculty).length;
-        const otherFaculties = [...new Set(
-          recs.filter(r => r.faculty !== faculty).map(r => r.faculty).filter(Boolean)
-        )];
-        return { name, inMonths, outMonths, rotated: outMonths > 0, otherFaculties };
-      });
-
-    const totalResidents = supervisedResidents.length;
-    const rotatedResidents = supervisedResidents.filter(d => d.rotated).length;
+    const { residents, results } = buildFacultyStats(faculty);
+    const totalResidents = residents.length;
+    const rotatedResidents = residents.filter(r => r.rotated).length;
+    const hasAnyEffect = results.some(r => r.cohens_d !== null);
 
     let reason = null;
     if (totalResidents === 0) {
       reason = 'هیچ رزیدنتی برای این استاد ثبت نشده است.';
     } else if (rotatedResidents === 0) {
-      reason = 'امکان تفکیک اثر استاد وجود ندارد؛ هیچ‌یک از رزیدنت‌های این استاد چرخش نداشته‌اند.';
-    } else if (rotatedResidents < 2) {
-      reason = 'امکان محاسبه اندازه اثر وجود ندارد؛ تنها یک رزیدنت چرخش‌دار وجود دارد و حداقل دو رزیدنت چرخش‌دار لازم است.';
+      reason = 'امکان تفکیک اثر استاد وجود ندارد؛ هیچ‌یک از رزیدنت‌های این استاد با استاد دیگری جابجا نشده‌اند.';
+    } else if (!hasAnyEffect) {
+      reason = 'داده ماهانه برای برآورد پراکندگی کافی نیست؛ برای هر رزیدنت چرخش‌دار حداقل ۳ ماه داده (مجموع دوران با و بدون این استاد) لازم است.';
     }
 
-    // Calculate global max effect size across ALL faculties for consistent axis
+    // Shared axis: max effect across ALL faculties
     const allFaculties = [...new Set(rows.map(r => r.faculty).filter(Boolean))];
     let globalMax = 0.2;
-
     allFaculties.forEach(f => {
-      const { facultyMax } = calcPairedEffect(f);
+      const { facultyMax } = buildFacultyStats(f);
       if (facultyMax > globalMax) globalMax = facultyMax;
     });
-
-    globalMax = globalMax * 1.2; // Add 20% padding to the axis limit
-
-    // Calculate specifically for the requested faculty
-    const { results: facultyResults } = calcPairedEffect(faculty);
-
-    const formattedResults = metrics.map(m => ({
-      metric: m,
-      ...facultyResults[m]
-    }));
+    globalMax = globalMax * 1.2;
 
     res.json({
-      results: formattedResults,
+      results,
       globalMaxEffect: Number(globalMax.toFixed(4)),
       reason,
       totalResidents,
       rotatedResidents,
-      diagnostics: supervisedResidents
+      diagnostics: residents.map(({ inRecs, outRecs, ...rest }) => rest)
     });
   });
 
