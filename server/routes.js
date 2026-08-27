@@ -143,25 +143,29 @@ export const createRouter = (db) => {
 
   router.get('/api/faculty-impact/:faculty', (req, res) => {
     const { faculty } = req.params;
-    
+
     const rows = db.prepare(`
       SELECT name, faculty, PDI, WQS_adj, LAQ, INT
       FROM aggregated_scores
       WHERE category = 'resident'
     `).all();
 
-    if (!rows || rows.length === 0) return res.json({ results: [], globalMaxEffect: 0.2 });
+    if (!rows || rows.length === 0) {
+      return res.json({ results: [], globalMaxEffect: 0.2, reason: 'داده‌ای در پایگاه ثبت نشده است.', totalResidents: 0, rotatedResidents: 0 });
+    }
 
     const metrics = ['PDI', 'WQS_adj', 'LAQ', 'INT'];
-    
-    // Helper: Calculates Paired Cohen's d (Avg per resident, then across residents)
-    const calcPairedEffect = (targetFaculty) => {
-      const residentsMap = {};
-      rows.forEach(r => {
-        if (!residentsMap[r.name]) residentsMap[r.name] = [];
-        residentsMap[r.name].push(r);
-      });
+    const normalize = (s) => String(s || '').replace(/\s+/g, ' ').trim();
 
+    // Group resident records by normalized name (built once, shared by all calculations)
+    const residentsMap = {};
+    rows.forEach(r => {
+      const key = normalize(r.name);
+      if (!residentsMap[key]) residentsMap[key] = [];
+      residentsMap[key].push(r);
+    });
+
+    const calcPairedEffect = (targetFaculty) => {
       const results = {};
       let facultyMax = 0;
 
@@ -174,7 +178,7 @@ export const createRouter = (db) => {
         Object.values(residentsMap).forEach(resRecords => {
           const inVals = resRecords.filter(r => r.faculty === targetFaculty).map(r => r[m]).filter(v => v != null && !isNaN(v));
           const outVals = resRecords.filter(r => r.faculty !== targetFaculty).map(r => r[m]).filter(v => v != null && !isNaN(v));
-          
+
           // Only include residents who rotated with AND without this faculty
           if (inVals.length > 0 && outVals.length > 0) {
             const meanIn = inVals.reduce((a, b) => a + b, 0) / inVals.length;
@@ -193,7 +197,7 @@ export const createRouter = (db) => {
           const variance = diffs.reduce((a, b) => a + (b - meanDiff) ** 2, 0) / (diffs.length - 1);
           const stdDev = Math.sqrt(variance);
           const cohensD = stdDev > 0 ? meanDiff / stdDev : 0;
-          
+
           results[m] = {
             delta: Number(meanDiff.toFixed(4)),
             cohens_d: Number(cohensD.toFixed(4)),
@@ -207,6 +211,24 @@ export const createRouter = (db) => {
       return { results, facultyMax };
     };
 
+    // --- Diagnostic: why the effect may not be computable for this faculty ---
+    const supervisedResidents = Object.values(residentsMap).filter(recs =>
+      recs.some(r => r.faculty === faculty)
+    );
+    const totalResidents = supervisedResidents.length;
+    const rotatedResidents = supervisedResidents.filter(recs =>
+      recs.some(r => r.faculty !== faculty)
+    ).length;
+
+    let reason = null;
+    if (totalResidents === 0) {
+      reason = 'هیچ رزیدنتی برای این استاد ثبت نشده است.';
+    } else if (rotatedResidents === 0) {
+      reason = 'هیچ‌یک از رزیدنت‌های این استاد چرخش نداشته‌اند؛ بدون دوران «بدون این استاد»، مقایسه ممکن نیست.';
+    } else if (rotatedResidents < 2) {
+      reason = 'تنها یک رزیدنت چرخش‌دار وجود دارد؛ برای محاسبه اندازه اثر حداقل دو رزیدنت چرخش‌دار لازم است.';
+    }
+
     // Calculate global max effect size across ALL faculties for consistent axis
     const allFaculties = [...new Set(rows.map(r => r.faculty).filter(Boolean))];
     let globalMax = 0.2;
@@ -215,7 +237,7 @@ export const createRouter = (db) => {
       const { facultyMax } = calcPairedEffect(f);
       if (facultyMax > globalMax) globalMax = facultyMax;
     });
-    
+
     globalMax = globalMax * 1.2; // Add 20% padding to the axis limit
 
     // Calculate specifically for the requested faculty
@@ -226,7 +248,13 @@ export const createRouter = (db) => {
       ...facultyResults[m]
     }));
 
-    res.json({ results: formattedResults, globalMaxEffect: Number(globalMax.toFixed(4)) });
+    res.json({
+      results: formattedResults,
+      globalMaxEffect: Number(globalMax.toFixed(4)),
+      reason,
+      totalResidents,
+      rotatedResidents
+    });
   });
 
   return router;

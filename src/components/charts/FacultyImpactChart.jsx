@@ -6,6 +6,8 @@ import ChartTooltip from './ChartTooltip';
 const FacultyImpactChart = ({ faculty }) => {
   const [data, setData] = useState([]);
   const [globalMax, setGlobalMax] = useState(0.5);
+  const [reason, setReason] = useState(null);
+  const [stats, setStats] = useState({ totalResidents: 0, rotatedResidents: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -17,9 +19,16 @@ const FacultyImpactChart = ({ faculty }) => {
           // Fallback for old API format
           setData(res);
           setGlobalMax(0.5);
+          setReason(null);
+          setStats({ totalResidents: 0, rotatedResidents: 0 });
         } else {
           setData(res.results || []);
           setGlobalMax(res.globalMaxEffect || 0.5);
+          setReason(res.reason || null);
+          setStats({
+            totalResidents: res.totalResidents || 0,
+            rotatedResidents: res.rotatedResidents || 0,
+          });
         }
       })
       .finally(() => setLoading(false));
@@ -31,10 +40,18 @@ const FacultyImpactChart = ({ faculty }) => {
     </div>
   );
   
-  if (data.length === 0 || data.every(d => d.n_in === 0 || d.n_out === 0)) {
+  const hasEffectData = data.some(d => d.cohens_d !== null && d.cohens_d !== undefined);
+
+  if (!hasEffectData) {
     return (
-      <div className="glass u-container u-container--md chart-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '200px' }}>
-        داده کافی برای محاسبه اثر وجود ندارد.
+      <div className="glass u-container u-container--md chart-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '200px', gap: '0.5rem' }}>
+        <h3 className="chart-title">اثر هیئت علمی بر رزیدنت‌ها (اندازه اثر - Cohen's d)</h3>
+        <p style={{ color: 'var(--color-gray9, #607d8b)', fontFamily: 'var(--font-family-base)', fontSize: '0.95rem', textAlign: 'center', margin: 0 }}>
+          {reason || 'داده کافی برای محاسبه اثر وجود ندارد.'}
+        </p>
+        <p style={{ color: 'var(--color-gray9, #607d8b)', fontFamily: 'var(--font-family-base)', fontSize: '0.8rem', textAlign: 'center', margin: 0 }}>
+          تعداد رزیدنت‌های این استاد: {stats.totalResidents} | رزیدنت‌های دارای چرخش: {stats.rotatedResidents}
+        </p>
       </div>
     );
   }
