@@ -212,21 +212,27 @@ export const createRouter = (db) => {
     };
 
     // --- Diagnostic: why the effect may not be computable for this faculty ---
-    const supervisedResidents = Object.values(residentsMap).filter(recs =>
-      recs.some(r => r.faculty === faculty)
-    );
+    const supervisedResidents = Object.entries(residentsMap)
+      .filter(([, recs]) => recs.some(r => r.faculty === faculty))
+      .map(([name, recs]) => {
+        const inMonths = recs.filter(r => r.faculty === faculty).length;
+        const outMonths = recs.filter(r => r.faculty !== faculty).length;
+        const otherFaculties = [...new Set(
+          recs.filter(r => r.faculty !== faculty).map(r => r.faculty).filter(Boolean)
+        )];
+        return { name, inMonths, outMonths, rotated: outMonths > 0, otherFaculties };
+      });
+
     const totalResidents = supervisedResidents.length;
-    const rotatedResidents = supervisedResidents.filter(recs =>
-      recs.some(r => r.faculty !== faculty)
-    ).length;
+    const rotatedResidents = supervisedResidents.filter(d => d.rotated).length;
 
     let reason = null;
     if (totalResidents === 0) {
       reason = 'هیچ رزیدنتی برای این استاد ثبت نشده است.';
     } else if (rotatedResidents === 0) {
-      reason = 'هیچ‌یک از رزیدنت‌های این استاد چرخش نداشته‌اند؛ بدون دوران «بدون این استاد»، مقایسه ممکن نیست.';
+      reason = 'امکان تفکیک اثر استاد وجود ندارد؛ هیچ‌یک از رزیدنت‌های این استاد چرخش نداشته‌اند.';
     } else if (rotatedResidents < 2) {
-      reason = 'تنها یک رزیدنت چرخش‌دار وجود دارد؛ برای محاسبه اندازه اثر حداقل دو رزیدنت چرخش‌دار لازم است.';
+      reason = 'امکان محاسبه اندازه اثر وجود ندارد؛ تنها یک رزیدنت چرخش‌دار وجود دارد و حداقل دو رزیدنت چرخش‌دار لازم است.';
     }
 
     // Calculate global max effect size across ALL faculties for consistent axis
@@ -253,7 +259,8 @@ export const createRouter = (db) => {
       globalMaxEffect: Number(globalMax.toFixed(4)),
       reason,
       totalResidents,
-      rotatedResidents
+      rotatedResidents,
+      diagnostics: supervisedResidents
     });
   });
 
