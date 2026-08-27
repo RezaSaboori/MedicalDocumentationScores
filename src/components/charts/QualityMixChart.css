@@ -56,6 +56,7 @@
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
+  border: var(--border-width-hairline) solid rgba(255, 255, 255, 0.25);
 }
 
 .qm-mixbar__seg span { font-size: 10px; font-weight: 600; }
@@ -78,7 +79,17 @@
   pointer-events: none;
 }
 
-.qm-score__zones::after {
+/* 50% threshold line as a separate overlay so it stays ABOVE the bars */
+.qm-score__threshold {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.qm-score__threshold::after {
   content: "";
   position: absolute;
   top: 0;
@@ -102,11 +113,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
+  color: var(--color-gray1);
   font-size: 11px;
   font-weight: 600;
   overflow: hidden;
   white-space: nowrap;
+  border: var(--border-width-hairline) solid rgba(255, 255, 255, 0.25);
 }
 
 .qm-scorebar__outside {

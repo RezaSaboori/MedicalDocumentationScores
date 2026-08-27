@@ -200,8 +200,10 @@ const QualityMixChartBase = ({
           <div className="qm-panel-title">امتیاز</div>
 
           <div className="qm-score">
-            {/* 0..50 red / 50..100 green, dashed line at 50; right edge == 100% == max bar length */}
+            {/* 0..50 red / 50..100 green; right edge == 100% == max bar length */}
             <div className="qm-score__zones" style={{ right: SCORE_GUTTER }} />
+            {/* 50% threshold line, rendered above the score bars */}
+            <div className="qm-score__threshold" style={{ right: SCORE_GUTTER }} />
 
             <div className="qm-score__rows">
               {displayRows.map(row => (
