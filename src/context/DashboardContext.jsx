@@ -20,8 +20,8 @@ export const DashboardProvider = ({ children }) => {
 
   const [filters, setFilters] = useState({
     selectedYear: 'all',
-    selectedFlags: Object.keys(BASE_FLAG_FA),
     selectedFaculty: 'all',
+    selectedFlags: Object.keys(BASE_FLAG_FA),
   });
 
   const refresh = useCallback(async () => {

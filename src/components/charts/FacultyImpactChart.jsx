@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ResponsiveBar } from '@nivo/bar';
 import { fetchFacultyImpact } from '../../services/dataService';
-import './FacultyImpactChart.css';
+import ChartTooltip from './ChartTooltip';
 
 const FacultyImpactChart = ({ faculty }) => {
   const [data, setData] = useState([]);
@@ -15,9 +15,18 @@ const FacultyImpactChart = ({ faculty }) => {
       .finally(() => setLoading(false));
   }, [faculty]);
 
-  if (loading) return <div className="glass chart-card loading">در حال محاسبه اثر استاد...</div>;
+  if (loading) return (
+    <div className="glass u-container u-container--md chart-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '200px' }}>
+      در حال محاسبه اثر استاد...
+    </div>
+  );
+  
   if (data.length === 0 || data.every(d => d.n_in === 0 || d.n_out === 0)) {
-    return <div className="glass chart-card empty">داده کافی برای محاسبه اثر وجود ندارد.</div>;
+    return (
+      <div className="glass u-container u-container--md chart-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '200px' }}>
+        داده کافی برای محاسبه اثر وجود ندارد.
+      </div>
+    );
   }
 
   const metricLabels = {
@@ -38,12 +47,12 @@ const FacultyImpactChart = ({ faculty }) => {
   const maxVal = Math.max(...chartData.map(d => Math.abs(d.impact)), 0.2) * 1.2;
 
   return (
-    <div className="glass chart-card">
-      <div className="chart-header">
-        <h3 className="chart-title">اثر هیئت علمی بر رزیدنت‌ها (Effect Size - Cohen's d)</h3>
-        <p className="chart-subtitle">مقایسه عملکرد رزیدنت‌ها در دوران سرپرستی این استاد با سایر دوران‌ها (مثبت = بهبود)</p>
-      </div>
-      <div className="chart-body" style={{ height: '300px' }}>
+    <div className="glass u-container u-container--md chart-container">
+      <h3 className="chart-title">اثر هیئت علمی بر رزیدنت‌ها (اندازه اثر - Cohen's d)</h3>
+      <p style={{ fontSize: '0.85rem', color: 'var(--color-gray9, #607d8b)', margin: '0 0 1rem 0', textAlign: 'right' }}>
+        مقایسه عملکرد رزیدنت‌ها در دوران سرپرستی این استاد با سایر دوران‌ها (مثبت = بهبود)
+      </p>
+      <div style={{ height: '300px', direction: 'ltr' }}>
         <ResponsiveBar
           data={chartData}
           keys={['impact']}
@@ -78,16 +87,19 @@ const FacultyImpactChart = ({ faculty }) => {
             {
               axis: 'x',
               value: 0,
-              lineStyle: { stroke: '#94a3b8', strokeWidth: 1 },
+              lineStyle: { stroke: 'var(--color-gray6, #cfd8dc)', strokeWidth: 1 },
             }
           ]}
           tooltip={({ value, indexValue, data }) => (
-            <div style={{ background: '#1e293b', color: 'white', padding: '8px', borderRadius: '4px', direction: 'rtl' }}>
-              <strong>{indexValue}</strong><br />
-              Cohen's d: {value.toFixed(2)}<br />
-              Delta: {data.delta.toFixed(2)}<br />
-              ماه‌های با استاد: {data.n_in} | بدون استاد: {data.n_out}
-            </div>
+            <ChartTooltip 
+              title={indexValue}
+              rows={[
+                { label: "اندازه اثر (Cohen's d)", value: Number(value).toFixed(3) },
+                { label: 'تفاوت میانگین (Delta)', value: Number(data.delta).toFixed(3) },
+                { label: 'ماه‌های با استاد', value: data.n_in },
+                { label: 'ماه‌های بدون استاد', value: data.n_out }
+              ]}
+            />
           )}
           motionConfig="wobbly"
         />
