@@ -82,50 +82,52 @@ const DashboardFilters = () => {
           placeholder="انتخاب گروه..."
         />
       </div>
+      
       {mode === DASHBOARD_MODES.RESIDENTS && (
-      <div className="filter-group">
-        <label className="filter-label">فیلتر بر اساس سال:</label>
-        <DropdownInput
-          dir="rtl"
-          busy={loading}
-          options={yearDropdownOptions}
-          value={yearValue}
-          onChange={handleYearChange}
-          chevronIcon={<ChevronIcon />}
-          placeholder="انتخاب سال..."
-        />
-      </div>
-      )}
-      {mode === DASHBOARD_MODES.FACULTY && (
-      <div className="filter-group filter-group--with-clear">
-        <label className="filter-label">فیلتر بر اساس هیئت علمی:</label>
-        <div className="filter-with-clear">
+        <div className="filter-group">
+          <label className="filter-label">فیلتر بر اساس سال:</label>
           <DropdownInput
             dir="rtl"
-            searchable
             busy={loading}
-            options={facultyDropdownOptions}
-            value={facultyValue}
-            onChange={handleFacultyChange}
+            options={yearDropdownOptions}
+            value={yearValue}
+            onChange={handleYearChange}
             chevronIcon={<ChevronIcon />}
-            placeholder="انتخاب استاد..."
+            placeholder="انتخاب سال..."
           />
-          {isFacultyFilterActive && (
-            <button
-              type="button"
-              className="filter-clear-btn glass"
-              onClick={clearFacultyFilter}
-              title="حذف فیلتر"
-              aria-label="حذف فیلتر هیئت علمی"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          )}
         </div>
-      </div>
+      )}
+      
+      {mode === DASHBOARD_MODES.FACULTY && (
+        <div className="filter-group filter-group--with-clear">
+          <label className="filter-label">فیلتر بر اساس هیئت علمی:</label>
+          <div className="filter-with-clear">
+            <DropdownInput
+              dir="rtl"
+              searchable
+              busy={loading}
+              options={facultyDropdownOptions}
+              value={facultyValue}
+              onChange={handleFacultyChange}
+              chevronIcon={<ChevronIcon />}
+              placeholder="انتخاب استاد..."
+            />
+            {isFacultyFilterActive && (
+              <button
+                type="button"
+                className="filter-clear-btn glass"
+                onClick={clearFacultyFilter}
+                title="حذف فیلتر"
+                aria-label="حذف فیلتر هیئت علمی"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
