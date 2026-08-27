@@ -152,84 +152,81 @@ export const createRouter = (db) => {
 
     if (!rows || rows.length === 0) return res.json({ results: [], globalMaxEffect: 0.2 });
 
-    // --- Calculate global max effect size across ALL faculties for consistent axis ---
-    const allFaculties = [...new Set(rows.map(r => r.faculty).filter(Boolean))];
-    let globalMax = 0.2; // Minimum baseline
-
     const metrics = ['PDI', 'WQS_adj', 'LAQ', 'INT'];
+    
+    // Helper: Calculates Paired Cohen's d (Avg per resident, then across residents)
+    const calcPairedEffect = (targetFaculty) => {
+      const residentsMap = {};
+      rows.forEach(r => {
+        if (!residentsMap[r.name]) residentsMap[r.name] = [];
+        residentsMap[r.name].push(r);
+      });
 
-    const mean = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
-    const variance = arr => arr.reduce((a, b) => a + (b - mean(arr)) ** 2, 0) / (arr.length - 1);
-
-    allFaculties.forEach(f => {
-      const facResidents = new Set(rows.filter(r => r.faculty === f).map(r => r.name));
-      const fRelevant = rows.filter(r => facResidents.has(r.name));
-      const fInRot = fRelevant.filter(r => r.faculty === f);
-      const fOutRot = fRelevant.filter(r => r.faculty !== f);
+      const results = {};
+      let facultyMax = 0;
 
       metrics.forEach(m => {
-        const inVals = fInRot.map(r => r[m]).filter(v => v != null && !isNaN(v));
-        const outVals = fOutRot.map(r => r[m]).filter(v => v != null && !isNaN(v));
-        const n1 = inVals.length;
-        const n2 = outVals.length;
-        if (n1 < 2 || n2 < 2) return;
+        const diffs = [];
+        let totalInMonths = 0;
+        let totalOutMonths = 0;
+        let validResidents = 0;
 
-        const muIn = mean(inVals);
-        const muOut = mean(outVals);
-        const varIn = variance(inVals);
-        const varOut = variance(outVals);
+        Object.values(residentsMap).forEach(resRecords => {
+          const inVals = resRecords.filter(r => r.faculty === targetFaculty).map(r => r[m]).filter(v => v != null && !isNaN(v));
+          const outVals = resRecords.filter(r => r.faculty !== targetFaculty).map(r => r[m]).filter(v => v != null && !isNaN(v));
+          
+          // Only include residents who rotated with AND without this faculty
+          if (inVals.length > 0 && outVals.length > 0) {
+            const meanIn = inVals.reduce((a, b) => a + b, 0) / inVals.length;
+            const meanOut = outVals.reduce((a, b) => a + b, 0) / outVals.length;
+            diffs.push(meanIn - meanOut);
+            totalInMonths += inVals.length;
+            totalOutMonths += outVals.length;
+            validResidents++;
+          }
+        });
 
-        const pooledVar = ((n1 - 1) * varIn + (n2 - 1) * varOut) / (n1 + n2 - 2);
-        const pooledSD = Math.sqrt(pooledVar);
-        if (pooledSD > 0) {
-          const d = Math.abs((muIn - muOut) / pooledSD);
-          if (d > globalMax) globalMax = d;
+        if (validResidents < 2) {
+          results[m] = { delta: null, cohens_d: null, n_in: totalInMonths, n_out: totalOutMonths, n_residents: validResidents };
+        } else {
+          const meanDiff = diffs.reduce((a, b) => a + b, 0) / diffs.length;
+          const variance = diffs.reduce((a, b) => a + (b - meanDiff) ** 2, 0) / (diffs.length - 1);
+          const stdDev = Math.sqrt(variance);
+          const cohensD = stdDev > 0 ? meanDiff / stdDev : 0;
+          
+          results[m] = {
+            delta: Number(meanDiff.toFixed(4)),
+            cohens_d: Number(cohensD.toFixed(4)),
+            n_in: totalInMonths,
+            n_out: totalOutMonths,
+            n_residents: validResidents
+          };
+          if (Math.abs(cohensD) > facultyMax) facultyMax = Math.abs(cohensD);
         }
       });
+      return { results, facultyMax };
+    };
+
+    // Calculate global max effect size across ALL faculties for consistent axis
+    const allFaculties = [...new Set(rows.map(r => r.faculty).filter(Boolean))];
+    let globalMax = 0.2;
+
+    allFaculties.forEach(f => {
+      const { facultyMax } = calcPairedEffect(f);
+      if (facultyMax > globalMax) globalMax = facultyMax;
     });
-    // Add 20% padding to the global max
-    globalMax = globalMax * 1.2;
-    // ---------------------------------------------------------------------------
+    
+    globalMax = globalMax * 1.2; // Add 20% padding to the axis limit
 
-    const residentsWithFaculty = new Set(
-      rows.filter(r => r.faculty === faculty).map(r => r.name)
-    );
+    // Calculate specifically for the requested faculty
+    const { results: facultyResults } = calcPairedEffect(faculty);
 
-    const relevantRows = rows.filter(r => residentsWithFaculty.has(r.name));
-    const inRot = relevantRows.filter(r => r.faculty === faculty);
-    const outRot = relevantRows.filter(r => r.faculty !== faculty);
+    const formattedResults = metrics.map(m => ({
+      metric: m,
+      ...facultyResults[m]
+    }));
 
-    const results = metrics.map(m => {
-      const inVals = inRot.map(r => r[m]).filter(v => v != null && !isNaN(v));
-      const outVals = outRot.map(r => r[m]).filter(v => v != null && !isNaN(v));
-
-      const n1 = inVals.length;
-      const n2 = outVals.length;
-
-      if (n1 === 0 || n2 === 0) return { metric: m, delta: null, cohens_d: null, n_in: n1, n_out: n2 };
-
-      const muIn = mean(inVals);
-      const muOut = mean(outVals);
-      
-      const varIn = n1 > 1 ? variance(inVals) : 0;
-      const varOut = n2 > 1 ? variance(outVals) : 0;
-
-      const pooledVar = (n1 + n2 - 2) > 0 ? ((n1 - 1) * varIn + (n2 - 1) * varOut) / (n1 + n2 - 2) : 0;
-      const pooledSD = Math.sqrt(pooledVar);
-
-      const delta = muIn - muOut;
-      const cohensD = pooledSD > 0 ? delta / pooledSD : 0;
-
-      return {
-        metric: m,
-        delta: Number(delta.toFixed(4)),
-        cohens_d: Number(cohensD.toFixed(4)),
-        n_in: n1,
-        n_out: n2
-      };
-    });
-
-    res.json({ results, globalMaxEffect: Number(globalMax.toFixed(4)) });
+    res.json({ results: formattedResults, globalMaxEffect: Number(globalMax.toFixed(4)) });
   });
 
   return router;

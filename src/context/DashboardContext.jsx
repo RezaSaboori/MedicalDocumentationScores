@@ -75,6 +75,11 @@ export const DashboardProvider = ({ children }) => {
   }, [selectedPeriod]);
 
   const { data, availableYears, availableFaculties } = useMemo(() => {
+    // CRITICAL FIX: If a faculty filter is active, switch to 'resident' mode to show their residents.
+    // Otherwise, in Faculty mode, show 'faculty' data. In Resident mode, show 'resident' data.
+    const isFacultyFilterActive = mode === DASHBOARD_MODES.FACULTY && filters.selectedFaculty !== 'all';
+    const dbCategory = (mode === DASHBOARD_MODES.RESIDENTS || isFacultyFilterActive) ? 'resident' : 'faculty';
+
     const yearByName = new Map(
       residentsMaster.map((r) => [String(r.name || '').replace(/\s+/g, ' ').trim(), r.year])
     );
@@ -90,16 +95,13 @@ export const DashboardProvider = ({ children }) => {
           }
         : row;
 
-    // For faculty mode: use resident data filtered by supervising faculty
-    // For resident mode: use resident data directly
-    const residentData = rawCurrentData.filter((d) => d.category === 'resident').map(attachYear);
-    const previousResidentData = rawPreviousData.filter((d) => d.category === 'resident').map(attachYear);
+    const currentModeData = rawCurrentData.filter((d) => d.category === dbCategory).map(attachYear);
+    const previousModeData = rawPreviousData.filter((d) => d.category === dbCategory).map(attachYear);
 
-    // Extract unique faculty names from resident data
+    // Extract unique faculty names from resident data regardless of current mode
+    const residentRows = rawCurrentData.filter(d => d.category === 'resident');
     const facultyNamesSet = new Set(
-      residentData
-        .map((r) => r.faculty)
-        .filter((f) => f && String(f).trim() !== '')
+      residentRows.map((r) => r.faculty).filter((f) => f && String(f).trim() !== '')
     );
     const availableFacultyList = Array.from(facultyNamesSet).sort();
 
@@ -150,18 +152,13 @@ export const DashboardProvider = ({ children }) => {
       });
     };
 
-    // Year filter only applies in residents mode (its dropdown is hidden in faculty mode)
     const includeYear = mode === DASHBOARD_MODES.RESIDENTS;
 
-    // Full resident sets: the ranking/comparison base.
-    // Ranks and month-over-month changes are always computed over ALL residents,
-    // exactly like the residents dashboard.
-    const allCurrent = applyFilters(residentData, includeYear);
-    const allPrevious = applyFilters(previousResidentData, includeYear);
+    const allCurrent = applyFilters(currentModeData, includeYear);
+    const allPrevious = applyFilters(previousModeData, includeYear);
 
-    // Display sets: faculty mode only narrows which residents are shown
     const inFacultyScope = (rows) =>
-      mode === DASHBOARD_MODES.FACULTY && filters.selectedFaculty !== 'all'
+      isFacultyFilterActive
         ? rows.filter((r) => String(r.faculty || '').trim() === filters.selectedFaculty)
         : rows;
 
@@ -201,7 +198,6 @@ export const DashboardProvider = ({ children }) => {
       availableFaculties: availableFacultyList,
     };
   }, [rawCurrentData, rawPreviousData, mode, filters, residentsMaster]);
-
   const updateFilters = (newFilters) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
   };

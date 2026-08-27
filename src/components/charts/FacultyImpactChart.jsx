@@ -51,7 +51,8 @@ const FacultyImpactChart = ({ faculty }) => {
     impact: d.cohens_d,
     delta: d.delta,
     n_in: d.n_in,
-    n_out: d.n_out
+    n_out: d.n_out,
+    n_residents: d.n_residents || 0
   }));
 
   return (
@@ -104,8 +105,9 @@ const FacultyImpactChart = ({ faculty }) => {
               rows={[
                 { label: "اندازه اثر (Cohen's d)", value: Number(value).toFixed(3) },
                 { label: 'تفاوت میانگین (Delta)', value: Number(data.delta).toFixed(3) },
-                { label: 'ماه‌های با استاد', value: data.n_in },
-                { label: 'ماه‌های بدون استاد', value: data.n_out }
+                { label: 'رزیدنت‌های مقایسه شده', value: data.n_residents || 0 },
+                { label: 'میانگین ماه‌های با استاد', value: data.n_residents > 0 ? (data.n_in / data.n_residents).toFixed(1) : 0 },
+                { label: 'میانگین ماه‌های بدون استاد', value: data.n_residents > 0 ? (data.n_out / data.n_residents).toFixed(1) : 0 }
               ]}
             />
           )}
