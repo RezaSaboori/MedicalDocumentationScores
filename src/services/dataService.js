@@ -50,3 +50,9 @@ export const saveResidentsMaster = async (list) => {
   }
   return res.json();
 };
+
+export const fetchFacultyImpact = async (facultyName) => {
+  const res = await fetch(`${API_BASE}/api/faculty-impact/${encodeURIComponent(facultyName)}`);
+  if (!res.ok) return [];
+  return res.json();
+};

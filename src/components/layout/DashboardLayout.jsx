@@ -12,12 +12,13 @@ import PdiRankingChart from '../charts/PdiRankingChart';
 import AuditTable from '../table/AuditTable';
 import ModeToggle from './ModeToggle';
 import { UploadModal } from '../UploadModal/UploadModal';
+import FacultyImpactChart from '../charts/FacultyImpactChart';
 import { useDashboard } from '../../context/DashboardContext';
 import { DASHBOARD_MODES } from '../../utils/constants';
 import './DashboardLayout.css';
 
 const DashboardLayout = () => {
-  const { mode, setMode, loading } = useDashboard();
+  const { mode, setMode, loading, filters } = useDashboard();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   const handleDataProcessed = () => {
@@ -53,6 +54,12 @@ const DashboardLayout = () => {
       <div className="u-container u-container--md filters-container">
         <DashboardFilters />
       </div>
+
+      {mode === DASHBOARD_MODES.FACULTY && filters.selectedFaculty !== 'all' && (
+        <div className="u-container u-container--md">
+          <FacultyImpactChart faculty={filters.selectedFaculty} />
+        </div>
+      )}
 
       <div className="charts-grid-2">
         <GroupDonutChart />

@@ -141,5 +141,61 @@ export const createRouter = (db) => {
     }
   });
 
+  router.get('/api/faculty-impact/:faculty', (req, res) => {
+    const { faculty } = req.params;
+    
+    const rows = db.prepare(`
+      SELECT name, faculty, PDI, WQS_adj, LAQ, INT
+      FROM aggregated_scores
+      WHERE category = 'resident'
+    `).all();
+
+    if (!rows || rows.length === 0) return res.json([]);
+
+    const residentsWithFaculty = new Set(
+      rows.filter(r => r.faculty === faculty).map(r => r.name)
+    );
+
+    const relevantRows = rows.filter(r => residentsWithFaculty.has(r.name));
+    const inRot = relevantRows.filter(r => r.faculty === faculty);
+    const outRot = relevantRows.filter(r => r.faculty !== faculty);
+
+    const metrics = ['PDI', 'WQS_adj', 'LAQ', 'INT'];
+    const results = metrics.map(m => {
+      const inVals = inRot.map(r => r[m]).filter(v => v != null && !isNaN(v));
+      const outVals = outRot.map(r => r[m]).filter(v => v != null && !isNaN(v));
+
+      const n1 = inVals.length;
+      const n2 = outVals.length;
+
+      if (n1 === 0 || n2 === 0) return { metric: m, delta: null, cohens_d: null, n_in: n1, n_out: n2 };
+
+      const mean = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
+      const variance = arr => arr.reduce((a, b) => a + (b - mean(arr)) ** 2, 0) / (arr.length - 1);
+
+      const muIn = mean(inVals);
+      const muOut = mean(outVals);
+      
+      const varIn = n1 > 1 ? variance(inVals) : 0;
+      const varOut = n2 > 1 ? variance(outVals) : 0;
+
+      const pooledVar = (n1 + n2 - 2) > 0 ? ((n1 - 1) * varIn + (n2 - 1) * varOut) / (n1 + n2 - 2) : 0;
+      const pooledSD = Math.sqrt(pooledVar);
+
+      const delta = muIn - muOut;
+      const cohensD = pooledSD > 0 ? delta / pooledSD : 0;
+
+      return {
+        metric: m,
+        delta: Number(delta.toFixed(4)),
+        cohens_d: Number(cohensD.toFixed(4)),
+        n_in: n1,
+        n_out: n2
+      };
+    });
+
+    res.json(results);
+  });
+
   return router;
 };
