@@ -6,7 +6,7 @@ import { Skeleton } from '../ui/Skeleton';
 import './KpiCards.css';
 
 const KpiCards = () => {
-  const { data, loading, mode } = useDashboard();
+  const { data, loading, mode, filters } = useDashboard();
   const d = data.current;
 
   const kpis = useMemo(() => {
@@ -49,8 +49,11 @@ const KpiCards = () => {
     );
   }
 
+  const isFacultyFiltered = mode === DASHBOARD_MODES.FACULTY && filters.selectedFaculty !== 'all';
+  const firstKpiTitle = isFacultyFiltered ? 'تعداد رزیدنت‌ها' : (mode === DASHBOARD_MODES.FACULTY ? 'تعداد اساتید' : 'تعداد رزیدنت‌ها');
+
   const cards = [
-    { title: mode === DASHBOARD_MODES.FACULTY ? 'تعداد اساتید' : 'تعداد رزیدنت‌ها', value: formatNumber(kpis.n_physicians), color: 'var(--color-blue)' },
+    { title: firstKpiTitle, value: formatNumber(kpis.n_physicians), color: 'var(--color-blue)' },
     { title: 'مجموع ویزیت‌ها', value: formatNumber(kpis.total_visits), color: 'var(--color-blue)' },
     { title: 'میانگین PDI', value: kpis.mean_pdi.toFixed(1), color: 'var(--color-blue)', sub: 'از 100' },
     { title: 'نسبت مستندسازی', value: formatPercent(kpis.mean_cov, 0), color: 'var(--color-green)' },

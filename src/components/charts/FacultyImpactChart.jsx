@@ -5,13 +5,23 @@ import ChartTooltip from './ChartTooltip';
 
 const FacultyImpactChart = ({ faculty }) => {
   const [data, setData] = useState([]);
+  const [globalMax, setGlobalMax] = useState(0.5);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!faculty || faculty === 'all') return;
     setLoading(true);
     fetchFacultyImpact(faculty)
-      .then(res => setData(res))
+      .then(res => {
+        if (Array.isArray(res)) {
+          // Fallback for old API format
+          setData(res);
+          setGlobalMax(0.5);
+        } else {
+          setData(res.results || []);
+          setGlobalMax(res.globalMaxEffect || 0.5);
+        }
+      })
       .finally(() => setLoading(false));
   }, [faculty]);
 
@@ -43,8 +53,6 @@ const FacultyImpactChart = ({ faculty }) => {
     n_in: d.n_in,
     n_out: d.n_out
   }));
-
-  const maxVal = Math.max(...chartData.map(d => Math.abs(d.impact)), 0.2) * 1.2;
 
   return (
     <div className="glass u-container u-container--md chart-container">
@@ -81,8 +89,8 @@ const FacultyImpactChart = ({ faculty }) => {
           labelTextColor="#ffffff"
           enableGridX={true}
           enableGridY={false}
-          minValue={-maxVal}
-          maxValue={maxVal}
+          minValue={-globalMax}
+          maxValue={globalMax}
           markers={[
             {
               axis: 'x',

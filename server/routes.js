@@ -150,7 +150,46 @@ export const createRouter = (db) => {
       WHERE category = 'resident'
     `).all();
 
-    if (!rows || rows.length === 0) return res.json([]);
+    if (!rows || rows.length === 0) return res.json({ results: [], globalMaxEffect: 0.2 });
+
+    // --- Calculate global max effect size across ALL faculties for consistent axis ---
+    const allFaculties = [...new Set(rows.map(r => r.faculty).filter(Boolean))];
+    let globalMax = 0.2; // Minimum baseline
+
+    const metrics = ['PDI', 'WQS_adj', 'LAQ', 'INT'];
+
+    const mean = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
+    const variance = arr => arr.reduce((a, b) => a + (b - mean(arr)) ** 2, 0) / (arr.length - 1);
+
+    allFaculties.forEach(f => {
+      const facResidents = new Set(rows.filter(r => r.faculty === f).map(r => r.name));
+      const fRelevant = rows.filter(r => facResidents.has(r.name));
+      const fInRot = fRelevant.filter(r => r.faculty === f);
+      const fOutRot = fRelevant.filter(r => r.faculty !== f);
+
+      metrics.forEach(m => {
+        const inVals = fInRot.map(r => r[m]).filter(v => v != null && !isNaN(v));
+        const outVals = fOutRot.map(r => r[m]).filter(v => v != null && !isNaN(v));
+        const n1 = inVals.length;
+        const n2 = outVals.length;
+        if (n1 < 2 || n2 < 2) return;
+
+        const muIn = mean(inVals);
+        const muOut = mean(outVals);
+        const varIn = variance(inVals);
+        const varOut = variance(outVals);
+
+        const pooledVar = ((n1 - 1) * varIn + (n2 - 1) * varOut) / (n1 + n2 - 2);
+        const pooledSD = Math.sqrt(pooledVar);
+        if (pooledSD > 0) {
+          const d = Math.abs((muIn - muOut) / pooledSD);
+          if (d > globalMax) globalMax = d;
+        }
+      });
+    });
+    // Add 20% padding to the global max
+    globalMax = globalMax * 1.2;
+    // ---------------------------------------------------------------------------
 
     const residentsWithFaculty = new Set(
       rows.filter(r => r.faculty === faculty).map(r => r.name)
@@ -160,7 +199,6 @@ export const createRouter = (db) => {
     const inRot = relevantRows.filter(r => r.faculty === faculty);
     const outRot = relevantRows.filter(r => r.faculty !== faculty);
 
-    const metrics = ['PDI', 'WQS_adj', 'LAQ', 'INT'];
     const results = metrics.map(m => {
       const inVals = inRot.map(r => r[m]).filter(v => v != null && !isNaN(v));
       const outVals = outRot.map(r => r[m]).filter(v => v != null && !isNaN(v));
@@ -169,9 +207,6 @@ export const createRouter = (db) => {
       const n2 = outVals.length;
 
       if (n1 === 0 || n2 === 0) return { metric: m, delta: null, cohens_d: null, n_in: n1, n_out: n2 };
-
-      const mean = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
-      const variance = arr => arr.reduce((a, b) => a + (b - mean(arr)) ** 2, 0) / (arr.length - 1);
 
       const muIn = mean(inVals);
       const muOut = mean(outVals);
@@ -194,7 +229,7 @@ export const createRouter = (db) => {
       };
     });
 
-    res.json(results);
+    res.json({ results, globalMaxEffect: Number(globalMax.toFixed(4)) });
   });
 
   return router;
