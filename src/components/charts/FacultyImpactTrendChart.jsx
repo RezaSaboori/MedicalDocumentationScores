@@ -58,9 +58,6 @@ const FacultyImpactTrendChart = ({ series }) => {
           </span>
         ))}
       </div>
-      <div style={{ fontSize: '0.7rem', color: 'var(--color-gray9, #607d8b)', fontFamily: 'var(--font-family-base)', textAlign: 'center', marginTop: 4, lineHeight: 1.7 }}>
-        قضاوت دربارهٔ اثر استاد فقط با مقایسهٔ ستون سبز و نارنجی (همین رزیدنت‌ها در حضور/غیاب استاد) معتبر است؛ ستون خاکستری صرفاً زمینهٔ کل بیمارستان است و ممکن است از هر دو کمتر یا بیشتر باشد.
-      </div>
     </div>
   );
 };
