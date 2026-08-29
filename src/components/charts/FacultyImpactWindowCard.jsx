@@ -1,7 +1,7 @@
 import React from 'react';
 import FacultyImpactTrendChart from './FacultyImpactTrendChart';
 
-const FacultyImpactWindowCard = ({ label, windowData, series, globalMax, withoutLabel }) => {
+const FacultyImpactWindowCard = ({ label, windowData, series, globalMax }) => {
   const d = windowData?.cohens_d;
   const delta = windowData?.delta;
   const hasD = d !== null && d !== undefined;
@@ -29,16 +29,6 @@ const FacultyImpactWindowCard = ({ label, windowData, series, globalMax, without
         </p>
       ) : (
         <>
-          {windowData?.method === 'within' && (
-            <div style={{ fontSize: '0.7rem', color: 'var(--color-green, #10b981)', fontFamily: 'var(--font-family-base)' }}>
-              برآورد علّی: مقایسهٔ همان رزیدنت‌ها در حضور و غیاب این استاد
-            </div>
-          )}
-          {windowData?.method === 'between' && (
-            <div style={{ fontSize: '0.7rem', color: 'var(--color-orange, #f59e0b)', fontFamily: 'var(--font-family-base)', lineHeight: 1.7 }}>
-              برآورد توصیفی: رزیدنت‌های این استاد چرخش نکرده‌اند؛ این عدد مقایسه با سایر رزیدنت‌های هم‌دوره است و اثر علّی استاد نیست.
-            </div>
-          )}
           <div>
             <div style={{ fontSize: '0.75rem', color: 'var(--color-gray9, #607d8b)', marginBottom: 4, fontFamily: 'var(--font-family-base)' }}>
               اندازه اثر (Cohen's d)
@@ -68,10 +58,11 @@ const FacultyImpactWindowCard = ({ label, windowData, series, globalMax, without
             </div>
           </div>
           <div style={{ fontSize: '0.8rem', color: 'var(--color-gray9, #607d8b)', fontFamily: 'var(--font-family-base)' }}>
-            میانگین تغییر امتیاز رزیدنت‌ها:{' '}
+            میانگین تغییر امتیاز پس از کسر روند زمانی بیمارستان:{' '}
             <strong style={{ color: (delta || 0) >= 0 ? 'var(--color-green, #10b981)' : 'var(--color-red, #ef4444)' }}>
               {(delta || 0) >= 0 ? '+' : ''}{Number(delta).toFixed(2)}
             </strong>
+            {' '}| تغییر خام: {(windowData.delta_raw || 0) >= 0 ? '+' : ''}{Number(windowData.delta_raw || 0).toFixed(2)}
             {' '}(رزیدنت‌های مقایسه‌شده: {windowData.n_residents})
           </div>
           {windowData.mean_in !== null && windowData.mean_in !== undefined && windowData.mean_out !== null && windowData.mean_out !== undefined && (
@@ -82,7 +73,7 @@ const FacultyImpactWindowCard = ({ label, windowData, series, globalMax, without
         </>
       )}
 
-      <FacultyImpactTrendChart series={series} withoutLabel={withoutLabel} />
+      <FacultyImpactTrendChart series={series} />
     </div>
   );
 };

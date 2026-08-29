@@ -2,12 +2,13 @@ import React from 'react';
 import { ResponsiveBar } from '@nivo/bar';
 import ChartTooltip from './ChartTooltip';
 
-const FacultyImpactTrendChart = ({ series, withoutLabel }) => {
-  const SERIES_META = [
-    { key: 'all', label: 'زمینه: میانگین کل بیمارستان', color: 'var(--color-gray8, #90a4ae)' },
-    { key: 'with', label: 'رزیدنت‌های این استاد با ایشان', color: 'var(--color-green, #10b981)' },
-    { key: 'without', label: withoutLabel || 'رزیدنت‌های این استاد بدون ایشان', color: 'var(--color-orange, #f59e0b)' },
-  ];
+const SERIES_META = [
+  { key: 'all', label: 'زمینه: میانگین کل بیمارستان', color: 'var(--color-gray8, #90a4ae)' },
+  { key: 'with', label: 'رزیدنت‌های این استاد با ایشان', color: 'var(--color-green, #10b981)' },
+  { key: 'without', label: 'رزیدنت‌های این استاد بدون ایشان', color: 'var(--color-orange, #f59e0b)' },
+];
+
+const FacultyImpactTrendChart = ({ series }) => {
   const data = (series || []).map(s => ({
     period: s.period,
     all: s.all ?? 0,

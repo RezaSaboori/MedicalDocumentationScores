@@ -68,13 +68,11 @@ const FacultyImpactChart = ({ faculty }) => {
         title="اثر هیئت علمی بر امتیاز رزیدنت‌ها"
         metricData={metrics.PDI}
         globalMax={payload.globalMaxEffect}
-        withoutLabel={payload.withoutLabel}
       />
       <FacultyImpactMetricCard
         title="اثر هیئت علمی بر امتیاز رزیدنت‌ها (بدون احتساب داده کاذب)"
         metricData={metrics.PDI_noF}
         globalMax={payload.globalMaxEffect}
-        withoutLabel={payload.withoutLabel}
       />
     </div>
   );
