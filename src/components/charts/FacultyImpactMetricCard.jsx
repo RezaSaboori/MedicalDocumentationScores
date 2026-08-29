@@ -13,13 +13,13 @@ const FacultyImpactMetricCard = ({ title, metricData, globalMax }) => {
   return (
     <div className="glass u-container u-container--md chart-container">
       <h3 className="chart-title">{title}</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--spacing-md, 12px)' }}>
         {WINDOWS.map(([key, label]) => (
           <FacultyImpactWindowCard
             key={key}
             label={label}
             windowData={metricData.windows[key]}
-            series={metricData.series}
+            series={metricData.series[key] || []}
             globalMax={globalMax}
           />
         ))}

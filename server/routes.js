@@ -159,9 +159,9 @@ export const createRouter = (db) => {
     const CAP = 3;
     const metrics = ['PDI', 'PDI_noF'];
     const periods = [...new Set(rows.map(r => r.period))].sort();
+    const yearOf = (p) => String(p).split('/')[0];
 
     const mean = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
-    const variance = (arr) => arr.reduce((a, b) => a + (b - mean(arr)) ** 2, 0) / (arr.length - 1);
     const round4 = (v) => Number(v.toFixed(4));
 
     const residentsMap = {};
@@ -171,12 +171,27 @@ export const createRouter = (db) => {
       residentsMap[key].push(r);
     });
 
+    // Baseline-controlled pooled Cohen's d: each resident's months are centered
+    // by that resident's own mean (removes baseline ability), then centered
+    // with/without values are pooled across residents. Keeps the sign of d
+    // consistent with the direction seen in the trend charts.
+    const pooledD = (inVals, outVals) => {
+      const n1 = inVals.length;
+      const n2 = outVals.length;
+      const df = n1 + n2 - 2;
+      if (n1 === 0 || n2 === 0 || df < 1) return null;
+      const varOf = (arr) => arr.reduce((a, b) => a + (b - mean(arr)) ** 2, 0) / (arr.length - 1);
+      const sd = Math.sqrt(((n1 - 1) * varOf(inVals) + (n2 - 1) * varOf(outVals)) / df);
+      if (sd <= 0) return null;
+      return Math.max(-CAP, Math.min(CAP, (mean(inVals) - mean(outVals)) / sd));
+    };
+
     const buildFacultyStats = (targetFaculty, includeSeries) => {
       const residents = Object.entries(residentsMap)
         .filter(([, recs]) => recs.some(r => r.faculty === targetFaculty))
         .map(([name, recs]) => {
-          const outAll = recs.filter(r => r.faculty !== targetFaculty);
           const inAll = recs.filter(r => r.faculty === targetFaculty);
+          const outAll = recs.filter(r => r.faculty !== targetFaculty);
           return {
             name,
             recs,
@@ -197,54 +212,47 @@ export const createRouter = (db) => {
       const metricStats = {};
       metrics.forEach(m => {
         const windowStats = {};
+
         Object.entries(windows).forEach(([wKey, w]) => {
           const inSet = new Set(w.in);
           const outSet = new Set(w.out);
-          const perResident = [];
+          const inC = [];
+          const outC = [];
+          const deltas = [];
           let totalIn = 0;
           let totalOut = 0;
+          let contributors = 0;
 
           residents.forEach(res => {
             const inVals = res.recs.filter(r => r.faculty === targetFaculty && inSet.has(r.period)).map(r => r[m]).filter(v => v != null && !isNaN(v));
             const outVals = res.recs.filter(r => r.faculty !== targetFaculty && outSet.has(r.period)).map(r => r[m]).filter(v => v != null && !isNaN(v));
             if (inVals.length === 0 || outVals.length === 0) return;
+            if (inVals.length + outVals.length - 2 < 1) return;
 
+            const mu = mean([...inVals, ...outVals]);
+            inVals.forEach(v => inC.push(v - mu));
+            outVals.forEach(v => outC.push(v - mu));
+            deltas.push(mean(inVals) - mean(outVals));
             totalIn += inVals.length;
             totalOut += outVals.length;
-
-            const n1 = inVals.length;
-            const n2 = outVals.length;
-            const df = n1 + n2 - 2;
-            if (df < 1) return;
-
-            const vIn = n1 > 1 ? variance(inVals) : 0;
-            const vOut = n2 > 1 ? variance(outVals) : 0;
-            const sd = Math.sqrt(((n1 - 1) * vIn + (n2 - 1) * vOut) / df);
-            if (sd <= 0) return;
-
-            const delta = mean(inVals) - mean(outVals);
-            perResident.push({ delta, d: Math.max(-CAP, Math.min(CAP, delta / sd)) });
+            contributors++;
           });
 
-          windowStats[wKey] = perResident.length === 0
-            ? { cohens_d: null, delta: null, n_residents: 0, n_in: totalIn, n_out: totalOut }
-            : {
-                cohens_d: round4(mean(perResident.map(p => p.d))),
-                delta: round4(mean(perResident.map(p => p.delta))),
-                n_residents: perResident.length,
-                n_in: totalIn,
-                n_out: totalOut
-              };
+          const d = pooledD(inC, outC);
+
+          windowStats[wKey] = d === null
+            ? { cohens_d: null, delta: null, n_residents: contributors, n_in: totalIn, n_out: totalOut }
+            : { cohens_d: round4(d), delta: round4(mean(deltas)), n_residents: contributors, n_in: totalIn, n_out: totalOut };
         });
 
-        let series = [];
+        let seriesByWindow = {};
         if (includeSeries) {
           const supervisedNames = new Set(residents.map(r => r.name));
           const mv = (list) => {
             const vals = list.map(r => r[m]).filter(v => v != null && !isNaN(v));
             return vals.length ? round4(mean(vals)) : null;
           };
-          series = periods.map(p => {
+          const monthly = (periodList) => periodList.map(p => {
             const periodRows = rows.filter(r => r.period === p);
             return {
               period: p,
@@ -253,9 +261,23 @@ export const createRouter = (db) => {
               without: mv(periodRows.filter(r => r.faculty !== targetFaculty && supervisedNames.has(normalize(r.name))))
             };
           });
+          const years = [...new Set(periods.map(yearOf))].sort();
+          seriesByWindow = {
+            year: years.map(y => {
+              const yearRows = rows.filter(r => yearOf(r.period) === y);
+              return {
+                period: `سال ${y}`,
+                all: mv(yearRows),
+                with: mv(yearRows.filter(r => r.faculty === targetFaculty)),
+                without: mv(yearRows.filter(r => r.faculty !== targetFaculty && supervisedNames.has(normalize(r.name))))
+              };
+            }),
+            threeMonth: monthly(periods.slice(-3)),
+            lastMonth: monthly(periods)
+          };
         }
 
-        metricStats[m] = { windows: windowStats, series };
+        metricStats[m] = { windows: windowStats, series: seriesByWindow };
       });
 
       const facultyMax = Math.max(0, ...metrics.flatMap(m => Object.values(metricStats[m].windows).map(w => Math.abs(w.cohens_d || 0))));
@@ -264,16 +286,20 @@ export const createRouter = (db) => {
 
     const { residents, metricStats } = buildFacultyStats(faculty, true);
     const totalResidents = residents.length;
-    const rotatedResidents = residents.filter(r => r.rotated).length;
+    const rotated = residents.filter(r => r.rotated);
+    const rotatedResidents = rotated.length;
     const hasAnyEffect = metrics.some(m => Object.values(metricStats[m].windows).some(w => w.cohens_d !== null));
+
+    const faNames = residents.map(r => `«${r.name}»`).join('، ');
+    const rotatedNames = rotated.map(r => `«${r.name}»`).join('، ');
 
     let reason = null;
     if (totalResidents === 0) {
-      reason = 'هیچ رزیدنتی برای این استاد ثبت نشده است.';
+      reason = `برای «${faculty}» هیچ رزیدنتی در ماه‌های ثبت‌شده یافت نشد؛ بنابراین داده‌ای برای برآورد اثر وجود ندارد.`;
     } else if (rotatedResidents === 0) {
-      reason = 'امکان تفکیک اثر استاد وجود ندارد؛ هیچ‌یک از رزیدنت‌های این استاد با استاد دیگری جابجا نشده‌اند.';
+      reason = `استاد «${faculty}» ${totalResidents} رزیدنت داشته‌اند (${faNames}). تمامی این رزیدنت‌ها در همهٔ ماه‌های ثبت‌شده تنها تحت سرپرستی همین استاد بوده‌اند و هیچ چرخشی به استاد دیگر نداشته‌اند؛ بدون دورهٔ مقایسه («بدون این استاد») امکان تفکیک اثر استاد از سطح پایهٔ رزیدنت‌ها وجود ندارد.`;
     } else if (!hasAnyEffect) {
-      reason = 'داده ماهانه برای برآورد پراکندگی کافی نیست؛ برای هر رزیدنت چرخش‌دار حداقل ۳ ماه داده (مجموع دوران با و بدون این استاد) لازم است.';
+      reason = `از ${totalResidents} رزیدنت این استاد، تنها ${rotatedNames} چرخش داشته‌اند، اما مجموع ماه‌های ثبت‌شدهٔ هر رزیدنت چرخش‌دار کمتر از ۳ ماه است؛ برای برآورد پراکندگی و محاسبهٔ اندازهٔ اثر، حداقل ۳ ماه داده (مجموع دوران با و بدون این استاد) برای هر رزیدنت چرخش‌دار لازم است.`;
     }
 
     const allFaculties = [...new Set(rows.map(r => r.faculty).filter(Boolean))];

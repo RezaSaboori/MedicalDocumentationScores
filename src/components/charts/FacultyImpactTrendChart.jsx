@@ -3,9 +3,9 @@ import { ResponsiveBar } from '@nivo/bar';
 import ChartTooltip from './ChartTooltip';
 
 const SERIES_META = [
-  { key: 'all', label: 'همه رزیدنت‌ها', color: '#90a4ae' },
-  { key: 'with', label: 'با این استاد', color: '#10b981' },
-  { key: 'without', label: 'بدون این استاد', color: '#f59e0b' },
+  { key: 'all', label: 'همه رزیدنت‌ها', color: 'var(--color-gray8, #90a4ae)' },
+  { key: 'with', label: 'با این استاد', color: 'var(--color-green, #10b981)' },
+  { key: 'without', label: 'بدون این استاد', color: 'var(--color-orange, #f59e0b)' },
 ];
 
 const FacultyImpactTrendChart = ({ series }) => {
@@ -33,7 +33,7 @@ const FacultyImpactTrendChart = ({ series }) => {
           margin={{ top: 8, right: 8, bottom: 28, left: 36 }}
           padding={0.25}
           innerPadding={1}
-          colors={({ id }) => SERIES_META.find(s => s.key === id)?.color || '#90a4ae'}
+          colors={({ id }) => SERIES_META.find(s => s.key === id)?.color || 'var(--color-gray8, #90a4ae)'}
           enableLabel={false}
           axisBottom={{ tickSize: 0, tickPadding: 6 }}
           axisLeft={{ tickSize: 0, tickPadding: 6, tickValues: 4 }}
@@ -41,7 +41,7 @@ const FacultyImpactTrendChart = ({ series }) => {
           enableGridY={true}
           tooltip={({ indexValue, data: barData }) => (
             <ChartTooltip
-              title={`ماه ${indexValue}`}
+              title={String(indexValue).startsWith('سال') ? indexValue : `ماه ${indexValue}`}
               rows={SERIES_META.map(m => ({
                 label: m.label,
                 value: fmt(barData.raw?.[m.key]),
@@ -53,7 +53,7 @@ const FacultyImpactTrendChart = ({ series }) => {
       <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: 6 }}>
         {SERIES_META.map(m => (
           <span key={m.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.7rem', color: 'var(--color-gray9, #607d8b)', fontFamily: 'var(--font-family-base)' }}>
-            <span style={{ width: 10, height: 10, borderRadius: 2, background: m.color, display: 'inline-block' }} />
+            <span style={{ width: 10, height: 10, borderRadius: 'var(--border-radius-container-xs, 8px)', background: m.color, display: 'inline-block' }} />
             {m.label}
           </span>
         ))}
