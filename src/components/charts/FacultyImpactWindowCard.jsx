@@ -63,7 +63,7 @@ const FacultyImpactWindowCard = ({ label, windowData, series, globalMax }) => {
             mode="diverging"
             items={[
               { label: 'میانگین تغییر امتیاز پس از کسر روند زمانی بیمارستان', value: windowData.delta, pattern: 'stripes' },
-              { label: 'تغییر خام', value: windowData.delta_raw, pattern: 'dots' },
+              { label: 'تغییر خام (بدون کسر روند زمانی بیمارستان)', value: windowData.delta_raw, pattern: 'dots' },
             ]}
           />
 

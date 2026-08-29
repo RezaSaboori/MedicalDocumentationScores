@@ -68,13 +68,16 @@ const FacultyImpactRadialCompare = ({ items, mode = 'diverging', formatter }) =>
         })}
 
         {usable.map((it, i) => {
-          const outer = i === 0;
+          const clockwise = mode === 'positive' ? true : (it.value || 0) >= 0;
+          // The label sits on the EMPTY side of the center line:
+          // positive arc goes right -> label left; negative arc goes left -> label right.
+          const leftSide = clockwise;
           return (
             <text
               key={`v${i}`}
-              x={outer ? CX - 10 : CX + 10}
-              y={outer ? CY - radii[0] + 4 : CY - radii[1] + 4}
-              textAnchor={outer ? 'end' : 'start'}
+              x={leftSide ? CX - 10 : CX + 10}
+              y={i === 0 ? CY - radii[0] + 4 : CY - radii[1] + 4}
+              textAnchor={leftSide ? 'end' : 'start'}
               style={{ fontSize: 13, fontWeight: 700, fill: colorOf(it), fontFamily: 'var(--font-family-base)' }}
             >
               {fmtVal(it.value)}
