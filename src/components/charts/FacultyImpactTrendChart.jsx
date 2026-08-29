@@ -1,0 +1,65 @@
+import React from 'react';
+import { ResponsiveBar } from '@nivo/bar';
+import ChartTooltip from './ChartTooltip';
+
+const SERIES_META = [
+  { key: 'all', label: 'همه رزیدنت‌ها', color: '#90a4ae' },
+  { key: 'with', label: 'با این استاد', color: '#10b981' },
+  { key: 'without', label: 'بدون این استاد', color: '#f59e0b' },
+];
+
+const FacultyImpactTrendChart = ({ series }) => {
+  const data = (series || []).map(s => ({
+    period: s.period,
+    all: s.all ?? 0,
+    with: s.with ?? 0,
+    without: s.without ?? 0,
+    raw: s,
+  }));
+
+  const fmt = (v) => (typeof v === 'number' ? v.toFixed(1) : '—');
+
+  return (
+    <div>
+      <div style={{ fontSize: '0.75rem', color: 'var(--color-gray9, #607d8b)', marginBottom: 4, fontFamily: 'var(--font-family-base)' }}>
+        روند میانگین امتیاز در ماه‌ها
+      </div>
+      <div style={{ height: 180, direction: 'ltr' }}>
+        <ResponsiveBar
+          data={data}
+          keys={['all', 'with', 'without']}
+          indexBy="period"
+          groupMode="grouped"
+          margin={{ top: 8, right: 8, bottom: 28, left: 36 }}
+          padding={0.25}
+          innerPadding={1}
+          colors={({ id }) => SERIES_META.find(s => s.key === id)?.color || '#90a4ae'}
+          enableLabel={false}
+          axisBottom={{ tickSize: 0, tickPadding: 6 }}
+          axisLeft={{ tickSize: 0, tickPadding: 6, tickValues: 4 }}
+          enableGridX={false}
+          enableGridY={true}
+          tooltip={({ indexValue, data: barData }) => (
+            <ChartTooltip
+              title={`ماه ${indexValue}`}
+              rows={SERIES_META.map(m => ({
+                label: m.label,
+                value: fmt(barData.raw?.[m.key]),
+              }))}
+            />
+          )}
+        />
+      </div>
+      <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: 6 }}>
+        {SERIES_META.map(m => (
+          <span key={m.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.7rem', color: 'var(--color-gray9, #607d8b)', fontFamily: 'var(--font-family-base)' }}>
+            <span style={{ width: 10, height: 10, borderRadius: 2, background: m.color, display: 'inline-block' }} />
+            {m.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default FacultyImpactTrendChart;

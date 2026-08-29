@@ -145,28 +145,24 @@ export const createRouter = (db) => {
     const { faculty } = req.params;
 
     const rows = db.prepare(`
-      SELECT name, faculty, PDI, WQS_adj, LAQ, INT
-      FROM aggregated_scores
-      WHERE category = 'resident'
+      SELECT a.name AS name, a.faculty AS faculty, a.PDI AS PDI, a.PDI_noF AS PDI_noF, s.period AS period
+      FROM aggregated_scores a
+      JOIN snapshots s ON s.id = a.snapshot_id
+      WHERE a.category = 'resident'
     `).all();
 
     if (!rows || rows.length === 0) {
-      return res.json({
-        results: [],
-        globalMaxEffect: 0.2,
-        reason: 'داده‌ای در پایگاه ثبت نشده است.',
-        totalResidents: 0,
-        rotatedResidents: 0,
-        diagnostics: []
-      });
+      return res.json({ globalMaxEffect: 0.2, reason: 'داده‌ای در پایگاه ثبت نشده است.', totalResidents: 0, rotatedResidents: 0, diagnostics: [], periods: [], metrics: null });
     }
 
-    const metrics = ['PDI', 'WQS_adj', 'LAQ', 'INT'];
     const normalize = (s) => String(s || '').replace(/\s+/g, ' ').trim();
-    const CAP = 3; // winsorize extreme per-resident effect sizes to keep the shared axis readable
+    const CAP = 3;
+    const metrics = ['PDI', 'PDI_noF'];
+    const periods = [...new Set(rows.map(r => r.period))].sort();
 
     const mean = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
     const variance = (arr) => arr.reduce((a, b) => a + (b - mean(arr)) ** 2, 0) / (arr.length - 1);
+    const round4 = (v) => Number(v.toFixed(4));
 
     const residentsMap = {};
     rows.forEach(r => {
@@ -175,79 +171,101 @@ export const createRouter = (db) => {
       residentsMap[key].push(r);
     });
 
-    // Effect model: for EACH resident, standardize the months under this faculty
-    // against the months without this faculty (within-resident Cohen's d), then
-    // average across residents. Works even when the faculty supervised a single
-    // resident, as long as that resident has >= 3 recorded months in total.
-    const buildFacultyStats = (targetFaculty) => {
+    const buildFacultyStats = (targetFaculty, includeSeries) => {
       const residents = Object.entries(residentsMap)
         .filter(([, recs]) => recs.some(r => r.faculty === targetFaculty))
         .map(([name, recs]) => {
-          const inRecs = recs.filter(r => r.faculty === targetFaculty);
-          const outRecs = recs.filter(r => r.faculty !== targetFaculty);
+          const outAll = recs.filter(r => r.faculty !== targetFaculty);
+          const inAll = recs.filter(r => r.faculty === targetFaculty);
           return {
             name,
-            inRecs,
-            outRecs,
-            inMonths: inRecs.length,
-            outMonths: outRecs.length,
-            rotated: outRecs.length > 0,
-            otherFaculties: [...new Set(outRecs.map(r => r.faculty).filter(Boolean))]
+            recs,
+            inMonths: inAll.length,
+            outMonths: outAll.length,
+            rotated: outAll.length > 0,
+            otherFaculties: [...new Set(outAll.map(r => r.faculty).filter(Boolean))]
           };
         });
 
-      const results = metrics.map(m => {
-        const perResident = [];
-        let totalIn = 0;
-        let totalOut = 0;
+      const last = periods[periods.length - 1];
+      const windows = {
+        year: { in: periods, out: periods },
+        threeMonth: { in: periods.slice(-3), out: periods.slice(-3) },
+        lastMonth: { in: [last], out: periods.slice(0, -1) }
+      };
 
-        residents.forEach(res => {
-          if (!res.rotated) return;
+      const metricStats = {};
+      metrics.forEach(m => {
+        const windowStats = {};
+        Object.entries(windows).forEach(([wKey, w]) => {
+          const inSet = new Set(w.in);
+          const outSet = new Set(w.out);
+          const perResident = [];
+          let totalIn = 0;
+          let totalOut = 0;
 
-          const inVals = res.inRecs.map(r => r[m]).filter(v => v != null && !isNaN(v));
-          const outVals = res.outRecs.map(r => r[m]).filter(v => v != null && !isNaN(v));
-          if (inVals.length === 0 || outVals.length === 0) return;
+          residents.forEach(res => {
+            const inVals = res.recs.filter(r => r.faculty === targetFaculty && inSet.has(r.period)).map(r => r[m]).filter(v => v != null && !isNaN(v));
+            const outVals = res.recs.filter(r => r.faculty !== targetFaculty && outSet.has(r.period)).map(r => r[m]).filter(v => v != null && !isNaN(v));
+            if (inVals.length === 0 || outVals.length === 0) return;
 
-          totalIn += inVals.length;
-          totalOut += outVals.length;
+            totalIn += inVals.length;
+            totalOut += outVals.length;
 
-          const n1 = inVals.length;
-          const n2 = outVals.length;
-          const df = n1 + n2 - 2;
-          if (df < 1) return; // >= 3 months required to estimate variability
+            const n1 = inVals.length;
+            const n2 = outVals.length;
+            const df = n1 + n2 - 2;
+            if (df < 1) return;
 
-          const vIn = n1 > 1 ? variance(inVals) : 0;
-          const vOut = n2 > 1 ? variance(outVals) : 0;
-          const sd = Math.sqrt(((n1 - 1) * vIn + (n2 - 1) * vOut) / df);
-          if (sd <= 0) return;
+            const vIn = n1 > 1 ? variance(inVals) : 0;
+            const vOut = n2 > 1 ? variance(outVals) : 0;
+            const sd = Math.sqrt(((n1 - 1) * vIn + (n2 - 1) * vOut) / df);
+            if (sd <= 0) return;
 
-          const delta = mean(inVals) - mean(outVals);
-          const d = Math.max(-CAP, Math.min(CAP, delta / sd));
-          perResident.push({ delta, d });
+            const delta = mean(inVals) - mean(outVals);
+            perResident.push({ delta, d: Math.max(-CAP, Math.min(CAP, delta / sd)) });
+          });
+
+          windowStats[wKey] = perResident.length === 0
+            ? { cohens_d: null, delta: null, n_residents: 0, n_in: totalIn, n_out: totalOut }
+            : {
+                cohens_d: round4(mean(perResident.map(p => p.d))),
+                delta: round4(mean(perResident.map(p => p.delta))),
+                n_residents: perResident.length,
+                n_in: totalIn,
+                n_out: totalOut
+              };
         });
 
-        if (perResident.length === 0) {
-          return { metric: m, delta: null, cohens_d: null, n_in: totalIn, n_out: totalOut, n_residents: 0 };
+        let series = [];
+        if (includeSeries) {
+          const supervisedNames = new Set(residents.map(r => r.name));
+          const mv = (list) => {
+            const vals = list.map(r => r[m]).filter(v => v != null && !isNaN(v));
+            return vals.length ? round4(mean(vals)) : null;
+          };
+          series = periods.map(p => {
+            const periodRows = rows.filter(r => r.period === p);
+            return {
+              period: p,
+              all: mv(periodRows),
+              with: mv(periodRows.filter(r => r.faculty === targetFaculty)),
+              without: mv(periodRows.filter(r => r.faculty !== targetFaculty && supervisedNames.has(normalize(r.name))))
+            };
+          });
         }
 
-        return {
-          metric: m,
-          delta: Number(mean(perResident.map(p => p.delta)).toFixed(4)),
-          cohens_d: Number(mean(perResident.map(p => p.d)).toFixed(4)),
-          n_in: totalIn,
-          n_out: totalOut,
-          n_residents: perResident.length
-        };
+        metricStats[m] = { windows: windowStats, series };
       });
 
-      const facultyMax = Math.max(0, ...results.map(r => Math.abs(r.cohens_d || 0)));
-      return { residents, results, facultyMax };
+      const facultyMax = Math.max(0, ...metrics.flatMap(m => Object.values(metricStats[m].windows).map(w => Math.abs(w.cohens_d || 0))));
+      return { residents, metricStats, facultyMax };
     };
 
-    const { residents, results } = buildFacultyStats(faculty);
+    const { residents, metricStats } = buildFacultyStats(faculty, true);
     const totalResidents = residents.length;
     const rotatedResidents = residents.filter(r => r.rotated).length;
-    const hasAnyEffect = results.some(r => r.cohens_d !== null);
+    const hasAnyEffect = metrics.some(m => Object.values(metricStats[m].windows).some(w => w.cohens_d !== null));
 
     let reason = null;
     if (totalResidents === 0) {
@@ -258,22 +276,22 @@ export const createRouter = (db) => {
       reason = 'داده ماهانه برای برآورد پراکندگی کافی نیست؛ برای هر رزیدنت چرخش‌دار حداقل ۳ ماه داده (مجموع دوران با و بدون این استاد) لازم است.';
     }
 
-    // Shared axis: max effect across ALL faculties
     const allFaculties = [...new Set(rows.map(r => r.faculty).filter(Boolean))];
     let globalMax = 0.2;
     allFaculties.forEach(f => {
-      const { facultyMax } = buildFacultyStats(f);
+      const { facultyMax } = buildFacultyStats(f, false);
       if (facultyMax > globalMax) globalMax = facultyMax;
     });
     globalMax = globalMax * 1.2;
 
     res.json({
-      results,
-      globalMaxEffect: Number(globalMax.toFixed(4)),
+      globalMaxEffect: round4(globalMax),
       reason,
       totalResidents,
       rotatedResidents,
-      diagnostics: residents.map(({ inRecs, outRecs, ...rest }) => rest)
+      diagnostics: residents.map(({ recs, ...rest }) => rest),
+      periods,
+      metrics: metricStats
     });
   });
 
