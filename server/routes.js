@@ -152,8 +152,13 @@ export const createRouter = (db) => {
     `).all();
 
     if (!rows || rows.length === 0) {
-      return res.json({ globalMaxEffect: 0.2, reason: 'داده‌ای در پایگاه ثبت نشده است.', totalResidents: 0, rotatedResidents: 0, diagnostics: [], periods: [], metrics: null });
+      return res.json({ globalMaxEffect: 0.2, reason: 'داده‌ای در پایگاه ثبت نشده است.', totalResidents: 0, rotatedResidents: 0, diagnostics: [], periods: [], metrics: null, withoutLabel: null });
     }
+
+    const yearByName = new Map(
+      db.prepare('SELECT name, year FROM residents_master').all()
+        .map(r => [String(r.name || '').replace(/\s+/g, ' ').trim(), r.year])
+    );
 
     const normalize = (s) => String(s || '').replace(/\s+/g, ' ').trim();
     const CAP = 3;
@@ -173,7 +178,7 @@ export const createRouter = (db) => {
       residentsMap[key].push(r);
     });
 
-    // Baseline-controlled pooled Cohen's d (sum-of-squares form, safe for n=1)
+    // Tier 1 (causal): baseline-controlled pooled Cohen's d (sum-of-squares form)
     const pooledD = (inVals, outVals) => {
       const n1 = inVals.length;
       const n2 = outVals.length;
@@ -200,6 +205,9 @@ export const createRouter = (db) => {
             otherFaculties: [...new Set(outAll.map(r => r.faculty).filter(Boolean))]
           };
         });
+
+      const hasAnyWithout = residents.some(r => r.rotated);
+      const yearsOfF = new Set(residents.map(r => yearByName.get(r.name)).filter(y => y != null));
 
       const windows = {
         year: { in: periods, out: periods, title: 'بازهٔ یک‌ساله' },
@@ -244,12 +252,50 @@ export const createRouter = (db) => {
             contributors++;
           });
 
-          const d = pooledD(inC, outC);
-          const meanIn = allIn.length ? round4(mean(allIn)) : null;
-          const meanOut = allOut.length ? round4(mean(allOut)) : null;
+          let method = 'within';
+          let d = pooledD(inC, outC);
+          let deltaVal = d !== null ? round4(mean(deltas)) : null;
+          let betweenInfo = null;
+
+          if (d === null) {
+            // Tier 2 (descriptive): no rotation available -> compare each resident
+            // of this faculty with same-year peers in the same period.
+            const dsB = [];
+            const deltasB = [];
+            const allInB = [];
+            const allOutB = [];
+            w.in.forEach(p => {
+              const periodRows = rows.filter(r => r.period === p);
+              periodRows.forEach(fr => {
+                if (fr.faculty !== targetFaculty || !valid(fr[m])) return;
+                const y = yearByName.get(normalize(fr.name));
+                let oVals = periodRows.filter(r => r.faculty !== targetFaculty && y != null && yearByName.get(normalize(r.name)) === y).map(r => r[m]).filter(valid);
+                if (oVals.length < 3) oVals = periodRows.filter(r => r.faculty !== targetFaculty).map(r => r[m]).filter(valid);
+                if (!oVals.length) return;
+                const allVals = periodRows.map(r => r[m]).filter(valid);
+                const sdAll = Math.sqrt(allVals.reduce((a, b) => a + (b - mean(allVals)) ** 2, 0) / Math.max(1, allVals.length - 1));
+                if (!isFinite(sdAll) || sdAll <= 0) return;
+                const delta = fr[m] - mean(oVals);
+                dsB.push(delta / sdAll);
+                deltasB.push(delta);
+                allInB.push(fr[m]);
+                allOutB.push(mean(oVals));
+              });
+            });
+            if (dsB.length) {
+              method = 'between';
+              d = Math.max(-CAP, Math.min(CAP, mean(dsB)));
+              deltaVal = round4(mean(deltasB));
+              betweenInfo = { meanIn: round4(mean(allInB)), meanOut: round4(mean(allOutB)), n: dsB.length };
+            }
+          }
+
+          const meanIn = betweenInfo ? betweenInfo.meanIn : (allIn.length ? round4(mean(allIn)) : null);
+          const meanOut = betweenInfo ? betweenInfo.meanOut : (allOut.length ? round4(mean(allOut)) : null);
+          const nRes = betweenInfo ? betweenInfo.n : contributors;
 
           if (d !== null) {
-            windowStats[wKey] = { cohens_d: round4(d), delta: round4(mean(deltas)), mean_in: meanIn, mean_out: meanOut, n_residents: contributors, n_in: totalIn, n_out: totalOut, reason: null };
+            windowStats[wKey] = { cohens_d: round4(d), delta: deltaVal, mean_in: meanIn, mean_out: meanOut, n_residents: nRes, n_in: totalIn, n_out: totalOut, method, reason: null };
           } else {
             let wReason;
             if (inWindowResidents === 0) {
@@ -261,7 +307,7 @@ export const createRouter = (db) => {
             } else {
               wReason = `در ${w.title}، امتیاز رزیدنت‌های این استاد پراکندگی ندارد (همهٔ امتیازها یکسان بوده‌اند)؛ بنابراین اندازهٔ اثر قابل برآورد نیست.`;
             }
-            windowStats[wKey] = { cohens_d: null, delta: null, mean_in: meanIn, mean_out: meanOut, n_residents: contributors, n_in: totalIn, n_out: totalOut, reason: wReason };
+            windowStats[wKey] = { cohens_d: null, delta: null, mean_in: meanIn, mean_out: meanOut, n_residents: contributors, n_in: totalIn, n_out: totalOut, method: null, reason: wReason };
           }
         });
 
@@ -272,13 +318,21 @@ export const createRouter = (db) => {
             const vals = list.map(r => r[m]).filter(valid);
             return vals.length ? round4(mean(vals)) : null;
           };
+          const peerRows = (periodRows) => {
+            let peers = periodRows.filter(r => r.faculty !== targetFaculty && yearsOfF.has(yearByName.get(normalize(r.name))));
+            if (!peers.length) peers = periodRows.filter(r => r.faculty !== targetFaculty);
+            return peers;
+          };
+          const withoutOf = (periodRows) => hasAnyWithout
+            ? mv(periodRows.filter(r => r.faculty !== targetFaculty && supervisedNames.has(normalize(r.name))))
+            : mv(peerRows(periodRows));
           const monthly = (periodList) => periodList.map(p => {
             const periodRows = rows.filter(r => r.period === p);
             return {
               period: p,
               all: mv(periodRows),
               with: mv(periodRows.filter(r => r.faculty === targetFaculty)),
-              without: mv(periodRows.filter(r => r.faculty !== targetFaculty && supervisedNames.has(normalize(r.name))))
+              without: withoutOf(periodRows)
             };
           });
           const years = [...new Set(periods.map(yearOf))].sort();
@@ -289,7 +343,7 @@ export const createRouter = (db) => {
                 period: `سال ${y}`,
                 all: mv(yearRows),
                 with: mv(yearRows.filter(r => r.faculty === targetFaculty)),
-                without: mv(yearRows.filter(r => r.faculty !== targetFaculty && supervisedNames.has(normalize(r.name))))
+                without: withoutOf(yearRows)
               };
             }),
             threeMonth: monthly(periods.slice(-3)),
@@ -317,7 +371,7 @@ export const createRouter = (db) => {
     if (totalResidents === 0) {
       reason = `برای «${faculty}» هیچ رزیدنتی در ماه‌های ثبت‌شده یافت نشد؛ بنابراین داده‌ای برای برآورد اثر وجود ندارد.`;
     } else if (rotatedResidents === 0) {
-      reason = `استاد «${faculty}» ${totalResidents} رزیدنت داشته‌اند (${faNames}). این رزیدنت‌ها در همهٔ ماه‌های ثبت‌شده فقط تحت سرپرستی همین استاد بوده‌اند و هرگز به استاد دیگری نرفته‌اند؛ چون دورهٔ «بدون این استاد» برای مقایسه وجود ندارد، اثر استاد قابل تفکیک نیست.`;
+      reason = `استاد «${faculty}» ${totalResidents} رزیدنت داشته‌اند (${faNames}) و هیچ‌یک از این رزیدنت‌ها به استاد دیگری نرفته‌اند؛ بنابراین «اثر علّی» استاد قابل برآورد نیست و اعداد نمایش‌داده‌شده صرفاً مقایسهٔ توصیفی رزیدنت‌های این استاد با سایر رزیدنت‌های هم‌دوره است.`;
     } else if (!hasAnyEffect) {
       reason = `رزیدنت‌های این استاد که به استاد دیگری هم رفته‌اند (${rotatedNames})، در مجموع کمتر از ۳ ماه دادهٔ ثبت‌شده دارند؛ برای برآورد اثر، هر رزیدنت باید حداقل ۳ ماه داده (جمع ماه‌های با و بدون این استاد) داشته باشد.`;
     }
@@ -337,7 +391,8 @@ export const createRouter = (db) => {
       rotatedResidents,
       diagnostics: residents.map(({ recs, ...rest }) => rest),
       periods,
-      metrics: metricStats
+      metrics: metricStats,
+      withoutLabel: rotatedResidents > 0 ? 'رزیدنت‌های این استاد بدون ایشان' : 'سایر رزیدنت‌های هم‌دوره (مقایسهٔ توصیفی)'
     });
   });
 

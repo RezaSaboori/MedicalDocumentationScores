@@ -7,7 +7,7 @@ const WINDOWS = [
   ['lastMonth', 'اثر ماه اخیر'],
 ];
 
-const FacultyImpactMetricCard = ({ title, metricData, globalMax }) => {
+const FacultyImpactMetricCard = ({ title, metricData, globalMax, withoutLabel }) => {
   if (!metricData) return null;
 
   return (
@@ -21,6 +21,7 @@ const FacultyImpactMetricCard = ({ title, metricData, globalMax }) => {
             windowData={metricData.windows[key]}
             series={metricData.series[key] || []}
             globalMax={globalMax}
+            withoutLabel={withoutLabel}
           />
         ))}
       </div>

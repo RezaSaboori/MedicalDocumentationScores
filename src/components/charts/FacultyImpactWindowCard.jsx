@@ -1,7 +1,7 @@
 import React from 'react';
 import FacultyImpactTrendChart from './FacultyImpactTrendChart';
 
-const FacultyImpactWindowCard = ({ label, windowData, series, globalMax }) => {
+const FacultyImpactWindowCard = ({ label, windowData, series, globalMax, withoutLabel }) => {
   const d = windowData?.cohens_d;
   const delta = windowData?.delta;
   const hasD = d !== null && d !== undefined;
@@ -29,6 +29,16 @@ const FacultyImpactWindowCard = ({ label, windowData, series, globalMax }) => {
         </p>
       ) : (
         <>
+          {windowData?.method === 'within' && (
+            <div style={{ fontSize: '0.7rem', color: 'var(--color-green, #10b981)', fontFamily: 'var(--font-family-base)' }}>
+              برآورد علّی: مقایسهٔ همان رزیدنت‌ها در حضور و غیاب این استاد
+            </div>
+          )}
+          {windowData?.method === 'between' && (
+            <div style={{ fontSize: '0.7rem', color: 'var(--color-orange, #f59e0b)', fontFamily: 'var(--font-family-base)', lineHeight: 1.7 }}>
+              برآورد توصیفی: رزیدنت‌های این استاد چرخش نکرده‌اند؛ این عدد مقایسه با سایر رزیدنت‌های هم‌دوره است و اثر علّی استاد نیست.
+            </div>
+          )}
           <div>
             <div style={{ fontSize: '0.75rem', color: 'var(--color-gray9, #607d8b)', marginBottom: 4, fontFamily: 'var(--font-family-base)' }}>
               اندازه اثر (Cohen's d)
@@ -72,7 +82,7 @@ const FacultyImpactWindowCard = ({ label, windowData, series, globalMax }) => {
         </>
       )}
 
-      <FacultyImpactTrendChart series={series} />
+      <FacultyImpactTrendChart series={series} withoutLabel={withoutLabel} />
     </div>
   );
 };
