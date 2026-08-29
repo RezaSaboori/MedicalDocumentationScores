@@ -160,9 +160,11 @@ export const createRouter = (db) => {
     const metrics = ['PDI', 'PDI_noF'];
     const periods = [...new Set(rows.map(r => r.period))].sort();
     const yearOf = (p) => String(p).split('/')[0];
+    const last = periods[periods.length - 1];
 
     const mean = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
     const round4 = (v) => Number(v.toFixed(4));
+    const valid = (v) => v != null && !isNaN(v);
 
     const residentsMap = {};
     rows.forEach(r => {
@@ -171,18 +173,15 @@ export const createRouter = (db) => {
       residentsMap[key].push(r);
     });
 
-    // Baseline-controlled pooled Cohen's d: each resident's months are centered
-    // by that resident's own mean (removes baseline ability), then centered
-    // with/without values are pooled across residents. Keeps the sign of d
-    // consistent with the direction seen in the trend charts.
+    // Baseline-controlled pooled Cohen's d (sum-of-squares form, safe for n=1)
     const pooledD = (inVals, outVals) => {
       const n1 = inVals.length;
       const n2 = outVals.length;
       const df = n1 + n2 - 2;
       if (n1 === 0 || n2 === 0 || df < 1) return null;
-      const varOf = (arr) => arr.reduce((a, b) => a + (b - mean(arr)) ** 2, 0) / (arr.length - 1);
-      const sd = Math.sqrt(((n1 - 1) * varOf(inVals) + (n2 - 1) * varOf(outVals)) / df);
-      if (sd <= 0) return null;
+      const ss = (arr) => arr.reduce((a, b) => a + (b - mean(arr)) ** 2, 0);
+      const sd = Math.sqrt((ss(inVals) + ss(outVals)) / df);
+      if (!isFinite(sd) || sd <= 0) return null;
       return Math.max(-CAP, Math.min(CAP, (mean(inVals) - mean(outVals)) / sd));
     };
 
@@ -202,11 +201,10 @@ export const createRouter = (db) => {
           };
         });
 
-      const last = periods[periods.length - 1];
       const windows = {
-        year: { in: periods, out: periods },
-        threeMonth: { in: periods.slice(-3), out: periods.slice(-3) },
-        lastMonth: { in: [last], out: periods.slice(0, -1) }
+        year: { in: periods, out: periods, title: 'بازهٔ یک‌ساله' },
+        threeMonth: { in: periods.slice(-3), out: periods.slice(-3), title: 'بازهٔ سه‌ماهه' },
+        lastMonth: { in: [last], out: periods.slice(0, -1), title: `ماه اخیر (${last})` }
       };
 
       const metricStats = {};
@@ -219,19 +217,27 @@ export const createRouter = (db) => {
           const inC = [];
           const outC = [];
           const deltas = [];
+          const allIn = [];
+          const allOut = [];
           let totalIn = 0;
           let totalOut = 0;
           let contributors = 0;
+          let rotatedInWindow = 0;
+          let inWindowResidents = 0;
 
           residents.forEach(res => {
-            const inVals = res.recs.filter(r => r.faculty === targetFaculty && inSet.has(r.period)).map(r => r[m]).filter(v => v != null && !isNaN(v));
-            const outVals = res.recs.filter(r => r.faculty !== targetFaculty && outSet.has(r.period)).map(r => r[m]).filter(v => v != null && !isNaN(v));
+            const inVals = res.recs.filter(r => r.faculty === targetFaculty && inSet.has(r.period)).map(r => r[m]).filter(valid);
+            const outVals = res.recs.filter(r => r.faculty !== targetFaculty && outSet.has(r.period)).map(r => r[m]).filter(valid);
+            if (inVals.length > 0) inWindowResidents++;
+            if (inVals.length > 0 && outVals.length > 0) rotatedInWindow++;
             if (inVals.length === 0 || outVals.length === 0) return;
             if (inVals.length + outVals.length - 2 < 1) return;
 
             const mu = mean([...inVals, ...outVals]);
             inVals.forEach(v => inC.push(v - mu));
             outVals.forEach(v => outC.push(v - mu));
+            allIn.push(...inVals);
+            allOut.push(...outVals);
             deltas.push(mean(inVals) - mean(outVals));
             totalIn += inVals.length;
             totalOut += outVals.length;
@@ -239,17 +245,31 @@ export const createRouter = (db) => {
           });
 
           const d = pooledD(inC, outC);
+          const meanIn = allIn.length ? round4(mean(allIn)) : null;
+          const meanOut = allOut.length ? round4(mean(allOut)) : null;
 
-          windowStats[wKey] = d === null
-            ? { cohens_d: null, delta: null, n_residents: contributors, n_in: totalIn, n_out: totalOut }
-            : { cohens_d: round4(d), delta: round4(mean(deltas)), n_residents: contributors, n_in: totalIn, n_out: totalOut };
+          if (d !== null) {
+            windowStats[wKey] = { cohens_d: round4(d), delta: round4(mean(deltas)), mean_in: meanIn, mean_out: meanOut, n_residents: contributors, n_in: totalIn, n_out: totalOut, reason: null };
+          } else {
+            let wReason;
+            if (inWindowResidents === 0) {
+              wReason = `در ${w.title} هیچ رزیدنتی تحت سرپرستی «${targetFaculty}» نبوده است؛ بنابراین اثر این بازه قابل محاسبه نیست.`;
+            } else if (rotatedInWindow === 0) {
+              wReason = `در ${w.title}، رزیدنت‌های این استاد فقط تحت سرپرستی «${targetFaculty}» بوده‌اند و ماهی بدون این استاد ندارند تا برای مقایسه استفاده شود.`;
+            } else if (contributors === 0) {
+              wReason = `در ${w.title}، مجموع ماه‌های ثبت‌شده برای رزیدنت‌های این استاد کمتر از ۳ ماه است؛ برای یک مقایسهٔ آماری معتبر حداقل ۳ ماه داده لازم است.`;
+            } else {
+              wReason = `در ${w.title}، امتیاز رزیدنت‌های این استاد پراکندگی ندارد (همهٔ امتیازها یکسان بوده‌اند)؛ بنابراین اندازهٔ اثر قابل برآورد نیست.`;
+            }
+            windowStats[wKey] = { cohens_d: null, delta: null, mean_in: meanIn, mean_out: meanOut, n_residents: contributors, n_in: totalIn, n_out: totalOut, reason: wReason };
+          }
         });
 
         let seriesByWindow = {};
         if (includeSeries) {
           const supervisedNames = new Set(residents.map(r => r.name));
           const mv = (list) => {
-            const vals = list.map(r => r[m]).filter(v => v != null && !isNaN(v));
+            const vals = list.map(r => r[m]).filter(valid);
             return vals.length ? round4(mean(vals)) : null;
           };
           const monthly = (periodList) => periodList.map(p => {
@@ -297,9 +317,9 @@ export const createRouter = (db) => {
     if (totalResidents === 0) {
       reason = `برای «${faculty}» هیچ رزیدنتی در ماه‌های ثبت‌شده یافت نشد؛ بنابراین داده‌ای برای برآورد اثر وجود ندارد.`;
     } else if (rotatedResidents === 0) {
-      reason = `استاد «${faculty}» ${totalResidents} رزیدنت داشته‌اند (${faNames}). تمامی این رزیدنت‌ها در همهٔ ماه‌های ثبت‌شده تنها تحت سرپرستی همین استاد بوده‌اند و هیچ چرخشی به استاد دیگر نداشته‌اند؛ بدون دورهٔ مقایسه («بدون این استاد») امکان تفکیک اثر استاد از سطح پایهٔ رزیدنت‌ها وجود ندارد.`;
+      reason = `استاد «${faculty}» ${totalResidents} رزیدنت داشته‌اند (${faNames}). این رزیدنت‌ها در همهٔ ماه‌های ثبت‌شده فقط تحت سرپرستی همین استاد بوده‌اند و هرگز به استاد دیگری نرفته‌اند؛ چون دورهٔ «بدون این استاد» برای مقایسه وجود ندارد، اثر استاد قابل تفکیک نیست.`;
     } else if (!hasAnyEffect) {
-      reason = `از ${totalResidents} رزیدنت این استاد، تنها ${rotatedNames} چرخش داشته‌اند، اما مجموع ماه‌های ثبت‌شدهٔ هر رزیدنت چرخش‌دار کمتر از ۳ ماه است؛ برای برآورد پراکندگی و محاسبهٔ اندازهٔ اثر، حداقل ۳ ماه داده (مجموع دوران با و بدون این استاد) برای هر رزیدنت چرخش‌دار لازم است.`;
+      reason = `رزیدنت‌های این استاد که به استاد دیگری هم رفته‌اند (${rotatedNames})، در مجموع کمتر از ۳ ماه دادهٔ ثبت‌شده دارند؛ برای برآورد اثر، هر رزیدنت باید حداقل ۳ ماه داده (جمع ماه‌های با و بدون این استاد) داشته باشد.`;
     }
 
     const allFaculties = [...new Set(rows.map(r => r.faculty).filter(Boolean))];

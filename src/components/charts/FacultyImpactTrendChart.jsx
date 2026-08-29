@@ -3,9 +3,9 @@ import { ResponsiveBar } from '@nivo/bar';
 import ChartTooltip from './ChartTooltip';
 
 const SERIES_META = [
-  { key: 'all', label: 'همه رزیدنت‌ها', color: 'var(--color-gray8, #90a4ae)' },
-  { key: 'with', label: 'با این استاد', color: 'var(--color-green, #10b981)' },
-  { key: 'without', label: 'بدون این استاد', color: 'var(--color-orange, #f59e0b)' },
+  { key: 'all', label: 'زمینه: میانگین کل بیمارستان', color: 'var(--color-gray8, #90a4ae)' },
+  { key: 'with', label: 'رزیدنت‌های این استاد با ایشان', color: 'var(--color-green, #10b981)' },
+  { key: 'without', label: 'رزیدنت‌های این استاد بدون ایشان', color: 'var(--color-orange, #f59e0b)' },
 ];
 
 const FacultyImpactTrendChart = ({ series }) => {
@@ -57,6 +57,9 @@ const FacultyImpactTrendChart = ({ series }) => {
             {m.label}
           </span>
         ))}
+      </div>
+      <div style={{ fontSize: '0.7rem', color: 'var(--color-gray9, #607d8b)', fontFamily: 'var(--font-family-base)', textAlign: 'center', marginTop: 4, lineHeight: 1.7 }}>
+        قضاوت دربارهٔ اثر استاد فقط با مقایسهٔ ستون سبز و نارنجی (همین رزیدنت‌ها در حضور/غیاب استاد) معتبر است؛ ستون خاکستری صرفاً زمینهٔ کل بیمارستان است و ممکن است از هر دو کمتر یا بیشتر باشد.
       </div>
     </div>
   );

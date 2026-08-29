@@ -24,8 +24,8 @@ const FacultyImpactWindowCard = ({ label, windowData, series, globalMax }) => {
       </h4>
 
       {!hasD ? (
-        <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-gray9, #607d8b)', fontFamily: 'var(--font-family-base)' }}>
-          داده کافی برای محاسبه اثر در این بازه وجود ندارد.
+        <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-gray9, #607d8b)', fontFamily: 'var(--font-family-base)', lineHeight: 1.8 }}>
+          {windowData?.reason || 'داده کافی برای محاسبه اثر در این بازه وجود ندارد.'}
         </p>
       ) : (
         <>
@@ -64,6 +64,11 @@ const FacultyImpactWindowCard = ({ label, windowData, series, globalMax }) => {
             </strong>
             {' '}(رزیدنت‌های مقایسه‌شده: {windowData.n_residents})
           </div>
+          {windowData.mean_in !== null && windowData.mean_in !== undefined && windowData.mean_out !== null && windowData.mean_out !== undefined && (
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-gray9, #607d8b)', fontFamily: 'var(--font-family-base)' }}>
+              میانگین امتیاز در ماه‌های با این استاد: {Number(windowData.mean_in).toFixed(1)} | میانگین امتیاز در ماه‌های بدون این استاد: {Number(windowData.mean_out).toFixed(1)}
+            </div>
+          )}
         </>
       )}
 

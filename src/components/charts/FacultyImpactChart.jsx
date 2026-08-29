@@ -45,18 +45,18 @@ const FacultyImpactChart = ({ faculty }) => {
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem', maxWidth: '760px' }}>
             {nonRotatedList.map(d => (
               <li key={d.name} style={TEXT_STYLE}>
-                • رزیدنت «{d.name}» در {d.inMonths} ماه ثبت‌شده، تنها تحت سرپرستی «{faculty}» بوده و با استاد دیگری جابجا نشده است؛ بنابراین دوره‌ای برای مقایسه «بدون این استاد» وجود ندارد و اثر استاد قابل تفکیک نیست.
+                • «{d.name}» در هر {d.inMonths} ماه ثبت‌شده فقط با «{faculty}» بوده و حتی یک ماه بدون این استاد نداشته است؛ بنابراین معیاری برای مقایسه وجود ندارد.
               </li>
             ))}
             {rotatedList.map(d => (
               <li key={d.name} style={TEXT_STYLE}>
-                • رزیدنت «{d.name}» دارای چرخش است: {d.inMonths} ماه با «{faculty}» و {d.outMonths} ماه با سایر اساتید{d.otherFaculties.length > 0 ? ` (${d.otherFaculties.join('، ')})` : ''}؛ اما مجموع ماه‌های ثبت‌شده ({d.inMonths + d.outMonths}) برای برآورد پراکندگی کافی نیست (حداقل ۳ ماه لازم است).
+                • «{d.name}» {d.inMonths} ماه با «{faculty}» و {d.outMonths} ماه با سایر اساتید{d.otherFaculties.length > 0 ? ` (${d.otherFaculties.join('، ')})` : ''} بوده است؛ اما مجموع {d.inMonths + d.outMonths} ماه داده برای یک مقایسهٔ آماری معتبر کافی نیست (حداقل ۳ ماه لازم است).
               </li>
             ))}
           </ul>
         )}
         <p style={{ ...TEXT_STYLE, textAlign: 'center', fontSize: '0.8rem' }}>
-          شرط محاسبه اثر: هر رزیدنت باید حداقل یک دوره با این استاد و یک دوره بدون این استاد و در مجموع حداقل ۳ ماه داده داشته باشد. (رزیدنت‌های دارای چرخش: {payload?.rotatedResidents || 0} از {payload?.totalResidents || 0})
+          به‌طور خلاصه: برای محاسبهٔ اثر، هر رزیدنت باید هم با این استاد و هم بدون این استاد کار کرده باشد و در مجموع حداقل ۳ ماه داده داشته باشد. (رزیدنت‌هایی که هر دو شرط را دارند: {payload?.rotatedResidents || 0} از {payload?.totalResidents || 0})
         </p>
       </div>
     );
