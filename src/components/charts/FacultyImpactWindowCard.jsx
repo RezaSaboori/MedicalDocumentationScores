@@ -1,6 +1,6 @@
 import React from 'react';
 import FacultyImpactTrendChart from './FacultyImpactTrendChart';
-import FacultyImpactCompareBars from './FacultyImpactCompareBars';
+import FacultyImpactRadialCompare from './FacultyImpactRadialCompare';
 
 const FacultyImpactWindowCard = ({ label, windowData, series, globalMax }) => {
   const d = windowData?.cohens_d;
@@ -59,20 +59,20 @@ const FacultyImpactWindowCard = ({ label, windowData, series, globalMax }) => {
             </div>
           </div>
 
-          <FacultyImpactCompareBars
+          <FacultyImpactRadialCompare
             mode="diverging"
             items={[
-              { label: 'میانگین تغییر امتیاز پس از کسر روند زمانی بیمارستان', value: windowData.delta },
-              { label: 'تغییر خام', value: windowData.delta_raw },
+              { label: 'میانگین تغییر امتیاز پس از کسر روند زمانی بیمارستان', value: windowData.delta, pattern: 'stripes' },
+              { label: 'تغییر خام', value: windowData.delta_raw, pattern: 'dots' },
             ]}
           />
 
-          <FacultyImpactCompareBars
+          <FacultyImpactRadialCompare
             mode="positive"
             formatter={(v) => Number(v).toFixed(1)}
             items={[
-              { label: 'میانگین امتیاز در ماه‌های با این استاد', value: windowData.mean_in, color: 'var(--color-green, #10b981)' },
-              { label: 'میانگین امتیاز در ماه‌های بدون این استاد', value: windowData.mean_out, color: 'var(--color-orange, #f59e0b)' },
+              { label: 'میانگین امتیاز در ماه‌های با این استاد', value: windowData.mean_in, color: 'var(--color-green, #10b981)', pattern: 'stripes' },
+              { label: 'میانگین امتیاز در ماه‌های بدون این استاد', value: windowData.mean_out, color: 'var(--color-orange, #f59e0b)', pattern: 'dots' },
             ]}
           />
 
