@@ -2,6 +2,18 @@ import React from 'react';
 import FacultyImpactTrendChart from './FacultyImpactTrendChart';
 import FacultyImpactRadialCompare from './FacultyImpactRadialCompare';
 
+const SECTION_LABEL_STYLE = {
+  fontSize: '0.72rem',
+  fontWeight: 600,
+  color: 'var(--color-gray9, #607d8b)',
+  fontFamily: 'var(--font-family-base)',
+  marginBottom: 6,
+};
+
+const DIVIDER_STYLE = {
+  borderTop: '1px solid var(--color-gray3, #eceff1)',
+};
+
 const FacultyImpactWindowCard = ({ label, windowData, series, globalMax }) => {
   const d = windowData?.cohens_d;
   const hasD = d !== null && d !== undefined;
@@ -21,16 +33,32 @@ const FacultyImpactWindowCard = ({ label, windowData, series, globalMax }) => {
     <div
       className="glass"
       style={{
-        padding: 'var(--spacing-md, 12px)',
+        padding: 'var(--spacing-md, 14px)',
         borderRadius: 'var(--border-radius-container-xs, 8px)',
         display: 'flex',
         flexDirection: 'column',
-        gap: 'var(--spacing-sm, 8px)',
+        gap: 'var(--spacing-md, 12px)',
       }}
     >
-      <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: 'var(--color-gray12, #263238)', fontFamily: 'var(--font-family-base)' }}>
-        {label}
-      </h4>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--color-gray12, #263238)', fontFamily: 'var(--font-family-base)' }}>
+          {label}
+        </h4>
+        <span
+          className="glass"
+          style={{
+            fontSize: '0.68rem',
+            fontWeight: 600,
+            color: 'var(--color-gray11, #37474f)',
+            padding: '3px 10px',
+            borderRadius: 999,
+            whiteSpace: 'nowrap',
+            fontFamily: 'var(--font-family-base)',
+          }}
+        >
+          رزیدنت‌های مقایسه‌شده: {windowData?.n_residents ?? 0}
+        </span>
+      </div>
 
       {!hasD ? (
         <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-gray9, #607d8b)', fontFamily: 'var(--font-family-base)', lineHeight: 1.8 }}>
@@ -39,9 +67,7 @@ const FacultyImpactWindowCard = ({ label, windowData, series, globalMax }) => {
       ) : (
         <>
           <div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--color-gray9, #607d8b)', marginBottom: 4, fontFamily: 'var(--font-family-base)' }}>
-              اندازه اثر (Cohen's d)
-            </div>
+            <div style={SECTION_LABEL_STYLE}>اندازه اثر (Cohen's d)</div>
             <div style={{ position: 'relative', height: 26, background: 'var(--color-gray3, #eceff1)', borderRadius: 999 }}>
               <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 1, background: 'var(--color-gray6, #cfd8dc)' }} />
               <div style={{
@@ -59,28 +85,36 @@ const FacultyImpactWindowCard = ({ label, windowData, series, globalMax }) => {
             </div>
           </div>
 
-          <FacultyImpactRadialCompare
-            mode="diverging"
-            items={[
-              { label: 'میانگین تغییر امتیاز پس از کسر روند زمانی بیمارستان', value: windowData.delta, pattern: 'stripes' },
-              { label: 'تغییر خام (بدون کسر روند زمانی بیمارستان)', value: windowData.delta_raw, pattern: 'dots' },
-            ]}
-          />
+          <div style={DIVIDER_STYLE} />
 
-          <FacultyImpactRadialCompare
-            mode="positive"
-            formatter={(v) => Number(v).toFixed(1)}
-            items={[
-              { label: 'میانگین امتیاز در ماه‌های با این استاد', value: windowData.mean_in, color: 'var(--color-green, #10b981)', pattern: 'stripes' },
-              { label: 'میانگین امتیاز در ماه‌های بدون این استاد', value: windowData.mean_out, color: 'var(--color-orange, #f59e0b)', pattern: 'dots' },
-            ]}
-          />
+          <div>
+            <div style={SECTION_LABEL_STYLE}>مقایسهٔ تغییر امتیاز (با / بدون این استاد)</div>
+            <FacultyImpactRadialCompare
+              mode="diverging"
+              items={[
+                { label: 'میانگین تغییر امتیاز پس از کسر روند زمانی بیمارستان', value: windowData.delta, pattern: 'stripes' },
+                { label: 'تغییر خام (بدون کسر روند زمانی بیمارستان)', value: windowData.delta_raw, pattern: 'dots' },
+              ]}
+            />
+          </div>
 
-          <div style={{ fontSize: '0.7rem', color: 'var(--color-gray9, #607d8b)', fontFamily: 'var(--font-family-base)' }}>
-            رزیدنت‌های مقایسه‌شده: {windowData.n_residents}
+          <div style={DIVIDER_STYLE} />
+
+          <div>
+            <div style={SECTION_LABEL_STYLE}>مقایسهٔ میانگین امتیاز (با / بدون این استاد)</div>
+            <FacultyImpactRadialCompare
+              mode="positive"
+              formatter={(v) => Number(v).toFixed(1)}
+              items={[
+                { label: 'میانگین امتیاز در ماه‌های با این استاد', value: windowData.mean_in, color: 'var(--color-green, #10b981)', pattern: 'stripes' },
+                { label: 'میانگین امتیاز در ماه‌های بدون این استاد', value: windowData.mean_out, color: 'var(--color-orange, #f59e0b)', pattern: 'dots' },
+              ]}
+            />
           </div>
         </>
       )}
+
+      <div style={DIVIDER_STYLE} />
 
       <FacultyImpactTrendChart series={series} />
     </div>

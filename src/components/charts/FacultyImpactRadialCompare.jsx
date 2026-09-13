@@ -104,9 +104,9 @@ const FacultyImpactRadialCompare = ({ items, mode = 'diverging', formatter }) =>
           );
         })}
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 6 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
         {usable.map((it, i) => (
-          <div key={`l${i}`} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.7rem', color: 'var(--color-gray9, #607d8b)', fontFamily: 'var(--font-family-base)' }}>
+          <div key={`l${i}`} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.72rem', fontWeight: 600, color: 'var(--color-gray11, #37474f)', fontFamily: 'var(--font-family-base)' }}>
             <svg width="14" height="14" viewBox="0 0 14 14" style={{ flexShrink: 0 }}>
               <rect width="14" height="14" rx="3" fill={colorOf(it)} />
               {it.pattern === 'dots'

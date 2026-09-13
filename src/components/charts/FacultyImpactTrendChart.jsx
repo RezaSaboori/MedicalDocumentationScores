@@ -21,7 +21,7 @@ const FacultyImpactTrendChart = ({ series }) => {
 
   return (
     <div>
-      <div style={{ fontSize: '0.75rem', color: 'var(--color-gray9, #607d8b)', marginBottom: 4, fontFamily: 'var(--font-family-base)' }}>
+      <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--color-gray9, #607d8b)', marginBottom: 6, fontFamily: 'var(--font-family-base)' }}>
         روند میانگین امتیاز در ماه‌ها
       </div>
       <div style={{ height: 180, direction: 'ltr' }}>
@@ -52,7 +52,7 @@ const FacultyImpactTrendChart = ({ series }) => {
       </div>
       <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: 6 }}>
         {SERIES_META.map(m => (
-          <span key={m.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.7rem', color: 'var(--color-gray9, #607d8b)', fontFamily: 'var(--font-family-base)' }}>
+          <span key={m.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.72rem', fontWeight: 600, color: 'var(--color-gray11, #37474f)', fontFamily: 'var(--font-family-base)' }}>
             <span style={{ width: 10, height: 10, borderRadius: 'var(--border-radius-container-xs, 8px)', background: m.color, display: 'inline-block' }} />
             {m.label}
           </span>

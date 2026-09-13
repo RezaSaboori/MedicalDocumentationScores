@@ -2,7 +2,7 @@ import React from 'react';
 import FacultyImpactWindowCard from './FacultyImpactWindowCard';
 
 const WINDOWS = [
-  ['year', 'اثر یک‌ساله (کل داده‌ها)'],
+  ['year', 'اثر یک‌ساله'],
   ['threeMonth', 'اثر سه‌ماهه'],
   ['lastMonth', 'اثر ماه اخیر'],
 ];
