@@ -5,8 +5,6 @@ import GroupDonutChart from '../charts/GroupDonutChart';
 import FlagMembershipChart from '../charts/FlagMembershipChart';
 import LaqDistributionChart from '../charts/LaqDistributionChart';
 import LoadVsQualityChart from '../charts/LoadVsQualityChart';
-import IntegrityMapChart from '../charts/IntegrityMapChart';
-import QualityMixChart from '../charts/QualityMixChart';
 import QualityMixNoFChart from '../charts/QualityMixNoFChart';
 import PdiRankingChart from '../charts/PdiRankingChart';
 import AuditTable from '../table/AuditTable';
@@ -69,8 +67,6 @@ const DashboardLayout = () => {
       <div className="charts-grid-1">
         <LaqDistributionChart />
         <LoadVsQualityChart />
-        <IntegrityMapChart />
-        <QualityMixChart />
         <QualityMixNoFChart />
         <PdiRankingChart />
       </div>

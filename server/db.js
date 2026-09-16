@@ -26,7 +26,7 @@ export const initializeDB = () => {
       doctor_name TEXT, doctor_national_id TEXT, doctor_medical_code TEXT,
       afrad TEXT, center_name TEXT, clinic_name TEXT, clinic_unique_id TEXT,
       electronic_record TEXT, status TEXT, date TEXT,
-      quality_score REAL, fraud_count INTEGER, completeness REAL,
+      quality_score REAL, completeness REAL,
       density REAL, non_repetition REAL, total_chars INTEGER, total_words INTEGER,
       combo_status TEXT,
       FOREIGN KEY(snapshot_id) REFERENCES snapshots(id)
@@ -54,11 +54,11 @@ export const initializeDB = () => {
       faculty TEXT, section TEXT, group_fa TEXT,
       members_count INTEGER, review_sign TEXT,
       V INTEGER, D INTEGER, C REAL, U REAL, avg_chars REAL, avg_words REAL,
-      E INTEGER, G INTEGER, A INTEGER, W INTEGER, F INTEGER, Z INTEGER,
+      E INTEGER, G INTEGER, A INTEGER, W INTEGER, Z INTEGER,
       W2 INTEGER, W1 INTEGER, combo_status TEXT,
       supervision_rate REAL, quality_score REAL, density_score REAL,
       start_date TEXT, end_date TEXT,
-      WQS_adj REAL, COV_adj REAL, LAQ REAL, INT REAL, PDI REAL, PDI_noF REAL, flags TEXT,
+      WQS_adj REAL, COV_adj REAL, LAQ REAL, INT REAL, PDI_noF REAL, flags TEXT,
       FOREIGN KEY(snapshot_id) REFERENCES snapshots(id)
     );
   `);

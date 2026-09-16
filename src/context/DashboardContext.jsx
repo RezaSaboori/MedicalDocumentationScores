@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 import { fetchDashboardData, fetchSnapshots, fetchResidentsMaster } from '../services/dataService';
 import { DASHBOARD_MODES, BASE_FLAG_FA } from '../utils/constants';
 import { flagGroupLabel, flagGroupColor } from '../utils/flagGroups';
+import { enrichScoringGroup } from '../utils/scoring';
 
 const DashboardContext = createContext(null);
 
@@ -80,6 +81,21 @@ export const DashboardProvider = ({ children }) => {
     const isFacultyFilterActive = mode === DASHBOARD_MODES.FACULTY && filters.selectedFaculty !== 'all';
     const dbCategory = (mode === DASHBOARD_MODES.RESIDENTS || isFacultyFilterActive) ? 'resident' : 'faculty';
 
+    const scoreSnapshot = (rows) => [
+      ...enrichScoringGroup(
+        rows.filter((row) => row.category === 'resident'),
+        'resident',
+        residentsMaster
+      ),
+      ...enrichScoringGroup(
+        rows.filter((row) => row.category === 'faculty'),
+        'faculty'
+      ),
+    ];
+
+    const scoredCurrentData = scoreSnapshot(rawCurrentData);
+    const scoredPreviousData = scoreSnapshot(rawPreviousData);
+
     const yearByName = new Map(
       residentsMaster.map((r) => [String(r.name || '').replace(/\s+/g, ' ').trim(), r.year])
     );
@@ -95,40 +111,35 @@ export const DashboardProvider = ({ children }) => {
           }
         : row;
 
-    const currentModeData = rawCurrentData.filter((d) => d.category === dbCategory).map(attachYear);
-    const previousModeData = rawPreviousData.filter((d) => d.category === dbCategory).map(attachYear);
+    const currentModeData = scoredCurrentData
+      .filter((d) => d.category === dbCategory)
+      .map(attachYear);
+
+    const previousModeData = scoredPreviousData
+      .filter((d) => d.category === dbCategory)
+      .map(attachYear);
 
     // Extract unique faculty names from resident data regardless of current mode
-    const residentRows = rawCurrentData.filter(d => d.category === 'resident');
+    const residentRows = scoredCurrentData.filter(d => d.category === 'resident');
     const facultyNamesSet = new Set(
       residentRows.map((r) => r.faculty).filter((f) => f && String(f).trim() !== '')
     );
     const availableFacultyList = Array.from(facultyNamesSet).sort();
 
     const enrichRow = (row) => {
-      const N =
-        (row.E || 0) +
-        (row.G || 0) +
-        (row.A || 0) +
-        (row.W || 0) +
-        (row.F || 0) +
-        (row.Z || 0);
-
-      const N_safe = N || 1;
-
-      const group_fa = flagGroupLabel(row.flags);
-      const group_color = flagGroupColor(row.flags);
+      const flags = row.flags || 'OK';
+      const group_fa = flagGroupLabel(flags);
+      const group_color = flagGroupColor(flags);
 
       return {
         ...row,
-        N,
-        N_noF: N - (row.F || 0),
-        flags: row.flags || 'OK',
+        flags,
         group_fa,
         group_color,
-        rho_Z: row.Z / N_safe,
-        rho_F: row.F / N_safe,
-        COV: row.COV_adj || row.D / (row.V || 1),
+        COV:
+          row.COV_adj ??
+          row.COV ??
+          row.D / (row.V || 1),
       };
     };
 
@@ -178,8 +189,8 @@ export const DashboardProvider = ({ children }) => {
         ...enriched,
         comparison: prev
           ? {
-              PDI: prev.PDI,
-              delta_PDI: enriched.PDI - prev.PDI,
+              PDI_noF: prev.PDI_noF,
+              delta_PDI_noF: enriched.PDI_noF - prev.PDI_noF,
               V: prev.V,
               delta_V: enriched.V - prev.V,
             }

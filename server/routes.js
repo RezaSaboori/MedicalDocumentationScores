@@ -27,8 +27,8 @@ export const createRouter = (db) => {
 
         const docStmt = db.prepare(`
           INSERT INTO documents 
-          (snapshot_id, visit_id, patient_name, national_id, mobile, doctor_name, doctor_national_id, doctor_medical_code, afrad, center_name, clinic_name, clinic_unique_id, electronic_record, status, date, quality_score, fraud_count, completeness, density, non_repetition, total_chars, total_words, combo_status)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          (snapshot_id, visit_id, patient_name, national_id, mobile, doctor_name, doctor_national_id, doctor_medical_code, afrad, center_name, clinic_name, clinic_unique_id, electronic_record, status, date, quality_score, completeness, density, non_repetition, total_chars, total_words, combo_status)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
         
         for (const doc of documents) {
@@ -37,7 +37,7 @@ export const createRouter = (db) => {
             doc.doctor_name, doc.doctor_national_id, doc.doctor_medical_code,
             doc.afrad, doc.center_name, doc.clinic_name, doc.clinic_unique_id,
             doc.electronic_record, doc.status, doc.date,
-            doc.quality_score, doc.fraud_count, doc.completeness,
+            doc.quality_score, doc.completeness,
             doc.density, doc.non_repetition, doc.total_chars, doc.total_words,
             doc.combo_status
           );
@@ -54,8 +54,8 @@ export const createRouter = (db) => {
 
       const aggStmt = db.prepare(`
           INSERT INTO aggregated_scores 
-          (snapshot_id, category, name, faculty, section, group_fa, members_count, review_sign, V, D, C, U, avg_chars, avg_words, E, G, A, W, F, Z, W2, W1, combo_status, supervision_rate, quality_score, density_score, start_date, end_date, WQS_adj, COV_adj, LAQ, INT, PDI, PDI_noF, flags)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          (snapshot_id, category, name, faculty, section, group_fa, members_count, review_sign, V, D, C, U, avg_chars, avg_words, E, G, A, W, Z, W2, W1, combo_status, supervision_rate, quality_score, density_score, start_date, end_date, WQS_adj, COV_adj, LAQ, INT, PDI_noF, flags)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
         
         const allAgg = [
@@ -67,10 +67,10 @@ export const createRouter = (db) => {
           aggStmt.run(
             snapshotId, agg.category, agg.name, agg.faculty, agg.section, agg.group_fa,
             agg.members_count, agg.review_sign, agg.V, agg.D, agg.C, agg.U, agg.avg_chars, agg.avg_words,
-            agg.E, agg.G, agg.A, agg.W, agg.F, agg.Z, agg.W2, agg.W1, agg.combo_status,
+            agg.E, agg.G, agg.A, agg.W, agg.Z, agg.W2, agg.W1, agg.combo_status,
             agg.supervision_rate, agg.quality_score, agg.density_score,
             agg.start_date, agg.end_date,
-            agg.WQS_adj, agg.COV_adj, agg.LAQ, agg.INT, agg.PDI, agg.PDI_noF, agg.flags
+            agg.WQS_adj, agg.COV_adj, agg.LAQ, agg.INT, agg.PDI_noF, agg.flags
           );
         }
 
@@ -101,8 +101,60 @@ export const createRouter = (db) => {
       'SELECT id, period, start_date, end_date FROM snapshots WHERE period < ? ORDER BY period DESC LIMIT 1'
     ).get(period);
 
-    const currentData = db.prepare('SELECT * FROM aggregated_scores WHERE snapshot_id = ?').all(currentSnapshot.id);
-    const previousData = previousSnapshot ? db.prepare('SELECT * FROM aggregated_scores WHERE snapshot_id = ?').all(previousSnapshot.id) : [];
+    const dashboardColumns = `
+      id,
+      snapshot_id,
+      category,
+      name,
+      faculty,
+      section,
+      group_fa,
+      members_count,
+      review_sign,
+      V,
+      D,
+      C,
+      U,
+      avg_chars,
+      avg_words,
+      E,
+      G,
+      A,
+      W,
+      Z,
+      W2,
+      W1,
+      combo_status,
+      supervision_rate,
+      quality_score,
+      density_score,
+      start_date,
+      end_date,
+      WQS_adj,
+      COV_adj,
+      LAQ,
+      INT,
+      PDI_noF,
+      flags
+    `;
+
+    const currentData = db
+      .prepare(`
+        SELECT ${dashboardColumns}
+        FROM aggregated_scores
+        WHERE snapshot_id = ?
+      `)
+      .all(currentSnapshot.id);
+
+    const previousData = previousSnapshot
+      ? db
+          .prepare(`
+            SELECT ${dashboardColumns}
+            FROM aggregated_scores
+            WHERE snapshot_id = ?
+          `)
+          .all(previousSnapshot.id)
+      : [];
 
     res.json({
       current: { snapshot: currentSnapshot, data: currentData },
@@ -145,7 +197,7 @@ export const createRouter = (db) => {
     const { faculty } = req.params;
 
     const rows = db.prepare(`
-      SELECT a.name AS name, a.faculty AS faculty, a.PDI AS PDI, a.PDI_noF AS PDI_noF, s.period AS period
+      SELECT a.name AS name, a.faculty AS faculty, a.PDI_noF AS PDI_noF, s.period AS period
       FROM aggregated_scores a
       JOIN snapshots s ON s.id = a.snapshot_id
       WHERE a.category = 'resident'
@@ -157,7 +209,7 @@ export const createRouter = (db) => {
 
     const normalize = (s) => String(s || '').replace(/\s+/g, ' ').trim();
     const CAP = 3;
-    const metrics = ['PDI', 'PDI_noF'];
+    const metrics = ['PDI_noF'];
     const periods = [...new Set(rows.map(r => r.period))].sort();
     const yearOf = (p) => String(p).split('/')[0];
     const last = periods[periods.length - 1];

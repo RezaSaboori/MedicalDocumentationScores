@@ -18,25 +18,29 @@ const PdiRankingChart = () => {
     if (!d || d.length === 0) return [];
     return [...d]
       .filter(row => row.N > 0)
-      .sort((a, b) => a.PDI - b.PDI)
+      .sort((a, b) => a.PDI_noF - b.PDI_noF)
       .map(row => ({
-        name: row.name, PDI: row.PDI, group_fa: row.group_fa, V: row.V, LAQ: row.LAQ,
+        name: row.name,
+        PDI_noF: row.PDI_noF,
+        group_fa: row.group_fa,
+        V: row.V,
+        LAQ: row.LAQ,
         color: row.group_color || '#1f77b4',
       }));
   }, [d]);
 
   return (
     <div className="glass u-container u-container--md pdi-container">
-      <h3 className="pdi-title">رتبه‌بندی شاخص ترکیبی مستندسازی پزشک (PDI)</h3>
+      <h3 className="pdi-title">رتبه‌بندی شاخص ترکیبی مستندسازی پزشک (PDI_noF)</h3>
       <div
         className="pdi-body"
         style={{ height: `${chartData.length * ROW_HEIGHT + CHART_VERTICAL_MARGIN}px` }}
       >
         <ResponsiveBar
-          data={chartData} keys={['PDI']} indexBy="name" layout="horizontal"
+          data={chartData} keys={['PDI_noF']} indexBy="name" layout="horizontal"
           margin={{ top: 10, right: 56, bottom: 40, left: 140 }} padding={0.2}
           colors={({ data }) => data.color}
-          axisBottom={{ legend: 'PDI', legendPosition: 'middle', legendOffset: 30 }}
+          axisBottom={{ legend: 'PDI_noF', legendPosition: 'middle', legendOffset: 30 }}
           axisLeft={{ tickSize: 0, tickPadding: 12 }}
           label={() => ''}
           layers={[
@@ -46,7 +50,11 @@ const PdiRankingChart = () => {
             (layerProps) => (
               <g key="value-labels">
                 {layerProps.bars.map((bar) => {
-                  const val = Number(bar.data?.PDI ?? bar.data?.data?.PDI ?? bar.value);
+                  const val = Number(
+                    bar.data?.PDI_noF ??
+                    bar.data?.data?.PDI_noF ??
+                    bar.value
+                  );
                   if (isNaN(val)) return null;
                   return (
                     <text
@@ -69,7 +77,7 @@ const PdiRankingChart = () => {
           tooltip={({ data }) => (
             <ChartTooltip title={data.name} rows={[
               { label: 'گروه', value: data.group_fa }, { label: 'ویزیت', value: formatNumber(data.V) },
-              { label: 'LAQ', value: data.LAQ?.toFixed(2) }, { label: 'PDI', value: data.PDI.toFixed(1) },
+              { label: 'LAQ', value: data.LAQ?.toFixed(2) }, { label: 'PDI_noF', value: data.PDI_noF.toFixed(1) },
             ]} />
           )}
         />

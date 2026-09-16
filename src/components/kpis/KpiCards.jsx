@@ -15,11 +15,9 @@ const KpiCards = () => {
     return {
       n_physicians: d.length,
       total_visits: d.reduce((sum, row) => sum + (row.V || 0), 0),
-      mean_pdi: d.reduce((sum, row) => sum + (row.PDI || 0), 0) / d.length,
+      mean_pdi_noF: d.reduce((sum, row) => sum + (row.PDI_noF || 0), 0) / d.length,
       mean_cov: d.reduce((sum, row) => sum + (row.COV || 0), 0) / d.length,
       mean_rho_z: d.reduce((sum, row) => sum + (row.rho_Z || 0), 0) / d.length,
-      mean_rho_f: d.reduce((sum, row) => sum + (row.rho_F || 0), 0) / d.length,
-      n_fraud: hasFlag('INTEGRITY_AUDIT'),
       n_lazy: hasFlag('ENGAGEMENT_TRAINING'),
       n_exemplar: hasFlag('EXEMPLAR'),
     };
@@ -28,7 +26,7 @@ const KpiCards = () => {
   if (loading) {
     return (
       <div className="kpi-grid">
-        {Array.from({ length: 9 }).map((_, i) => (
+        {Array.from({ length: 7 }).map((_, i) => (
           <div key={i} className="glass u-container u-container--sm kpi-card">
             <Skeleton width="70%" height="0.9rem" />
             <Skeleton width="45%" height="1.6rem" />
@@ -55,11 +53,9 @@ const KpiCards = () => {
   const cards = [
     { title: firstKpiTitle, value: formatNumber(kpis.n_physicians), color: 'var(--color-blue)' },
     { title: 'مجموع ویزیت‌ها', value: formatNumber(kpis.total_visits), color: 'var(--color-blue)' },
-    { title: 'میانگین PDI', value: kpis.mean_pdi.toFixed(1), color: 'var(--color-blue)', sub: 'از 100' },
+    { title: 'میانگین PDI_noF', value: kpis.mean_pdi_noF.toFixed(1), color: 'var(--color-blue)', sub: 'از 100' },
     { title: 'نسبت مستندسازی', value: formatPercent(kpis.mean_cov, 0), color: 'var(--color-green)' },
     { title: 'میانگین نرخ پرونده خالی', value: formatPercent(kpis.mean_rho_z, 0), color: 'var(--color-orange)' },
-    { title: 'میانگین نرخ داده کاذب', value: formatPercent(kpis.mean_rho_f, 0), color: 'var(--color-red)' },
-    { title: 'گروه مشکوک به داده کاذب', value: formatNumber(kpis.n_fraud), color: 'var(--color-red)', sub: 'پزشک' },
     { title: 'گروه کم‌حوصله', value: formatNumber(kpis.n_lazy), color: 'var(--color-orange)', sub: 'پزشک' },
     { title: 'گروه باحوصله', value: formatNumber(kpis.n_exemplar), color: 'var(--color-green)', sub: 'پزشک' },
   ];

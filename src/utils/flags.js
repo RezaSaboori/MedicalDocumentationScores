@@ -2,16 +2,12 @@ import { BASE_FLAG_COLOR, BASE_FLAG_FA, FLAG_PRIORITY } from './constants';
 
 // Exact combo names ported from dashboard.py
 export const COMBO_NAME_FA = {
-  'INTEGRITY_AUDIT': 'مشکوک به داده کاذب',
   'ENGAGEMENT_TRAINING': 'کم‌حوصله',
   'EXEMPLAR': 'باحوصله',
   'OK': 'عادی',
   'LOW_DATA': 'فاقد ویزیت کافی',
-  'ENGAGEMENT_TRAINING|INTEGRITY_AUDIT': 'مشکوک به داده کاذبِ کم‌حوصله',
   'ENGAGEMENT_TRAINING|EXEMPLAR': 'باحوصلهٔ پرمشغله',
-  'INTEGRITY_AUDIT|LOW_DATA': 'فاقد ویزیت کافی (مشکوک به داده کاذب)',
   'ENGAGEMENT_TRAINING|LOW_DATA': 'فاقد ویزیت کافی (مشکوک به کم‌حوصلگی)',
-  'ENGAGEMENT_TRAINING|INTEGRITY_AUDIT|LOW_DATA': 'فاقد ویزیت کافی (مشکوک به داده کاذب و کم‌حوصلگی)',
 };
 
 const comboKey = (flags) => [...flags].sort().join('|');

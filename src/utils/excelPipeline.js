@@ -1,27 +1,5 @@
 import * as XLSX from 'xlsx';
-
-const CONFIG = {
-  w_excellent: 1.00,
-  w_good: 0.70,
-  w_acceptable: 0.40,
-  w_weak: 0.10,
-  w_empty: 0.00,
-  w_fraud: -1.00,
-  rich_min_words: 8,
-  shrink_k: 30,
-  int_fraud_penalty: 3.0,
-  int_empty_penalty: 1.0,
-  pdi_cov: 0.25,
-  pdi_wqs: 0.40,
-  pdi_int: 0.25,
-  pdi_rich: 0.10,
-  flag_fraud_rate: 0.05,
-  flag_empty_rate: 0.40,
-  flag_low_visits: 20,
-  flag_exemplar_min_visits: 50,
-};
-
-const NUM_KEYS = ['V', 'D', 'C', 'U', 'avg_chars', 'avg_words', 'E', 'G', 'A', 'W', 'F', 'Z'];
+import { enrichScoringGroup } from './scoring';
 
 const normalize = (text) => String(text || '').replace(/\s+/g, ' ').trim();
 const cleanName = (text) => normalize(text).replace(/\s*:\s*\d+\s*\/\s*\d+\s*$/, '').trim();
@@ -106,7 +84,6 @@ const mergeByName = (rows, keyField) => {
       existing.W += row.W || 0;
       existing.W2 = (existing.W2 || 0) + (row.W2 || 0);
       existing.W1 = (existing.W1 || 0) + (row.W1 || 0);
-      existing.F += row.F || 0;
       existing.Z += row.Z || 0;
       existing.V = totalV;
       existing.D = existing.V - existing.Z;
@@ -150,114 +127,7 @@ const mergeByName = (rows, keyField) => {
   });
 };
 
-// DIKW enrichment + empirical Bayes + LAQ + flags, computed WITHIN each group.
-const enrichGroup = (records, category, residentsData = []) => {
-  const tempRecords = records.map(r => {
-    const N = r.E + r.G + r.A + r.W + r.F + r.Z;
-    const N_noF = r.E + r.G + r.A + r.W + r.Z;
-    const V_safe = r.V || 1;
-    const N_safe = N || 1;
-    const N_noF_safe = N_noF || 1;
 
-    const COV = Math.min(1, Math.max(0, r.D / V_safe));
-    const rho_Z = r.Z / N_safe;
-    const rho_F = r.F / N_safe;
-    const rho_Z_noF = r.Z / N_noF_safe;
-    const RICH = Math.min(1, Math.max(0, (r.avg_words || 0) / CONFIG.rich_min_words));
-
-    const q_num =
-      CONFIG.w_excellent * r.E + CONFIG.w_good * r.G + CONFIG.w_acceptable * r.A +
-      CONFIG.w_weak * r.W + CONFIG.w_empty * r.Z + CONFIG.w_fraud * r.F;
-    const WQS = Math.min(1, Math.max(0, q_num / N_safe));
-
-    const q_num_noF =
-      CONFIG.w_excellent * r.E + CONFIG.w_good * r.G + CONFIG.w_acceptable * r.A +
-      CONFIG.w_weak * r.W + CONFIG.w_empty * r.Z;
-    const WQS_noF = Math.min(1, Math.max(0, q_num_noF / N_noF_safe));
-
-    return { ...r, N, N_noF, COV, rho_Z, rho_F, rho_Z_noF, RICH, WQS, WQS_noF };
-  });
-
-  const mean = (arr) => arr.reduce((a, b) => a + b, 0) / (arr.length || 1);
-  const meanWQS = mean(tempRecords.map(t => t.WQS));
-  const meanCOV = mean(tempRecords.map(t => t.COV));
-  const meanWQS_noF = mean(tempRecords.map(t => t.WQS_noF));
-
-  const ebAdjust = (val, visits, k, meanVal) => (visits * val + k * meanVal) / (visits + k);
-
-  const validForLAQ = tempRecords.filter(t => t.V > 0);
-  let slope = 0, intercept = 0;
-  if (validForLAQ.length >= 2) {
-    const x = validForLAQ.map(t => Math.log(t.V));
-    const y = validForLAQ.map(t => ebAdjust(t.WQS, t.V, CONFIG.shrink_k, meanWQS));
-    const n = x.length;
-    const sumX = x.reduce((a, b) => a + b, 0);
-    const sumY = y.reduce((a, b) => a + b, 0);
-    const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
-    const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0);
-    const denom = n * sumX2 - sumX * sumX;
-    if (denom !== 0) {
-      slope = (n * sumXY - sumX * sumY) / denom;
-      intercept = (sumY - slope * sumX) / n;
-    }
-  }
-
-  const laqValues = validForLAQ
-    .map(t => ebAdjust(t.WQS, t.V, CONFIG.shrink_k, meanWQS) - (intercept + slope * Math.log(t.V)))
-    .sort((a, b) => a - b);
-  const laq75 = laqValues.length ? laqValues[Math.floor(laqValues.length * 0.75)] : 0;
-
-  const finalRecords = tempRecords.map(t => {
-    const WQS_adj = ebAdjust(t.WQS, t.V, CONFIG.shrink_k, meanWQS);
-    const COV_adj = ebAdjust(t.COV, t.V, CONFIG.shrink_k, meanCOV);
-    const WQS_expected_for_load = t.V > 0 ? intercept + slope * Math.log(t.V) : WQS_adj;
-    const LAQ = t.V > 0 ? WQS_adj - WQS_expected_for_load : 0;
-    const INT = Math.min(1, Math.max(0, 1 - CONFIG.int_fraud_penalty * t.rho_F - CONFIG.int_empty_penalty * t.rho_Z));
-    const eps = 1e-9;
-
-    const PDI = 100 * (
-      Math.pow(Math.max(eps, COV_adj), CONFIG.pdi_cov) *
-      Math.pow(Math.max(eps, WQS_adj), CONFIG.pdi_wqs) *
-      Math.pow(Math.max(eps, INT), CONFIG.pdi_int) *
-      Math.pow(Math.max(eps, t.RICH), CONFIG.pdi_rich)
-    );
-
-    const WQS_noF_adj = ebAdjust(t.WQS_noF, t.V, CONFIG.shrink_k, meanWQS_noF);
-    const INT_noF = Math.min(1, Math.max(0, 1 - CONFIG.int_empty_penalty * t.rho_Z_noF));
-    const PDI_noF = 100 * (
-      Math.pow(Math.max(eps, COV_adj), CONFIG.pdi_cov) *
-      Math.pow(Math.max(eps, WQS_noF_adj), CONFIG.pdi_wqs) *
-      Math.pow(Math.max(eps, INT_noF), CONFIG.pdi_int) *
-      Math.pow(Math.max(eps, t.RICH), CONFIG.pdi_rich)
-    );
-
-    const flagsArr = [];
-    if (t.V < CONFIG.flag_low_visits) flagsArr.push('LOW_DATA');
-    if (t.rho_F > CONFIG.flag_fraud_rate) flagsArr.push('INTEGRITY_AUDIT');
-    if (t.rho_Z > CONFIG.flag_empty_rate) flagsArr.push('ENGAGEMENT_TRAINING');
-    if (LAQ >= laq75 && t.V >= CONFIG.flag_exemplar_min_visits && !flagsArr.includes('INTEGRITY_AUDIT')) {
-      flagsArr.push('EXEMPLAR');
-    }
-
-    let year = null;
-    if (category === 'resident' && residentsData.length) {
-      const match = residentsData.find(res => normalize(res.name) === normalize(t.name));
-      if (match) year = match.year;
-    }
-
-    return {
-      ...t,
-      WQS_adj, COV_adj, WQS_expected_for_load, LAQ, INT, PDI,
-      WQS_noF_adj, INT_noF, PDI_noF,
-      flags: flagsArr.length ? flagsArr.join('|') : 'OK',
-      category,
-      year,
-    };
-  });
-
-  finalRecords.sort((a, b) => b.PDI - a.PDI);
-  return finalRecords;
-};
 
 export const parseAndProcessExcel = async (file, residentsData = []) => {
   const rawData = await readSheet(file);
@@ -273,7 +143,6 @@ export const parseAndProcessExcel = async (file, residentsData = []) => {
   const idxStatus = colIdx('وضعیت'); 
   const idxDate = colIdx('تاریخ');
   const idxQualityScore = colIdx('امتیاز کیفیت پرونده');
-  const idxFraudCount = colIdx('تعداد پرونده های مشکوک به تقلب');
   const idxCompleteness = colIdx('امتیاز کامل بودن متن');
   const idxDensity = colIdx('امتیاز تراکم اطلاعاتی متن');
   const idxNonRepetition = colIdx('امتیاز عدم تکرار کلمات');
@@ -308,7 +177,6 @@ export const parseAndProcessExcel = async (file, residentsData = []) => {
 
     let Z = 0, W = 0, A = 0, G = 0, E = 0;
     let W2 = 0, W1 = 0;
-    let F = 0;
     let sumQuality = 0, countQuality = 0;
     let sumCompleteness = 0, countCompleteness = 0;
     let sumDensity = 0, countDensity = 0;
@@ -331,8 +199,6 @@ export const parseAndProcessExcel = async (file, residentsData = []) => {
       else if (comboStatus === 'قابل قبول') A++;
       else if (comboStatus === 'خوب') G++;
       else if (comboStatus === 'عالی') E++;
-
-      if (idxFraudCount !== -1) F += parseNum(row[idxFraudCount]);
 
       if (idxQualityScore !== -1 && row[idxQualityScore] !== '') {
         sumQuality += parseNum(row[idxQualityScore]);
@@ -395,7 +261,7 @@ export const parseAndProcessExcel = async (file, residentsData = []) => {
       group_fa: null,
       members_count: null,
       review_sign: null,
-      V, D, C, U, avg_chars, avg_words, E, G, A, W, F, Z, W2, W1,
+      V, D, C, U, avg_chars, avg_words, E, G, A, W, Z, W2, W1,
       combo_status,
       supervision_rate,
       quality_score,
@@ -405,8 +271,16 @@ export const parseAndProcessExcel = async (file, residentsData = []) => {
     });
   }
 
-  const residents = enrichGroup(mergeByName(parsedRows, 'name'), 'resident', residentsData);
-  const faculty = enrichGroup(mergeByName(parsedRows, 'faculty'), 'faculty');
+  const residents = enrichScoringGroup(
+    mergeByName(parsedRows, 'name'),
+    'resident',
+    residentsData
+  );
+
+  const faculty = enrichScoringGroup(
+    mergeByName(parsedRows, 'faculty'),
+    'faculty'
+  );
 
   // Extract raw documents for database storage
   const colMap = (name) => {
@@ -430,7 +304,6 @@ export const parseAndProcessExcel = async (file, residentsData = []) => {
     status: row[colMap('وضعیت')] || '',
     date: row[colMap('تاریخ')] || '',
     quality_score: parseNum(row[colMap('امتیاز کیفیت پرونده')]),
-    fraud_count: parseNum(row[colMap('تعداد پرونده های مشکوک به تقلب')]),
     completeness: parseNum(row[colMap('امتیاز کامل بودن متن')]),
     density: parseNum(row[colMap('امتیاز تراکم اطلاعاتی متن')]),
     non_repetition: parseNum(row[colMap('امتیاز عدم تکرار کلمات')]),
