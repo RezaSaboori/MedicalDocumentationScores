@@ -3,7 +3,7 @@ import { useDashboard } from '../../context/DashboardContext';
 import { QUALITY_CATEGORIES } from '../../utils/constants';
 import QualityMixChartBase from './QualityMixChartBase';
 
-const QualityMixNoFChart = () => {
+const QualityMixChart = () => {
   const { data } = useDashboard();
 
   return (
@@ -12,13 +12,13 @@ const QualityMixNoFChart = () => {
       previousRows={data.previous}
       comparisonRows={data.allCurrent}
       comparisonPreviousRows={data.allPrevious}
-      scoreKey="PDI_noF"
+      scoreKey="PDI"
       categories={QUALITY_CATEGORIES}
       positiveColor="#15C062"
-      title="رتبه‌بندی رزیدنت‌ها و توزیع کیفیت پرونده‌های آنان (PDI_noF)"
+      title="رتبه‌بندی رزیدنت‌ها و توزیع کیفیت پرونده‌های آنان"
       subtitle="مرتب‌شده از کمترین امتیاز تا بیشترین امتیاز"
     />
   );
 };
 
-export default QualityMixNoFChart;
+export default QualityMixChart;

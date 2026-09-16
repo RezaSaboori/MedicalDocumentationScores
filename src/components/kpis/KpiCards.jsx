@@ -15,7 +15,7 @@ const KpiCards = () => {
     return {
       n_physicians: d.length,
       total_visits: d.reduce((sum, row) => sum + (row.V || 0), 0),
-      mean_pdi_noF: d.reduce((sum, row) => sum + (row.PDI_noF || 0), 0) / d.length,
+      mean_pdi: d.reduce((sum, row) => sum + (row.PDI || 0), 0) / d.length,
       mean_cov: d.reduce((sum, row) => sum + (row.COV || 0), 0) / d.length,
       mean_rho_z: d.reduce((sum, row) => sum + (row.rho_Z || 0), 0) / d.length,
       n_lazy: hasFlag('ENGAGEMENT_TRAINING'),
@@ -53,7 +53,7 @@ const KpiCards = () => {
   const cards = [
     { title: firstKpiTitle, value: formatNumber(kpis.n_physicians), color: 'var(--color-blue)' },
     { title: 'مجموع ویزیت‌ها', value: formatNumber(kpis.total_visits), color: 'var(--color-blue)' },
-    { title: 'میانگین PDI_noF', value: kpis.mean_pdi_noF.toFixed(1), color: 'var(--color-blue)', sub: 'از 100' },
+    { title: 'میانگین PDI', value: kpis.mean_pdi.toFixed(1), color: 'var(--color-blue)', sub: 'از 100' },
     { title: 'نسبت مستندسازی', value: formatPercent(kpis.mean_cov, 0), color: 'var(--color-green)' },
     { title: 'میانگین نرخ پرونده خالی', value: formatPercent(kpis.mean_rho_z, 0), color: 'var(--color-orange)' },
     { title: 'گروه کم‌حوصله', value: formatNumber(kpis.n_lazy), color: 'var(--color-orange)', sub: 'پزشک' },

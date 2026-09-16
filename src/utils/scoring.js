@@ -141,7 +141,7 @@ export const enrichScoringGroup = (records, category, residentsData = []) => {
 
     const eps = 1e-9;
 
-    const PDI_noF =
+    const PDI =
       100 *
       (
         Math.pow(Math.max(eps, COV_adj), CONFIG.pdi_cov) *
@@ -182,26 +182,16 @@ export const enrichScoringGroup = (records, category, residentsData = []) => {
       }
     }
 
-    const {
-      F,
-      PDI,
-      N_noF,
-      rho_F,
-      rho_Z_noF,
-      WQS_noF,
-      WQS_noF_adj,
-      INT_noF,
-      ...cleanRecord
-    } = record;
+
 
     return {
-      ...cleanRecord,
+      ...record,
       WQS_adj,
       COV_adj,
       WQS_expected_for_load,
       LAQ,
       INT,
-      PDI_noF,
+      PDI,
       flags: flags.length ? flags.join('|') : 'OK',
       category,
       year,
@@ -209,7 +199,7 @@ export const enrichScoringGroup = (records, category, residentsData = []) => {
   });
 
   finalRecords.sort(
-    (a, b) => b.PDI_noF - a.PDI_noF
+    (a, b) => b.PDI - a.PDI
   );
 
   return finalRecords;

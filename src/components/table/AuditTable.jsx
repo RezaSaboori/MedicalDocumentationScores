@@ -6,7 +6,7 @@ import './AuditTable.css';
 
 const AuditTable = () => {
   const { data, loading } = useDashboard();
-  const [sortConfig, setSortConfig] = useState({ key: 'PDI_noF', direction: 'desc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'PDI', direction: 'desc' });
 
   const sortedData = useMemo(() => {
     if (!data.current) return [];
@@ -32,7 +32,7 @@ const AuditTable = () => {
             <th onClick={() => handleSort('rho_Z')}>نرخ خالی</th>
             <th onClick={() => handleSort('WQS_adj')}>کیفیت تعدیل‌شده</th>
             <th onClick={() => handleSort('LAQ')}>LAQ</th>
-            <th onClick={() => handleSort('PDI_noF')}>PDI_noF</th>
+            <th onClick={() => handleSort('PDI')}>PDI</th>
           </tr>
         </thead>
         <tbody>
@@ -51,7 +51,7 @@ const AuditTable = () => {
               <td>{formatPercent(row.rho_Z)}</td>
               <td>{row.WQS_adj?.toFixed(2)}</td>
               <td>{row.LAQ?.toFixed(2)}</td>
-              <td>{row.PDI_noF?.toFixed(1)}</td>
+              <td>{row.PDI?.toFixed(1)}</td>
             </tr>
           ))}
         </tbody>

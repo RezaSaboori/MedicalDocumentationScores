@@ -54,7 +54,7 @@ export const createRouter = (db) => {
 
       const aggStmt = db.prepare(`
           INSERT INTO aggregated_scores 
-          (snapshot_id, category, name, faculty, section, group_fa, members_count, review_sign, V, D, C, U, avg_chars, avg_words, E, G, A, W, Z, W2, W1, combo_status, supervision_rate, quality_score, density_score, start_date, end_date, WQS_adj, COV_adj, LAQ, INT, PDI_noF, flags)
+          (snapshot_id, category, name, faculty, section, group_fa, members_count, review_sign, V, D, C, U, avg_chars, avg_words, E, G, A, W, Z, W2, W1, combo_status, supervision_rate, quality_score, density_score, start_date, end_date, WQS_adj, COV_adj, LAQ, INT, PDI, flags)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
         
@@ -70,7 +70,7 @@ export const createRouter = (db) => {
             agg.E, agg.G, agg.A, agg.W, agg.Z, agg.W2, agg.W1, agg.combo_status,
             agg.supervision_rate, agg.quality_score, agg.density_score,
             agg.start_date, agg.end_date,
-            agg.WQS_adj, agg.COV_adj, agg.LAQ, agg.INT, agg.PDI_noF, agg.flags
+            agg.WQS_adj, agg.COV_adj, agg.LAQ, agg.INT, agg.PDI, agg.flags
           );
         }
 
@@ -134,7 +134,7 @@ export const createRouter = (db) => {
       COV_adj,
       LAQ,
       INT,
-      PDI_noF,
+      PDI,
       flags
     `;
 
@@ -197,7 +197,7 @@ export const createRouter = (db) => {
     const { faculty } = req.params;
 
     const rows = db.prepare(`
-      SELECT a.name AS name, a.faculty AS faculty, a.PDI_noF AS PDI_noF, s.period AS period
+      SELECT a.name AS name, a.faculty AS faculty, a.PDI AS PDI, s.period AS period
       FROM aggregated_scores a
       JOIN snapshots s ON s.id = a.snapshot_id
       WHERE a.category = 'resident'
@@ -209,7 +209,7 @@ export const createRouter = (db) => {
 
     const normalize = (s) => String(s || '').replace(/\s+/g, ' ').trim();
     const CAP = 3;
-    const metrics = ['PDI_noF'];
+    const metrics = ['PDI'];
     const periods = [...new Set(rows.map(r => r.period))].sort();
     const yearOf = (p) => String(p).split('/')[0];
     const last = periods[periods.length - 1];

@@ -189,8 +189,8 @@ export const DashboardProvider = ({ children }) => {
         ...enriched,
         comparison: prev
           ? {
-              PDI_noF: prev.PDI_noF,
-              delta_PDI_noF: enriched.PDI_noF - prev.PDI_noF,
+              PDI: prev.PDI,
+              delta_PDI: enriched.PDI - prev.PDI,
               V: prev.V,
               delta_V: enriched.V - prev.V,
             }

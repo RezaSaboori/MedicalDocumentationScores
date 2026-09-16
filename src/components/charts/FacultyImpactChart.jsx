@@ -64,8 +64,8 @@ const FacultyImpactChart = ({ faculty }) => {
 
   return (
     <FacultyImpactMetricCard
-      title="اثر هیئت علمی بر امتیاز PDI_noF رزیدنت‌ها"
-      metricData={metrics.PDI_noF}
+      title="اثر هیئت علمی بر امتیاز PDI رزیدنت‌ها"
+      metricData={metrics.PDI}
       globalMax={payload.globalMaxEffect}
     />
   );

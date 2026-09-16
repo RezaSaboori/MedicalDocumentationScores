@@ -58,7 +58,7 @@ export const initializeDB = () => {
       W2 INTEGER, W1 INTEGER, combo_status TEXT,
       supervision_rate REAL, quality_score REAL, density_score REAL,
       start_date TEXT, end_date TEXT,
-      WQS_adj REAL, COV_adj REAL, LAQ REAL, INT REAL, PDI_noF REAL, flags TEXT,
+      WQS_adj REAL, COV_adj REAL, LAQ REAL, INT REAL, PDI REAL, flags TEXT,
       FOREIGN KEY(snapshot_id) REFERENCES snapshots(id)
     );
   `);

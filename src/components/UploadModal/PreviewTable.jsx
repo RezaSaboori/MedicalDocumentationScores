@@ -23,7 +23,7 @@ const PreviewTable = ({ title, rows, onRowChange, onRowRemove }) => {
               <th>دسته</th>
               <th>سال</th>
               <th>ویزیت (V)</th>
-              <th>PDI_noF</th>
+              <th>PDI</th>
               <th>وضعیت</th>
               <th>عملیات</th>
             </tr>
@@ -46,7 +46,7 @@ const PreviewTable = ({ title, rows, onRowChange, onRowRemove }) => {
                       <input className="upload-modal-input" type="text" value={buffer.year ?? ''} onChange={(e) => setBuffer(b => ({ ...b, year: e.target.value }))} />
                     </td>
                     <td>{row.V}</td>
-                    <td>{Number(row.PDI_noF).toFixed(2)}</td>
+                    <td>{Number(row.PDI).toFixed(2)}</td>
                     <td>{row.flags}</td>
                     <td>
                       <button className="upload-modal-btn upload-modal-btn--sm green-glass upload-modal-btn--solid" onClick={saveEdit}>ذخیره</button>{' '}
@@ -63,7 +63,7 @@ const PreviewTable = ({ title, rows, onRowChange, onRowRemove }) => {
                     </td>
                     <td>{row.year ?? '—'}</td>
                     <td>{row.V}</td>
-                    <td>{Number(row.PDI_noF).toFixed(2)}</td>
+                    <td>{Number(row.PDI).toFixed(2)}</td>
                     <td>{row.flags}</td>
                     <td>
                       <button className="upload-modal-btn upload-modal-btn--sm upload-modal-btn--ghost" onClick={() => startEdit(idx)}>ویرایش</button>{' '}

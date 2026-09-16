@@ -29,7 +29,7 @@ export const generateMockPhysicians = (count = 64) => {
     const qualityBase = 0.9 - rhoZ * 0.55 + rand() * 0.15;
     const WQS_adj = Math.min(1, Math.max(0.05, qualityBase));
     const LAQ = (WQS_adj - 0.55) * 1.6 + (rand() - 0.5) * 0.3;
-    const PDI_noF = Math.min(100, Math.max(0, WQS_adj * 100));
+    const PDI = Math.min(100, Math.max(0, WQS_adj * 100));
 
     return {
       name,
@@ -38,7 +38,7 @@ export const generateMockPhysicians = (count = 64) => {
       rho_Z: Number(rhoZ.toFixed(3)),
       WQS_adj: Number(WQS_adj.toFixed(3)),
       LAQ: Number(LAQ.toFixed(3)),
-      PDI_noF: Number(PDI_noF.toFixed(1)),
+      PDI: Number(PDI.toFixed(1)),
       flags,
       group_fa: comboLabel(flags),
       year: 1403,
