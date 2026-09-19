@@ -8,12 +8,6 @@ const CONFIG = {
   shrink_k: 30,
   int_empty_penalty: 1.0,
 
-  // The former RICH weight is removed and the remaining
-  // PDI weights are proportionally renormalized.
-  pdi_cov: 0.28,
-  pdi_wqs: 0.44,
-  pdi_int: 0.28,
-
   flag_empty_rate: 0.40,
   flag_low_visits: 20,
   flag_exemplar_min_visits: 50,
@@ -96,13 +90,49 @@ export const enrichScoringGroup = (records, category, residentsData = []) => {
     (record) => record.N > 0
   );
 
-  const meanWQS = mean(
-    scorableRecords.map((record) => record.WQS)
-  );
+  const totalScorableDocuments =
+    scorableRecords.reduce(
+      (sum, record) => sum + record.N,
+      0
+    );
 
-  const meanCOV = mean(
-    tempRecords.map((record) => record.COV)
-  );
+  const meanWQS =
+    totalScorableDocuments > 0
+      ? scorableRecords.reduce(
+          (sum, record) =>
+            sum +
+            record.WQS * record.N,
+          0
+        ) / totalScorableDocuments
+      : 0;
+
+  const totalCompletedWeight =
+    tempRecords.reduce(
+      (sum, record) =>
+        sum +
+        (Number(record.completed_weight_sum) || 0),
+      0
+    );
+
+  const totalActiveWeight =
+    tempRecords.reduce(
+      (sum, record) =>
+        sum +
+        (Number(record.active_weight_sum) || 0),
+      0
+    );
+
+  const meanCOV =
+    totalActiveWeight > 0
+      ? Math.min(
+          1,
+          Math.max(
+            0,
+            totalCompletedWeight /
+              totalActiveWeight
+          )
+        )
+      : 0;
 
   const validForLAQ = tempRecords.filter(
     (record) =>
@@ -196,21 +226,7 @@ export const enrichScoringGroup = (records, category, residentsData = []) => {
 
     const PDI =
       record.N > 0
-        ? 100 *
-          (
-            Math.pow(
-              COV_adj,
-              CONFIG.pdi_cov
-            ) *
-            Math.pow(
-              WQS_adj,
-              CONFIG.pdi_wqs
-            ) *
-            Math.pow(
-              INT,
-              CONFIG.pdi_int
-            )
-          )
+        ? 100 * record.WQS
         : 0;
 
     const flags = [];
