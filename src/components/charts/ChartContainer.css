@@ -9,7 +9,17 @@
 .chart-panel__header {
   flex: 0 0 auto;
   width: 100%;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
   padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.chart-panel__heading {
+  flex: 1 1 auto;
+  min-width: 0;
   text-align: right;
 }
 
@@ -26,6 +36,25 @@
   font-size: var(--font-size-sm);
 }
 
+.chart-panel__download {
+  flex: 0 0 auto;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: var(--border-radius-pill);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.chart-panel__download svg {
+  position: relative;
+  z-index: 1;
+}
+
 .chart-panel__body {
   flex: 1 1 auto;
   width: 100%;
@@ -38,9 +67,24 @@
 .chart-panel__footer {
   flex: 0 0 auto;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-lg) var(--spacing-md);
 }
 
 .chart-panel__footer .chart-legend {
   margin-top: 0;
+}
+
+.chart-panel--exporting {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.chart-panel--exporting .chart-panel__body {
+  max-height: none !important;
+  overflow: visible !important;
 }

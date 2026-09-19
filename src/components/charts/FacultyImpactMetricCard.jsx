@@ -1,4 +1,5 @@
 import React from 'react';
+import ChartContainer from './ChartContainer';
 import FacultyImpactWindowCard from './FacultyImpactWindowCard';
 
 const WINDOWS = [
@@ -11,9 +12,17 @@ const FacultyImpactMetricCard = ({ title, metricData, globalMax }) => {
   if (!metricData) return null;
 
   return (
-    <div className="glass u-container u-container--md chart-container">
-      <h3 className="chart-title">{title}</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--spacing-md, 12px)' }}>
+    <ChartContainer
+      title={title}
+      className="chart-container"
+    >
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: 'var(--spacing-md, 12px)',
+        }}
+      >
         {WINDOWS.map(([key, label]) => (
           <FacultyImpactWindowCard
             key={key}
@@ -24,7 +33,7 @@ const FacultyImpactMetricCard = ({ title, metricData, globalMax }) => {
           />
         ))}
       </div>
-    </div>
+    </ChartContainer>
   );
 };
 

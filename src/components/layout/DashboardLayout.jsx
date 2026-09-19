@@ -71,12 +71,7 @@ const DashboardLayout = () => {
         <PdiRankingChart />
       </div>
 
-      <div className="glass u-container u-container--md">
-        <h3 className="table-section-title">
-          جدول ممیزی — قابل جست‌وجو، مرتب‌سازی و خروجی Excel
-        </h3>
-        <AuditTable />
-      </div>
+      <AuditTable />
 
       <UploadModal 
         isOpen={isUploadModalOpen} 

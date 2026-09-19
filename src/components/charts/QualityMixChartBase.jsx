@@ -106,6 +106,20 @@ const QualityMixChartBase = ({
 
   const qualityKeys = Object.keys(categories);
 
+  const statusFooter = (
+    <div className="qm-status">
+      <span className="qm-status-item qm-status-bad">
+        غیر قابل قبول · {layout.belowCount} نفر
+      </span>
+      <span className="qm-status-item qm-status-threshold">
+        آستانه {PDI_THRESHOLD}
+      </span>
+      <span className="qm-status-item qm-status-good">
+        قابل قبول · {layout.aboveCount} نفر
+      </span>
+    </div>
+  );
+
   if (layout.rowCount === 0) {
     return (
       <ChartContainer
@@ -116,6 +130,7 @@ const QualityMixChartBase = ({
           label: categories[key].label,
           color: categories[key].color,
         }))}
+        footerContent={statusFooter}
       >
         <p className="qm-empty">داده‌ای برای نمایش وجود ندارد</p>
       </ChartContainer>
@@ -150,6 +165,7 @@ const QualityMixChartBase = ({
         label: categories[key].label,
         color: categories[key].color,
       }))}
+      footerContent={statusFooter}
     >
       <div className="qm-panels" style={{ '--qm-sep-top': `${layout.sepTop}px` }}>
         {layout.showSeparator && <div className="qm-separator" />}
@@ -262,12 +278,6 @@ const QualityMixChartBase = ({
             <span className="qm-axis__legend" style={{ fontSize: layout.tickSize }}>امتیاز کیفیت ثبت پرونده‌ها</span>
           </div>
         </div>
-      </div>
-
-      <div className="qm-status">
-        <span className="qm-status-item qm-status-bad">غیر قابل قبول · {layout.belowCount} نفر</span>
-        <span className="qm-status-item qm-status-threshold">آستانه {PDI_THRESHOLD}</span>
-        <span className="qm-status-item qm-status-good">قابل قبول · {layout.aboveCount} نفر</span>
       </div>
 
       {tooltip && (

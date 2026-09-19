@@ -22,11 +22,12 @@
     "@nivo/bar": "^0.99.0",
     "@nivo/core": "^0.99.0",
     "@nivo/scatterplot": "^0.99.0",
+    "cors": "^2.8.5",
+    "dom-to-svg": "^0.12.2",
+    "express": "^4.19.2",
     "papaparse": "^5.6.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "xlsx": "^0.18.5",
-    "cors": "^2.8.5",
-    "express": "^4.19.2"
+    "xlsx": "^0.18.5"
   }
 }

@@ -180,7 +180,7 @@
 }
 
 /* ── Status pills / tooltip ───────────────────────────────────── */
-.qm-status { display: flex; justify-content: center; gap: var(--spacing-lg); margin-top: var(--spacing-md); font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); }
+.qm-status { display: flex; justify-content: center; gap: var(--spacing-lg); margin-top: 0; font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); }
 .qm-status-item { padding: 4px 12px; border-radius: var(--border-radius-pill); background-color: var(--color-gray2); }
 .qm-status-bad { color: #C62828; }
 .qm-status-threshold { color: var(--color-gray10); }
