@@ -1,6 +1,7 @@
 import {
   QUALITY_CLASS_KEYS,
   QUALITY_CLASS_WEIGHTS,
+  QUALITY_CLASS_MAX_WEIGHT,
 } from './qualityClasses';
 
 const CONFIG = {
@@ -72,7 +73,11 @@ export const enrichScoringGroup = (records, category, residentsData = []) => {
 
     const WQS = Math.min(
       1,
-      Math.max(0, q_num / N_safe)
+      Math.max(
+        0,
+        q_num /
+          (N_safe * QUALITY_CLASS_MAX_WEIGHT)
+      )
     );
 
     return {
@@ -87,10 +92,23 @@ export const enrichScoringGroup = (records, category, residentsData = []) => {
     };
   });
 
-  const meanWQS = mean(tempRecords.map((record) => record.WQS));
-  const meanCOV = mean(tempRecords.map((record) => record.COV));
+  const scorableRecords = tempRecords.filter(
+    (record) => record.N > 0
+  );
 
-  const validForLAQ = tempRecords.filter((record) => record.V > 0);
+  const meanWQS = mean(
+    scorableRecords.map((record) => record.WQS)
+  );
+
+  const meanCOV = mean(
+    tempRecords.map((record) => record.COV)
+  );
+
+  const validForLAQ = tempRecords.filter(
+    (record) =>
+      record.V > 0 &&
+      record.N > 0
+  );
 
   let slope = 0;
   let intercept = 0;
@@ -98,7 +116,12 @@ export const enrichScoringGroup = (records, category, residentsData = []) => {
   if (validForLAQ.length >= 2) {
     const x = validForLAQ.map((record) => Math.log(record.V));
     const y = validForLAQ.map((record) =>
-      ebAdjust(record.WQS, record.V, CONFIG.shrink_k, meanWQS)
+      ebAdjust(
+        record.WQS,
+        record.N,
+        CONFIG.shrink_k,
+        meanWQS
+      )
     );
 
     const n = x.length;
@@ -118,7 +141,12 @@ export const enrichScoringGroup = (records, category, residentsData = []) => {
   const laqValues = validForLAQ
     .map(
       (record) =>
-        ebAdjust(record.WQS, record.V, CONFIG.shrink_k, meanWQS) -
+        ebAdjust(
+          record.WQS,
+          record.N,
+          CONFIG.shrink_k,
+          meanWQS
+        ) -
         (intercept + slope * Math.log(record.V))
     )
     .sort((a, b) => a - b);
@@ -128,12 +156,15 @@ export const enrichScoringGroup = (records, category, residentsData = []) => {
     : 0;
 
   const finalRecords = tempRecords.map((record) => {
-    const WQS_adj = ebAdjust(
-      record.WQS,
-      record.V,
-      CONFIG.shrink_k,
-      meanWQS
-    );
+    const WQS_adj =
+      record.N > 0
+        ? ebAdjust(
+            record.WQS,
+            record.N,
+            CONFIG.shrink_k,
+            meanWQS
+          )
+        : 0;
 
     const COV_adj = ebAdjust(
       record.COV,
@@ -142,14 +173,20 @@ export const enrichScoringGroup = (records, category, residentsData = []) => {
       meanCOV
     );
 
+    const hasScorableData =
+      record.V > 0 &&
+      record.N > 0;
+
     const WQS_expected_for_load =
-      record.V > 0
-        ? intercept + slope * Math.log(record.V)
-        : WQS_adj;
+      hasScorableData
+        ? intercept +
+          slope * Math.log(record.V)
+        : 0;
 
     const LAQ =
-      record.V > 0
-        ? WQS_adj - WQS_expected_for_load
+      hasScorableData
+        ? WQS_adj -
+          WQS_expected_for_load
         : 0;
 
     const INT = Math.min(
@@ -157,24 +194,24 @@ export const enrichScoringGroup = (records, category, residentsData = []) => {
       Math.max(0, 1 - CONFIG.int_empty_penalty * record.rho_Z)
     );
 
-    const eps = 1e-9;
-
     const PDI =
-      100 *
-      (
-        Math.pow(
-          Math.max(eps, COV_adj),
-          CONFIG.pdi_cov
-        ) *
-        Math.pow(
-          Math.max(eps, WQS_adj),
-          CONFIG.pdi_wqs
-        ) *
-        Math.pow(
-          Math.max(eps, INT),
-          CONFIG.pdi_int
-        )
-      );
+      record.N > 0
+        ? 100 *
+          (
+            Math.pow(
+              COV_adj,
+              CONFIG.pdi_cov
+            ) *
+            Math.pow(
+              WQS_adj,
+              CONFIG.pdi_wqs
+            ) *
+            Math.pow(
+              INT,
+              CONFIG.pdi_int
+            )
+          )
+        : 0;
 
     const flags = [];
 
@@ -187,6 +224,7 @@ export const enrichScoringGroup = (records, category, residentsData = []) => {
     }
 
     if (
+      record.N > 0 &&
       LAQ >= laq75 &&
       record.V >= CONFIG.flag_exemplar_min_visits
     ) {

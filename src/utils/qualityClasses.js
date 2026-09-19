@@ -7,46 +7,48 @@ export const QUALITY_CLASSES = {
   0: {
     key: 'Q0',
     label: 'خالی',
-    weight: 0.0,
+    weight: 0,
     color: '#B0BEC5',
     textColor: '#263238',
   },
   1: {
     key: 'Q1',
     label: 'کمتر از حداقل انتظار',
-    weight: 0.2,
+    weight: 3,
     color: '#D84315',
     textColor: '#FFFFFF',
   },
   2: {
     key: 'Q2',
     label: 'حداقل قابل قبول',
-    weight: 0.4,
+    weight: 4,
     color: '#F28E2B',
     textColor: '#263238',
   },
   3: {
     key: 'Q3',
     label: 'سطح قابل قبول',
-    weight: 0.6,
+    weight: 5,
     color: '#BFD200',
     textColor: '#263238',
   },
   4: {
     key: 'Q4',
     label: 'خوب',
-    weight: 0.8,
+    weight: 6,
     color: '#38B000',
     textColor: '#FFFFFF',
   },
   5: {
     key: 'Q5',
     label: 'فراتر از انتظار',
-    weight: 1.0,
+    weight: 8,
     color: '#004B23',
     textColor: '#FFFFFF',
   },
 };
+
+export const QUALITY_CLASS_MAX_WEIGHT = 8;
 
 export const QUALITY_CLASS_KEYS = Object.values(QUALITY_CLASSES).map(
   (item) => item.key
