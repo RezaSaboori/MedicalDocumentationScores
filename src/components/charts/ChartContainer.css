@@ -79,6 +79,7 @@
 }
 
 .chart-panel--exporting {
+  min-height: 0 !important;
   height: auto !important;
   max-height: none !important;
   overflow: visible !important;
@@ -86,12 +87,14 @@
 
 .chart-panel--exporting .chart-panel__body {
   flex: 0 0 auto !important;
+  min-height: 0;
   height: auto !important;
   max-height: none !important;
   overflow: visible !important;
 }
 
 .chart-panel--exporting .chart-panel__download {
+  visibility: hidden !important;
   opacity: 0 !important;
   pointer-events: none !important;
 }
