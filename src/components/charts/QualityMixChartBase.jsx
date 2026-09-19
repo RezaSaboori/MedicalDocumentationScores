@@ -168,7 +168,23 @@ const QualityMixChartBase = ({
       footerContent={statusFooter}
     >
       <div className="qm-panels" style={{ '--qm-sep-top': `${layout.sepTop}px` }}>
-        {layout.showSeparator && <div className="qm-separator" />}
+        {layout.showSeparator && (
+          <svg
+            className="qm-separator"
+            viewBox="0 0 100 2"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <line
+              className="qm-separator__line"
+              x1="0"
+              y1="1"
+              x2="100"
+              y2="1"
+              vectorEffect="non-scaling-stroke"
+            />
+          </svg>
+        )}
 
         <div className="qm-panel qm-panel-left">
           <div className="qm-panel-title">توزیع کیفیت پرونده‌ها</div>
@@ -231,7 +247,26 @@ const QualityMixChartBase = ({
             {/* 0..50 red / 50..100 green; right edge == 100% == max bar length */}
             <div className="qm-score__zones" style={{ right: SCORE_GUTTER }} />
             {/* 50% threshold line, rendered above the score bars */}
-            <div className="qm-score__threshold" style={{ right: SCORE_GUTTER }} />
+            <div
+              className="qm-score__threshold"
+              style={{ right: SCORE_GUTTER }}
+            >
+              <svg
+                className="qm-score__threshold-svg"
+                viewBox="0 0 100 100"
+                preserveAspectRatio="none"
+                aria-hidden="true"
+              >
+                <line
+                  className="qm-score__threshold-line"
+                  x1="50"
+                  y1="0"
+                  x2="50"
+                  y2="100"
+                  vectorEffect="non-scaling-stroke"
+                />
+              </svg>
+            </div>
 
             <div className="qm-score__rows">
               {displayRows.map(row => (

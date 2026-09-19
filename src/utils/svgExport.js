@@ -11,11 +11,6 @@ const sanitizeFilename = (value) => {
   return cleaned || 'chart';
 };
 
-const nextFrame = () =>
-  new Promise((resolve) => {
-    requestAnimationFrame(resolve);
-  });
-
 const downloadBlob = (blob, filename) => {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
@@ -39,60 +34,63 @@ export const downloadElementAsSvg = async (element, title) => {
     await document.fonts.ready;
   }
 
-  const sourceWidth = Math.ceil(element.getBoundingClientRect().width);
-  const clone = element.cloneNode(true);
+  const body = element.querySelector('.chart-panel__body');
+  const previousScrollTop = body?.scrollTop ?? 0;
+  const previousScrollLeft = body?.scrollLeft ?? 0;
 
-  clone.classList.add('chart-panel--exporting');
-
-  clone
-    .querySelectorAll('[data-export-ignore="true"]')
-    .forEach((node) => node.remove());
-
-  Object.assign(clone.style, {
-    position: 'fixed',
-    left: '-100000px',
-    top: '0',
-    width: `${sourceWidth}px`,
-    maxWidth: 'none',
-    height: 'auto',
-    maxHeight: 'none',
-    flex: 'none',
-    pointerEvents: 'none',
-    zIndex: '-1',
-  });
-
-  document.body.appendChild(clone);
+  let svgDocument;
 
   try {
-    await nextFrame();
+    /*
+     * Export the real laid-out panel instead of a re-parented clone.
+     * The export class temporarily expands the scrollable chart body.
+     *
+     * No animation frame is awaited here, so the expanded state is measured
+     * synchronously by the exporter and is not painted to the screen.
+     */
+    element.classList.add('chart-panel--exporting');
 
-    const svgDocument = elementToSVG(clone);
+    if (body) {
+      body.scrollTop = 0;
+      body.scrollLeft = 0;
+    }
 
-    await inlineResources(svgDocument.documentElement);
+    // Force synchronous layout after applying the export-only rules.
+    void element.offsetHeight;
 
-    const svgTitle = svgDocument.createElementNS(
-      SVG_NAMESPACE,
-      'title'
-    );
-    svgTitle.textContent = title;
-
-    svgDocument.documentElement.insertBefore(
-      svgTitle,
-      svgDocument.documentElement.firstChild
-    );
-
-    const svgString = new XMLSerializer().serializeToString(svgDocument);
-
-    const blob = new Blob(
-      [svgString],
-      { type: 'image/svg+xml;charset=utf-8' }
-    );
-
-    downloadBlob(
-      blob,
-      `${sanitizeFilename(title)}.svg`
-    );
+    svgDocument = elementToSVG(element);
   } finally {
-    clone.remove();
+    element.classList.remove('chart-panel--exporting');
+
+    if (body) {
+      body.scrollTop = previousScrollTop;
+      body.scrollLeft = previousScrollLeft;
+    }
   }
+
+  await inlineResources(svgDocument.documentElement);
+
+  const svgTitle = svgDocument.createElementNS(
+    SVG_NAMESPACE,
+    'title'
+  );
+
+  svgTitle.textContent = title;
+
+  svgDocument.documentElement.insertBefore(
+    svgTitle,
+    svgDocument.documentElement.firstChild
+  );
+
+  const svgString = new XMLSerializer().serializeToString(svgDocument);
+
+  const blob = new Blob(
+    [svgString],
+    { type: 'image/svg+xml;charset=utf-8' }
+  );
+
+  downloadBlob(
+    blob,
+    `${sanitizeFilename(title)}.svg`
+  );
 };
