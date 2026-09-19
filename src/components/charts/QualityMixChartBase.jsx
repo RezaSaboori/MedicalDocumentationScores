@@ -111,9 +111,6 @@ const QualityMixChartBase = ({
       <span className="qm-status-item qm-status-bad">
         غیر قابل قبول · {layout.belowCount} نفر
       </span>
-      <span className="qm-status-item qm-status-threshold">
-        آستانه {PDI_THRESHOLD}
-      </span>
       <span className="qm-status-item qm-status-good">
         قابل قبول · {layout.aboveCount} نفر
       </span>

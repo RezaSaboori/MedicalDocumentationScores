@@ -54,6 +54,13 @@ export const QUALITY_CLASS_KEYS = Object.values(QUALITY_CLASSES).map(
   (item) => item.key
 );
 
+export const QUALITY_CLASS_WEIGHTS = Object.fromEntries(
+  Object.values(QUALITY_CLASSES).map((item) => [
+    item.key,
+    item.weight,
+  ])
+);
+
 export const qualityWeightToStatus = (value) => {
   const numericValue = Number(value);
 
