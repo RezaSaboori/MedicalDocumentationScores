@@ -137,7 +137,6 @@ export const DashboardProvider = ({ children }) => {
         group_fa,
         group_color,
         COV:
-          row.COV_adj ??
           row.COV ??
           row.D / (row.V || 1),
       };

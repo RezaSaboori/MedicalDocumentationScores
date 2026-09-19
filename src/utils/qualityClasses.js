@@ -54,9 +54,31 @@ export const QUALITY_CLASS_KEYS = Object.values(QUALITY_CLASSES).map(
   (item) => item.key
 );
 
-export const QUALITY_CLASS_WEIGHTS = Object.fromEntries(
-  Object.values(QUALITY_CLASSES).map((item) => [item.key, item.weight])
-);
+export const qualityWeightToStatus = (value) => {
+  const numericValue = Number(value);
+
+  if (!Number.isFinite(numericValue)) {
+    return null;
+  }
+
+  let closestClass = 0;
+  let smallestDistance = Infinity;
+
+  Object.entries(QUALITY_CLASSES).forEach(
+    ([classValue, item]) => {
+      const distance = Math.abs(
+        numericValue - item.weight
+      );
+
+      if (distance < smallestDistance) {
+        smallestDistance = distance;
+        closestClass = Number(classValue);
+      }
+    }
+  );
+
+  return QUALITY_CLASSES[closestClass].label;
+};
 
 export const QUALITY_CATEGORIES = Object.fromEntries(
   Object.values(QUALITY_CLASSES).map((item) => [

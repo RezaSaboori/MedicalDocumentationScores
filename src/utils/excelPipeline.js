@@ -2,7 +2,8 @@ import * as XLSX from 'xlsx';
 import { enrichScoringGroup } from './scoring';
 import {
   resolveQualityClass,
-  qualityClassToStatus,
+  qualityWeightToStatus,
+  QUALITY_CLASS_WEIGHTS,
 } from './qualityClasses';
 
 const normalize = (text) =>
@@ -195,19 +196,29 @@ const mergeByName = (rows, keyField) => {
     );
 
     if (totalClassified > 0) {
-      const averageClass =
+      const averageWeight =
         Array.from(
           { length: 6 },
-          (_, classValue) =>
-            classValue *
-            (rest[`Q${classValue}`] || 0)
+          (_, classValue) => {
+            const key =
+              `Q${classValue}`;
+
+            return (
+              QUALITY_CLASS_WEIGHTS[key] *
+              (rest[key] || 0)
+            );
+          }
         ).reduce(
-          (sum, value) => sum + value,
+          (sum, value) =>
+            sum + value,
           0
-        ) / totalClassified;
+        ) /
+        totalClassified;
 
       rest.combo_status =
-        qualityClassToStatus(averageClass);
+        qualityWeightToStatus(
+          averageWeight
+        );
     }
 
     return rest;
@@ -570,7 +581,7 @@ export const parseAndProcessExcel = async (
         0
       );
 
-    const averageClass =
+    const averageWeight =
       totalClassified > 0
         ? Object.entries(
             classCounts
@@ -580,17 +591,16 @@ export const parseAndProcessExcel = async (
               [key, count]
             ) =>
               sum +
-              Number(
-                key.substring(1)
-              ) *
+              QUALITY_CLASS_WEIGHTS[key] *
                 count,
             0
-          ) / totalClassified
+          ) /
+          totalClassified
         : null;
 
     const combo_status =
-      qualityClassToStatus(
-        averageClass
+      qualityWeightToStatus(
+        averageWeight
       );
 
     const supervision_rate =
