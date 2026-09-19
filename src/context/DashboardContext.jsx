@@ -147,14 +147,15 @@ export const DashboardProvider = ({ children }) => {
         if (
           includeYear &&
           filters.selectedYear !== 'all' &&
-          row.year &&
-          String(row.year) !== String(filters.selectedYear)
+          String(row.year ?? '') !== String(filters.selectedYear)
         ) {
           return false;
         }
 
         const rowFlags = row.flags ? row.flags.split('|') : ['OK'];
-        const hasSelectedFlag = rowFlags.some((f) => filters.selectedFlags.includes(f));
+        const hasSelectedFlag = rowFlags.some((f) =>
+          filters.selectedFlags.includes(f)
+        );
 
         if (!hasSelectedFlag) return false;
 
@@ -164,19 +165,36 @@ export const DashboardProvider = ({ children }) => {
 
     const includeYear = mode === DASHBOARD_MODES.RESIDENTS;
 
+    const yearsSet = new Set(
+      currentModeData
+        .map((row) => row.year)
+        .filter(
+          (year) =>
+            year !== null &&
+            year !== undefined &&
+            String(year).trim() !== ''
+        )
+        .map((year) => String(year))
+    );
+
+    const years = Array.from(yearsSet).sort(
+      (a, b) => Number(a) - Number(b)
+    );
+
     const allCurrent = applyFilters(currentModeData, includeYear);
     const allPrevious = applyFilters(previousModeData, includeYear);
 
     const inFacultyScope = (rows) =>
       isFacultyFilterActive
-        ? rows.filter((r) => String(r.faculty || '').trim() === filters.selectedFaculty)
+        ? rows.filter(
+            (r) =>
+              String(r.faculty || '').trim() ===
+              filters.selectedFaculty
+          )
         : rows;
 
     const filteredCurrent = inFacultyScope(allCurrent);
     const filteredPrevious = inFacultyScope(allPrevious);
-
-    const yearsSet = new Set(allCurrent.map((r) => r.year).filter(Boolean));
-    const years = Array.from(yearsSet).sort();
 
     const enrichedPrevious = filteredPrevious.map(enrichRow);
 
