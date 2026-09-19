@@ -4,7 +4,7 @@ import { useDashboard } from '../../context/DashboardContext';
 import { GROUP_COLOR_MAP } from '../../utils/flags';
 import { formatNumber } from '../../utils/formatters';
 import ChartTooltip from './ChartTooltip';
-import ChartLegend from './ChartLegend';
+import ChartContainer from './ChartContainer';
 import './PdiRankingChart.css';
 
 const ROW_HEIGHT = 24;
@@ -30,8 +30,15 @@ const PdiRankingChart = () => {
   }, [d]);
 
   return (
-    <div className="glass u-container u-container--md pdi-container">
-      <h3 className="pdi-title">رتبه‌بندی شاخص ترکیبی مستندسازی پزشک (PDI)</h3>
+    <ChartContainer
+      title="رتبه‌بندی شاخص ترکیبی مستندسازی پزشک (PDI)"
+      className="pdi-container"
+      legendItems={[
+        ...new Map(
+          chartData.map((row) => [row.group_fa, row.color])
+        ).entries(),
+      ].map(([label, color]) => ({ label, color }))}
+    >
       <div
         className="pdi-body"
         style={{ height: `${chartData.length * ROW_HEIGHT + CHART_VERTICAL_MARGIN}px` }}
@@ -82,8 +89,7 @@ const PdiRankingChart = () => {
           )}
         />
       </div>
-      <ChartLegend items={[...new Map(chartData.map(r => [r.group_fa, r.color])).entries()].map(([label, color]) => ({ label, color }))} />
-    </div>
+    </ChartContainer>
   );
 };
 

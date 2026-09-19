@@ -7,7 +7,7 @@ import {
   formatScoreChange,
   changeColor,
 } from '../../utils/comparison';
-import ChartLegend from './ChartLegend';
+import ChartContainer from './ChartContainer';
 import ChartTooltip from './ChartTooltip';
 import './QualityMixChart.css';
 
@@ -108,10 +108,17 @@ const QualityMixChartBase = ({
 
   if (layout.rowCount === 0) {
     return (
-      <div className="glass u-container u-container--md qm-container">
-        <h3 className="qm-title">{title}</h3>
+      <ChartContainer
+        title={title}
+        subtitle={subtitle}
+        className="qm-container"
+        legendItems={qualityKeys.map((key) => ({
+          label: categories[key].label,
+          color: categories[key].color,
+        }))}
+      >
         <p className="qm-empty">داده‌ای برای نمایش وجود ندارد</p>
-      </div>
+      </ChartContainer>
     );
   }
 
@@ -135,10 +142,15 @@ const QualityMixChartBase = ({
   ];
 
   return (
-    <div className="glass u-container u-container--md qm-container">
-      <h3 className="qm-title">{title}</h3>
-      <p className="qm-subtitle">{subtitle}</p>
-
+    <ChartContainer
+      title={title}
+      subtitle={subtitle}
+      className="qm-container"
+      legendItems={qualityKeys.map((key) => ({
+        label: categories[key].label,
+        color: categories[key].color,
+      }))}
+    >
       <div className="qm-panels" style={{ '--qm-sep-top': `${layout.sepTop}px` }}>
         {layout.showSeparator && <div className="qm-separator" />}
 
@@ -258,16 +270,12 @@ const QualityMixChartBase = ({
         <span className="qm-status-item qm-status-good">قابل قبول · {layout.aboveCount} نفر</span>
       </div>
 
-      <ChartLegend
-        items={qualityKeys.map(k => ({ label: categories[k].label, color: categories[k].color }))}
-      />
-
       {tooltip && (
         <div className="qm-tooltip" style={{ left: tooltip.x + 12, top: tooltip.y + 12 }}>
           <ChartTooltip title={tooltip.title} rows={tooltip.rows} />
         </div>
       )}
-    </div>
+    </ChartContainer>
   );
 };
 

@@ -3,6 +3,7 @@ import { useDashboard } from '../../context/DashboardContext';
 import { BASE_FLAG_FA, BASE_FLAG_COLOR } from '../../utils/constants';
 import { blendHex } from '../../utils/flags';
 import ChartTooltip from './ChartTooltip';
+import ChartContainer from './ChartContainer';
 import './GroupDonutChart.css';
 
 // Fixed geometry (100px per data unit, mirrors plotly ranges)
@@ -88,10 +89,16 @@ const GroupDonutChart = () => {
 
   if (!d || d.length === 0) {
     return (
-      <div className="glass u-container u-container--md chart-container">
-        <h3 className="chart-title">تقاطع گروه‌های رفتاری</h3>
+      <ChartContainer
+        title="تقاطع گروه‌های رفتاری"
+        className="chart-container"
+        legendItems={model.circles.map((circle) => ({
+          label: `${circle.label} (${circle.total})`,
+          color: circle.color,
+        }))}
+      >
         <div style={EMPTY_STYLE}>داده‌ای برای نمایش وجود ندارد</div>
-      </div>
+      </ChartContainer>
     );
   }
 
@@ -104,8 +111,14 @@ const GroupDonutChart = () => {
   const hoveredRegion = model.regions.find((r) => r.id === hovered);
 
   return (
-    <div className="glass u-container u-container--md chart-container">
-      <h3 className="chart-title">تقاطع گروه‌های رفتاری</h3>
+    <ChartContainer
+      title="تقاطع گروه‌های رفتاری"
+      className="chart-container"
+      legendItems={model.circles.map((circle) => ({
+        label: `${circle.label} (${circle.total})`,
+        color: circle.color,
+      }))}
+    >
       <div className="venn-wrapper">
         <svg viewBox="0 0 460 410" className="venn-svg">
           <defs>
@@ -200,21 +213,14 @@ const GroupDonutChart = () => {
           ))}
         </svg>
       </div>
-      <div className="venn-legend">
-        {model.circles.map((c) => (
-          <div key={c.id} className="legend-item">
-            <span className="legend-dot" style={{ background: c.color }}></span>
-            <span className="legend-label">{c.label} ({c.total})</span>
-          </div>
-        ))}
-      </div>
+
       {hoveredRegion && (
         <ChartTooltip
           title={hoveredRegion.name}
           rows={[{ label: 'تعداد پزشکان', value: hoveredRegion.count }]}
         />
       )}
-    </div>
+    </ChartContainer>
   );
 };
 

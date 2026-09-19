@@ -2,7 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import { ResponsiveScatterPlot } from '@nivo/scatterplot';
 import { useDashboard } from '../../context/DashboardContext';
 import BubbleNodesLayer from './BubbleNodesLayer';
-import ChartLegend from './ChartLegend';
+import ChartContainer from './ChartContainer';
 import './LoadVsQualityChart.css';
 
 const LoadVsQualityChart = () => {
@@ -63,19 +63,29 @@ const LoadVsQualityChart = () => {
 
   if (!d.length) {
     return (
-      <div className="glass u-container u-container--md lvq-container">
-        <h3 className="lvq-title">بار کاری یا حجم ویزیت دربرابر کیفیت</h3>
+      <ChartContainer
+        title="بار کاری یا حجم ویزیت دربرابر کیفیت"
+        subtitle="(اندازه حباب = تعداد پرونده طبقه‌بندی‌شده)"
+        className="lvq-container"
+        legendItems={[]}
+      >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 240, color: 'var(--color-gray8)', fontFamily: 'var(--font-family-base)' }}>
           داده‌ای برای نمایش وجود ندارد
         </div>
-      </div>
+      </ChartContainer>
     );
   }
 
   return (
-    <div className="glass u-container u-container--md lvq-container">
-      <h3 className="lvq-title">بار کاری یا حجم ویزیت دربرابر کیفیت</h3>
-      <p className="lvq-subtitle">(اندازه حباب = تعداد پرونده طبقه‌بندی‌شده)</p>
+    <ChartContainer
+      title="بار کاری یا حجم ویزیت دربرابر کیفیت"
+      subtitle="(اندازه حباب = تعداد پرونده طبقه‌بندی‌شده)"
+      className="lvq-container"
+      legendItems={series.map((item) => ({
+        label: item.id,
+        color: colorByGroup.get(item.id),
+      }))}
+    >
       <div className="lvq-body" dir="ltr" style={{ height: 420 }}>
         <ResponsiveScatterPlot
           data={series}
@@ -102,8 +112,7 @@ const LoadVsQualityChart = () => {
           }}
         />
       </div>
-      <ChartLegend items={series.map((s) => ({ label: s.id, color: colorByGroup.get(s.id) }))} />
-    </div>
+    </ChartContainer>
   );
 };
 

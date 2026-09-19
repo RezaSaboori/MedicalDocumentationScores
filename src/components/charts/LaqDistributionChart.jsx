@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { ResponsiveBar } from '@nivo/bar';
 import { useDashboard } from '../../context/DashboardContext';
 import { GROUP_COLOR_MAP } from '../../utils/flags';
-import ChartLegend from './ChartLegend';
+import ChartContainer from './ChartContainer';
 import ChartTooltip from './ChartTooltip';
 import './LaqDistributionChart.css';
 
@@ -54,9 +54,15 @@ const LaqDistributionChart = () => {
   }, [d]);
 
   return (
-    <div className="glass u-container u-container--md laq-container">
-      <h3 className="laq-title">تعداد و گروه‌بندی پزشکان براساس شاخص کیفیت تعدیل‌شده با بار کاری</h3>
-      <p className="laq-subtitle">(راستِ خط یعنی بهتر از انتظار)</p>
+    <ChartContainer
+      title="تعداد و گروه‌بندی پزشکان براساس شاخص کیفیت تعدیل‌شده با بار کاری"
+      subtitle="(راستِ خط یعنی بهتر از انتظار)"
+      className="laq-container"
+      legendItems={keys.map((key) => ({
+        label: key,
+        color: GROUP_COLOR_MAP[key],
+      }))}
+    >
       <div className="laq-body" dir="ltr">
         <ResponsiveBar
           data={chartData}
@@ -81,8 +87,7 @@ const LaqDistributionChart = () => {
           axisLeft={{ legend: 'تعداد پزشکان', legendPosition: 'middle', legendOffset: -40 }}
         />
       </div>
-      <ChartLegend items={keys.map(k => ({ label: k, color: GROUP_COLOR_MAP[k] }))} />
-    </div>
+    </ChartContainer>
   );
 };
 

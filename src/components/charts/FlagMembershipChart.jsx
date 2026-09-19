@@ -4,7 +4,7 @@ import { useDashboard } from '../../context/DashboardContext';
 import { BASE_FLAG_FA, BASE_FLAG_COLOR, FLAG_PRIORITY } from '../../utils/constants';
 import { Skeleton } from '../ui/Skeleton';
 import './FlagMembershipChart.css';
-import ChartLegend from './ChartLegend';
+import ChartContainer from './ChartContainer';
 import ChartTooltip from './ChartTooltip';
 
 const EMPTY_STATE_STYLE = {
@@ -30,19 +30,32 @@ const FlagMembershipChart = () => {
 
   if (loading) {
     return (
-      <div className="glass u-container u-container--md chart-container">
-        <Skeleton width="60%" height="1.2rem" />
+      <ChartContainer
+        title="توزیع پزشکان در گروه های رفتاری"
+        subtitle="(یک پزشک می‌تواند در چند گروه باشد)"
+        className="chart-container"
+        legendItems={chartData.map((item) => ({
+          label: item.flag,
+          color: item.color,
+        }))}
+      >
         <Skeleton width="100%" height="260px" />
-      </div>
+      </ChartContainer>
     );
   }
 
   const isEmpty = d.length === 0 || chartData.every(item => item.count === 0);
 
   return (
-    <div className="glass u-container u-container--md chart-container">
-      <h3 className="chart-title">توزیع پزشکان در گروه های رفتاری</h3>
-      <p className="chart-subtitle">(یک پزشک می‌تواند در چند گروه باشد)</p>
+    <ChartContainer
+      title="توزیع پزشکان در گروه های رفتاری"
+      subtitle="(یک پزشک می‌تواند در چند گروه باشد)"
+      className="chart-container"
+      legendItems={chartData.map((item) => ({
+        label: item.flag,
+        color: item.color,
+      }))}
+    >
       <div className="chart-wrapper" dir="ltr">
         {isEmpty ? (
           <div style={EMPTY_STATE_STYLE}>داده‌ای برای نمایش وجود ندارد</div>
@@ -78,7 +91,7 @@ const FlagMembershipChart = () => {
           />
         )}
       </div>
-    </div>
+    </ChartContainer>
   );
 };
 
