@@ -1,16 +1,18 @@
+import {
+  QUALITY_CLASS_KEYS,
+  QUALITY_CLASS_WEIGHTS,
+} from './qualityClasses';
+
 const CONFIG = {
-  w_excellent: 1.00,
-  w_good: 0.70,
-  w_acceptable: 0.40,
-  w_weak: 0.10,
-  w_empty: 0.00,
-  rich_min_words: 8,
   shrink_k: 30,
   int_empty_penalty: 1.0,
-  pdi_cov: 0.25,
-  pdi_wqs: 0.40,
-  pdi_int: 0.25,
-  pdi_rich: 0.10,
+
+  // The former RICH weight is removed and the remaining
+  // PDI weights are proportionally renormalized.
+  pdi_cov: 0.28,
+  pdi_wqs: 0.44,
+  pdi_int: 0.28,
+
   flag_empty_rate: 0.40,
   flag_low_visits: 20,
   flag_exemplar_min_visits: 50,
@@ -26,45 +28,61 @@ const ebAdjust = (value, visits, k, meanValue) =>
 
 export const enrichScoringGroup = (records, category, residentsData = []) => {
   const tempRecords = records.map((record) => {
-    const E = Number(record.E) || 0;
-    const G = Number(record.G) || 0;
-    const A = Number(record.A) || 0;
-    const W = Number(record.W) || 0;
-    const Z = Number(record.Z) || 0;
     const V = Number(record.V) || 0;
 
-    const N = E + G + A + W + Z;
-    const N_safe = N || 1;
-    const V_safe = V || 1;
-
-    const COV = Math.min(1, Math.max(0, (Number(record.D) || 0) / V_safe));
-    const rho_Z = Z / N_safe;
-    const RICH = Math.min(
-      1,
-      Math.max(0, (Number(record.avg_words) || 0) / CONFIG.rich_min_words)
+    const classCounts = Object.fromEntries(
+      QUALITY_CLASS_KEYS.map((key) => [
+        key,
+        Number(record[key]) || 0,
+      ])
     );
 
-    const q_num =
-      CONFIG.w_excellent * E +
-      CONFIG.w_good * G +
-      CONFIG.w_acceptable * A +
-      CONFIG.w_weak * W +
-      CONFIG.w_empty * Z;
+    const N = QUALITY_CLASS_KEYS.reduce(
+      (sum, key) => sum + classCounts[key],
+      0
+    );
 
-    const WQS = Math.min(1, Math.max(0, q_num / N_safe));
+    const N_safe = N || 1;
+
+    const completedWeight =
+      Number(record.completed_weight_sum) || 0;
+
+    const activeWeight =
+      Number(record.active_weight_sum) || 0;
+
+    const COV = Math.min(
+      1,
+      Math.max(
+        0,
+        activeWeight > 0
+          ? completedWeight / activeWeight
+          : 0
+      )
+    );
+
+    const rho_Z = classCounts.Q0 / N_safe;
+
+    const q_num = QUALITY_CLASS_KEYS.reduce(
+      (sum, key) =>
+        sum +
+        QUALITY_CLASS_WEIGHTS[key] *
+          classCounts[key],
+      0
+    );
+
+    const WQS = Math.min(
+      1,
+      Math.max(0, q_num / N_safe)
+    );
 
     return {
       ...record,
+      ...classCounts,
       V,
-      E,
-      G,
-      A,
-      W,
-      Z,
+      D: Math.max(0, V - classCounts.Q0),
       N,
       COV,
       rho_Z,
-      RICH,
       WQS,
     };
   });
@@ -144,10 +162,18 @@ export const enrichScoringGroup = (records, category, residentsData = []) => {
     const PDI =
       100 *
       (
-        Math.pow(Math.max(eps, COV_adj), CONFIG.pdi_cov) *
-        Math.pow(Math.max(eps, WQS_adj), CONFIG.pdi_wqs) *
-        Math.pow(Math.max(eps, INT), CONFIG.pdi_int) *
-        Math.pow(Math.max(eps, record.RICH), CONFIG.pdi_rich)
+        Math.pow(
+          Math.max(eps, COV_adj),
+          CONFIG.pdi_cov
+        ) *
+        Math.pow(
+          Math.max(eps, WQS_adj),
+          CONFIG.pdi_wqs
+        ) *
+        Math.pow(
+          Math.max(eps, INT),
+          CONFIG.pdi_int
+        )
       );
 
     const flags = [];

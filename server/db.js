@@ -5,7 +5,24 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const dbPath = path.join(__dirname, 'database.sqlite');
+const ensureColumns = (db, tableName, columns) => {
+  const existingColumns = new Set(
+    db
+      .prepare(`PRAGMA table_info(${tableName})`)
+      .all()
+      .map((column) => column.name)
+  );
+
+  Object.entries(columns).forEach(
+    ([columnName, columnType]) => {
+      if (!existingColumns.has(columnName)) {
+        db.exec(
+          `ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnType}`
+        );
+      }
+    }
+  );
+};
 
 export const initializeDB = () => {
   const db = new DatabaseSync(dbPath);
@@ -26,8 +43,13 @@ export const initializeDB = () => {
       doctor_name TEXT, doctor_national_id TEXT, doctor_medical_code TEXT,
       afrad TEXT, center_name TEXT, clinic_name TEXT, clinic_unique_id TEXT,
       electronic_record TEXT, status TEXT, date TEXT,
-      quality_score REAL, completeness REAL,
-      density REAL, non_repetition REAL, total_chars INTEGER, total_words INTEGER,
+      raw_score REAL,
+      calibrated_score REAL,
+      raw_score_class INTEGER,
+      calibrated_score_class INTEGER,
+      reference_sample_count INTEGER,
+      completed_weight_sum REAL,
+      active_weight_sum REAL,
       combo_status TEXT,
       FOREIGN KEY(snapshot_id) REFERENCES snapshots(id)
     );
@@ -53,15 +75,56 @@ export const initializeDB = () => {
       name TEXT NOT NULL,
       faculty TEXT, section TEXT, group_fa TEXT,
       members_count INTEGER, review_sign TEXT,
-      V INTEGER, D INTEGER, C REAL, U REAL, avg_chars REAL, avg_words REAL,
-      E INTEGER, G INTEGER, A INTEGER, W INTEGER, Z INTEGER,
-      W2 INTEGER, W1 INTEGER, combo_status TEXT,
-      supervision_rate REAL, quality_score REAL, density_score REAL,
+      V INTEGER,
+      D INTEGER,
+
+      raw_score REAL,
+      calibrated_score REAL,
+      raw_score_class REAL,
+      calibrated_score_class REAL,
+      reference_sample_count REAL,
+      completed_weight_sum REAL,
+      active_weight_sum REAL,
+
+      Q0 INTEGER,
+      Q1 INTEGER,
+      Q2 INTEGER,
+      Q3 INTEGER,
+      Q4 INTEGER,
+      Q5 INTEGER,
+
+      combo_status TEXT,
+      supervision_rate REAL,
       start_date TEXT, end_date TEXT,
       WQS_adj REAL, COV_adj REAL, LAQ REAL, INT REAL, PDI REAL, flags TEXT,
       FOREIGN KEY(snapshot_id) REFERENCES snapshots(id)
     );
   `);
+  ensureColumns(db, 'documents', {
+    raw_score: 'REAL',
+    calibrated_score: 'REAL',
+    raw_score_class: 'INTEGER',
+    calibrated_score_class: 'INTEGER',
+    reference_sample_count: 'INTEGER',
+    completed_weight_sum: 'REAL',
+    active_weight_sum: 'REAL',
+  });
+
+  ensureColumns(db, 'aggregated_scores', {
+    raw_score: 'REAL',
+    calibrated_score: 'REAL',
+    raw_score_class: 'REAL',
+    calibrated_score_class: 'REAL',
+    reference_sample_count: 'REAL',
+    completed_weight_sum: 'REAL',
+    active_weight_sum: 'REAL',
+    Q0: 'INTEGER',
+    Q1: 'INTEGER',
+    Q2: 'INTEGER',
+    Q3: 'INTEGER',
+    Q4: 'INTEGER',
+    Q5: 'INTEGER',
+  });
 
   return db;
 };

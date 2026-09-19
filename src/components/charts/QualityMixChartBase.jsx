@@ -219,7 +219,13 @@ const QualityMixChartBase = ({
                       style={{ width: `${row[k] * 100}%`, backgroundColor: categories[k].color }}
                     >
                       {row[k] >= 0.06 && (
-                        <span style={{ color: ['A', 'E', 'F'].includes(k) ? '#ffffff' : '#263238' }}>
+                        <span
+                          style={{
+                            color:
+                              categories[k].textColor ||
+                              '#263238',
+                          }}
+                        >
                           {Math.round(row[k] * 100)}٪
                         </span>
                       )}

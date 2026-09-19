@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { ResponsiveBar } from '@nivo/bar';
 import { useDashboard } from '../../context/DashboardContext';
-import { GROUP_COLOR_MAP } from '../../utils/flags';
 import ChartContainer from './ChartContainer';
 import ChartTooltip from './ChartTooltip';
 import './LaqDistributionChart.css';
@@ -27,8 +26,15 @@ const LaqDistributionChart = () => {
   const { data } = useDashboard();
   const d = (data.current || []).filter(row => !row.flags.includes('LOW_DATA'));
 
-  const { chartData, keys, zeroLabel } = useMemo(() => {
-    if (d.length === 0) return { chartData: [], keys: [], zeroLabel: null };
+  const { chartData, keys, zeroLabel, colorByGroup } = useMemo(() => {
+    if (d.length === 0) {
+      return {
+        chartData: [],
+        keys: [],
+        zeroLabel: null,
+        colorByGroup: new Map(),
+      };
+    }
 
     const laqValues = d.map(row => row.LAQ);
     const min = Math.min(...laqValues);
@@ -40,17 +46,37 @@ const LaqDistributionChart = () => {
     }));
 
     d.forEach(row => {
-      const binIndex = Math.min(NBINS - 1, Math.max(0, Math.floor((row.LAQ - min) / binWidth)));
-      bins[binIndex][row.group_fa] = (bins[binIndex][row.group_fa] || 0) + 1;
+      const binIndex = Math.min(
+        NBINS - 1,
+        Math.max(0, Math.floor((row.LAQ - min) / binWidth))
+      );
+
+      bins[binIndex][row.group_fa] =
+        (bins[binIndex][row.group_fa] || 0) + 1;
     });
 
     let zero = null;
+
     if (min <= 0 && max >= 0) {
-      const idx = Math.min(NBINS - 1, Math.max(0, Math.floor((0 - min) / binWidth)));
+      const idx = Math.min(
+        NBINS - 1,
+        Math.max(0, Math.floor((0 - min) / binWidth))
+      );
+
       zero = bins[idx].binLabel;
     }
 
-    return { chartData: bins, keys: [...new Set(d.map(row => row.group_fa))], zeroLabel: zero };
+    return {
+      chartData: bins,
+      keys: [...new Set(d.map(row => row.group_fa))],
+      zeroLabel: zero,
+      colorByGroup: new Map(
+        d.map(row => [
+          row.group_fa,
+          row.group_color || '#1f77b4',
+        ])
+      ),
+    };
   }, [d]);
 
   return (
@@ -60,7 +86,7 @@ const LaqDistributionChart = () => {
       className="laq-container"
       legendItems={keys.map((key) => ({
         label: key,
-        color: GROUP_COLOR_MAP[key],
+        color: colorByGroup.get(key),
       }))}
     >
       <div className="laq-body" dir="ltr">
@@ -76,7 +102,7 @@ const LaqDistributionChart = () => {
           )}
           margin={{ top: 20, right: 20, bottom: 60, left: 50 }}
           padding={0.05}
-          colors={({ id }) => GROUP_COLOR_MAP[id] || '#1f77b4'}
+          colors={({ id }) => colorByGroup.get(id) || '#1f77b4'}
           layers={[
             'grid',
             'axes',

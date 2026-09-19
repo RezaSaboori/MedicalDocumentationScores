@@ -27,17 +27,9 @@ const ChartContainer = ({
       className={`glass u-container u-container--md chart-panel ${className}`.trim()}
     >
       <header className="chart-panel__header">
-        <div className="chart-panel__heading">
-          <h3 className="chart-panel__title">{title}</h3>
-
-          {subtitle && (
-            <p className="chart-panel__subtitle">{subtitle}</p>
-          )}
-        </div>
-
         <button
           type="button"
-          className="chart-panel__download blue-glass"
+          className="chart-panel__download frost-glass"
           onClick={handleDownload}
           title="دانلود نمودار به صورت PNG"
           aria-label="دانلود نمودار به صورت PNG"
@@ -59,6 +51,16 @@ const ChartContainer = ({
             <path d="M5 21h14" />
           </svg>
         </button>
+
+        <div className="chart-panel__heading">
+          <h3 className="chart-panel__title">{title}</h3>
+
+          {subtitle && (
+            <p className="chart-panel__subtitle">{subtitle}</p>
+          )}
+        </div>
+
+
       </header>
 
       <div className="chart-panel__body">

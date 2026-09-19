@@ -1,189 +1,366 @@
 import * as XLSX from 'xlsx';
 import { enrichScoringGroup } from './scoring';
+import {
+  resolveQualityClass,
+  qualityClassToStatus,
+} from './qualityClasses';
 
-const normalize = (text) => String(text || '').replace(/\s+/g, ' ').trim();
-const cleanName = (text) => normalize(text).replace(/\s*:\s*\d+\s*\/\s*\d+\s*$/, '').trim();
+const normalize = (text) =>
+  String(text || '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const cleanName = (text) =>
+  normalize(text)
+    .replace(/\s*:\s*\d+\s*\/\s*\d+\s*$/, '')
+    .trim();
 
 const readSheet = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
+
     reader.onload = (e) => {
       try {
-        const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        resolve(XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' }));
+        const workbook = XLSX.read(
+          new Uint8Array(e.target.result),
+          { type: 'array' }
+        );
+
+        const worksheet =
+          workbook.Sheets[workbook.SheetNames[0]];
+
+        resolve(
+          XLSX.utils.sheet_to_json(worksheet, {
+            header: 1,
+            defval: '',
+          })
+        );
       } catch (err) {
         reject(err);
       }
     };
+
     reader.onerror = reject;
     reader.readAsArrayBuffer(file);
   });
 
 const parseNum = (val) => {
   const n = Number(val);
-  return isNaN(n) ? 0 : n;
+  return Number.isFinite(n) ? n : 0;
 };
 
-const statusToScore = (status) => {
-  switch (normalize(status)) {
-    case 'عالی': return 5;
-    case 'قابل قبول': return 4;
-    case 'خوب': return 3;
-    case 'ضعیف': return 2;
-    case 'خیلی ضعیف': return 1;
-    case 'پرونده خالی': return 0;
-    default: return 0;
+const parseOptionalNum = (val) => {
+  if (
+    val === '' ||
+    val === null ||
+    val === undefined
+  ) {
+    return null;
   }
-};
 
-const scoreToStatus = (score) => {
-  switch (Math.round(score)) {
-    case 5: return 'عالی';
-    case 4: return 'قابل قبول';
-    case 3: return 'خوب';
-    case 2: return 'ضعیف';
-    case 1: return 'خیلی ضعیف';
-    case 0: return 'پرونده خالی';
-    default: return 'پرونده خالی';
-  }
+  const n = Number(val);
+  return Number.isFinite(n) ? n : null;
 };
 
 const parseAfrad = (afradStr) => {
   const str = normalize(afradStr);
+
   let faculty = null;
   let resident = null;
 
   const facultyMatch = str.match(/پزشک:\s*([^,]+)/);
-  if (facultyMatch) faculty = cleanName(facultyMatch[1]);
+
+  if (facultyMatch) {
+    faculty = cleanName(facultyMatch[1]);
+  }
 
   const residentMatch = str.match(/رزیدنت:\s*([^,]+)/);
-  if (residentMatch) resident = cleanName(residentMatch[1]);
 
-  return { faculty, resident };
+  if (residentMatch) {
+    resident = cleanName(residentMatch[1]);
+  }
+
+  return {
+    faculty,
+    resident,
+  };
 };
 
-// Groups raw rows by the given key field, correctly summing counts and weighting averages.
 const mergeByName = (rows, keyField) => {
   const map = new Map();
+
+  const weightedAverageFields = [
+    'raw_score',
+    'calibrated_score',
+    'raw_score_class',
+    'calibrated_score_class',
+    'reference_sample_count',
+    'supervision_rate',
+  ];
+
   for (const row of rows) {
     const key = row[keyField];
-    if (!key) continue;
-    
+
+    if (!key) {
+      continue;
+    }
+
     if (!map.has(key)) {
-      map.set(key, { ...row, name: key, V_prev: row.V || 0 });
-    } else {
-      const existing = map.get(key);
-      const prevV = existing.V_prev || 0;
-      const currV = row.V || 0;
-      const totalV = prevV + currV;
+      map.set(key, {
+        ...row,
+        name: key,
+        V_prev: row.V || 0,
+      });
 
-      existing.E += row.E || 0;
-      existing.G += row.G || 0;
-      existing.A += row.A || 0;
-      existing.W += row.W || 0;
-      existing.W2 = (existing.W2 || 0) + (row.W2 || 0);
-      existing.W1 = (existing.W1 || 0) + (row.W1 || 0);
-      existing.Z += row.Z || 0;
-      existing.V = totalV;
-      existing.D = existing.V - existing.Z;
-
-      if (totalV > 0) {
-        existing.C = ((existing.C || 0) * prevV + (row.C || 0) * currV) / totalV;
-        existing.U = ((existing.U || 0) * prevV + (row.U || 0) * currV) / totalV;
-        existing.avg_chars = ((existing.avg_chars || 0) * prevV + (row.avg_chars || 0) * currV) / totalV;
-        existing.avg_words = ((existing.avg_words || 0) * prevV + (row.avg_words || 0) * currV) / totalV;
-        existing.quality_score = ((existing.quality_score || 0) * prevV + (row.quality_score || 0) * currV) / totalV;
-        existing.density_score = ((existing.density_score || 0) * prevV + (row.density_score || 0) * currV) / totalV;
-        existing.supervision_rate = ((existing.supervision_rate || 0) * prevV + (row.supervision_rate || 0) * currV) / totalV;
-      }
-
-      if (row.start_date && (!existing.start_date || row.start_date < existing.start_date)) {
-        existing.start_date = row.start_date;
-      }
-      if (row.end_date && (!existing.end_date || row.end_date > existing.end_date)) {
-        existing.end_date = row.end_date;
-      }
-
-      existing.V_prev = totalV;
+      continue;
     }
+
+    const existing = map.get(key);
+
+    const prevV = existing.V_prev || 0;
+    const currV = row.V || 0;
+    const totalV = prevV + currV;
+
+    for (
+      let classValue = 0;
+      classValue <= 5;
+      classValue += 1
+    ) {
+      const keyName = `Q${classValue}`;
+
+      existing[keyName] =
+        (existing[keyName] || 0) +
+        (row[keyName] || 0);
+    }
+
+    existing.V = totalV;
+
+    existing.D =
+      existing.V -
+      (existing.Q0 || 0);
+
+    existing.completed_weight_sum =
+      (existing.completed_weight_sum || 0) +
+      (row.completed_weight_sum || 0);
+
+    existing.active_weight_sum =
+      (existing.active_weight_sum || 0) +
+      (row.active_weight_sum || 0);
+
+    if (totalV > 0) {
+      weightedAverageFields.forEach((field) => {
+        existing[field] =
+          ((existing[field] || 0) * prevV +
+            (row[field] || 0) * currV) /
+          totalV;
+      });
+    }
+
+    if (
+      row.start_date &&
+      (
+        !existing.start_date ||
+        row.start_date < existing.start_date
+      )
+    ) {
+      existing.start_date = row.start_date;
+    }
+
+    if (
+      row.end_date &&
+      (
+        !existing.end_date ||
+        row.end_date > existing.end_date
+      )
+    ) {
+      existing.end_date = row.end_date;
+    }
+
+    existing.V_prev = totalV;
   }
-  
-  return Array.from(map.values()).map(r => {
-    const { V_prev, ...rest } = r;
-    const totalValid = (rest.E || 0) + (rest.G || 0) + (rest.A || 0) + (rest.W2 || 0) + (rest.W1 || 0) + (rest.Z || 0);
-    if (totalValid > 0) {
-      const avgScore = (
-        (rest.E || 0) * 5 + 
-        (rest.G || 0) * 3 + 
-        (rest.A || 0) * 4 + 
-        (rest.W2 || 0) * 2 + 
-        (rest.W1 || 0) * 1 + 
-        (rest.Z || 0) * 0
-      ) / totalValid;
-      rest.combo_status = scoreToStatus(avgScore);
+
+  return Array.from(map.values()).map((row) => {
+    const {
+      V_prev,
+      ...rest
+    } = row;
+
+    const totalClassified = Array.from(
+      { length: 6 },
+      (_, classValue) =>
+        rest[`Q${classValue}`] || 0
+    ).reduce(
+      (sum, value) => sum + value,
+      0
+    );
+
+    if (totalClassified > 0) {
+      const averageClass =
+        Array.from(
+          { length: 6 },
+          (_, classValue) =>
+            classValue *
+            (rest[`Q${classValue}`] || 0)
+        ).reduce(
+          (sum, value) => sum + value,
+          0
+        ) / totalClassified;
+
+      rest.combo_status =
+        qualityClassToStatus(averageClass);
     }
+
     return rest;
   });
 };
 
-
-
-export const parseAndProcessExcel = async (file, residentsData = []) => {
+export const parseAndProcessExcel = async (
+  file,
+  residentsData = []
+) => {
   const rawData = await readSheet(file);
-  if (!rawData || rawData.length === 0) throw new Error('فایل خالی است.');
 
-  // The new format has headers in the first row
-  const headers = rawData[0].map(h => normalize(String(h)).replace(/^\ufeff/, ''));
+  if (!rawData || rawData.length === 0) {
+    throw new Error('فایل خالی است.');
+  }
+
+  const headers = rawData[0].map((header) =>
+    normalize(String(header)).replace(
+      /^\ufeff/,
+      ''
+    )
+  );
+
   const dataRows = rawData.slice(1);
 
-  const colIdx = (name) => headers.findIndex(h => h.includes(name));
+  const colIdx = (name) =>
+    headers.findIndex(
+      (header) => header === name
+    );
 
-  const idxAfrad = colIdx('افراد');
-  const idxStatus = colIdx('وضعیت'); 
-  const idxDate = colIdx('تاریخ');
-  const idxQualityScore = colIdx('امتیاز کیفیت پرونده');
-  const idxCompleteness = colIdx('امتیاز کامل بودن متن');
-  const idxDensity = colIdx('امتیاز تراکم اطلاعاتی متن');
-  const idxNonRepetition = colIdx('امتیاز عدم تکرار کلمات');
-  const idxChars = colIdx('تعداد کل کاراکترهای متن');
-  const idxWords = colIdx('تعداد کل کلمات متن');
-  const idxComboStatus = colIdx('وضعیت ترکیبی');
+  const idxAfrad =
+    colIdx('افراد');
+
+  const idxStatus =
+    colIdx('وضعیت');
+
+  const idxDate =
+    colIdx('تاریخ');
+
+  const idxRawScore =
+    colIdx('امتیاز خام');
+
+  const idxCalibratedScore =
+    colIdx('امتیاز کالیبره');
+
+  const idxRawScoreClass =
+    colIdx('کلاس امتیاز خام');
+
+  const idxCalibratedScoreClass =
+    colIdx('کلاس امتیاز کالیبره');
+
+  const idxReferenceSampleCount =
+    colIdx('تعداد نمونه مرجع');
+
+  const idxCompletedWeight =
+    colIdx('مجموع وزن تکمیل‌شده');
+
+  const idxActiveWeight =
+    colIdx('مجموع وزن فعال');
+
+  const idxComboStatus =
+    colIdx('وضعیت ترکیبی');
 
   if (idxAfrad === -1) {
-    throw new Error('ستون «افراد» در فایل یافت نشد. لطفاً فایل صحیح را بارگذاری کنید.');
+    throw new Error(
+      'ستون «افراد» در فایل یافت نشد. لطفاً فایل صحیح را بارگذاری کنید.'
+    );
+  }
+
+  if (
+    idxComboStatus === -1 &&
+    idxCalibratedScoreClass === -1
+  ) {
+    throw new Error(
+      'حداقل یکی از ستون‌های «وضعیت ترکیبی» یا «کلاس امتیاز کالیبره» باید در فایل وجود داشته باشد.'
+    );
+  }
+
+  if (
+    idxCompletedWeight === -1 ||
+    idxActiveWeight === -1
+  ) {
+    throw new Error(
+      'ستون‌های «مجموع وزن تکمیل‌شده» و «مجموع وزن فعال» برای محاسبه امتیاز ضروری هستند.'
+    );
   }
 
   const groups = new Map();
 
   for (const row of dataRows) {
-    const afradStr = row[idxAfrad] || '';
-    const { faculty, resident } = parseAfrad(afradStr);
+    const afradStr =
+      row[idxAfrad] || '';
 
-    if (!faculty || !resident) continue;
+    const {
+      faculty,
+      resident,
+    } = parseAfrad(afradStr);
 
-    const groupKey = `${faculty}__${resident}`;
-    if (!groups.has(groupKey)) {
-      groups.set(groupKey, { faculty, resident, rows: [] });
+    if (!faculty || !resident) {
+      continue;
     }
-    groups.get(groupKey).rows.push(row);
+
+    const groupKey =
+      `${faculty}__${resident}`;
+
+    if (!groups.has(groupKey)) {
+      groups.set(groupKey, {
+        faculty,
+        resident,
+        rows: [],
+      });
+    }
+
+    groups
+      .get(groupKey)
+      .rows
+      .push(row);
   }
 
   const parsedRows = [];
 
-  for (const [_, group] of groups.entries()) {
+  for (const group of groups.values()) {
     const rows = group.rows;
+
     const V = rows.length;
 
-    let Z = 0, W = 0, A = 0, G = 0, E = 0;
-    let W2 = 0, W1 = 0;
-    let sumQuality = 0, countQuality = 0;
-    let sumCompleteness = 0, countCompleteness = 0;
-    let sumDensity = 0, countDensity = 0;
-    let sumNonRepetition = 0, countNonRepetition = 0;
-    let sumChars = 0, countChars = 0;
-    let sumWords = 0, countWords = 0;
-    
+    const classCounts = {
+      Q0: 0,
+      Q1: 0,
+      Q2: 0,
+      Q3: 0,
+      Q4: 0,
+      Q5: 0,
+    };
+
+    let sumRawScore = 0;
+    let countRawScore = 0;
+
+    let sumCalibratedScore = 0;
+    let countCalibratedScore = 0;
+
+    let sumRawScoreClass = 0;
+    let countRawScoreClass = 0;
+
+    let sumCalibratedScoreClass = 0;
+    let countCalibratedScoreClass = 0;
+
+    let sumReferenceSamples = 0;
+    let countReferenceSamples = 0;
+
+    let completedWeightSum = 0;
+    let activeWeightSum = 0;
+
     let userSignatures = 0;
     let totalSignatures = 0;
 
@@ -191,178 +368,632 @@ export const parseAndProcessExcel = async (file, residentsData = []) => {
     let maxDate = null;
 
     for (const row of rows) {
-      const comboStatus = idxComboStatus !== -1 ? normalize(row[idxComboStatus]) : '';
-      
-      if (comboStatus === 'پرونده خالی') Z++;
-      else if (comboStatus === 'ضعیف') { W++; W2++; }
-      else if (comboStatus === 'خیلی ضعیف') { W++; W1++; }
-      else if (comboStatus === 'قابل قبول') A++;
-      else if (comboStatus === 'خوب') G++;
-      else if (comboStatus === 'عالی') E++;
+      const comboStatus =
+        idxComboStatus !== -1
+          ? normalize(
+              row[idxComboStatus]
+            )
+          : '';
 
-      if (idxQualityScore !== -1 && row[idxQualityScore] !== '') {
-        sumQuality += parseNum(row[idxQualityScore]);
-        countQuality++;
+      const calibratedClass =
+        idxCalibratedScoreClass !== -1
+          ? row[
+              idxCalibratedScoreClass
+            ]
+          : null;
+
+      const qualityClass =
+        resolveQualityClass(
+          comboStatus,
+          calibratedClass
+        );
+
+      if (qualityClass !== null) {
+        classCounts[
+          `Q${qualityClass}`
+        ] += 1;
       }
-      if (idxCompleteness !== -1 && row[idxCompleteness] !== '') {
-        sumCompleteness += parseNum(row[idxCompleteness]);
-        countCompleteness++;
+
+      if (
+        idxRawScore !== -1 &&
+        row[idxRawScore] !== ''
+      ) {
+        sumRawScore +=
+          parseNum(
+            row[idxRawScore]
+          );
+
+        countRawScore += 1;
       }
-      if (idxDensity !== -1 && row[idxDensity] !== '') {
-        sumDensity += parseNum(row[idxDensity]);
-        countDensity++;
+
+      if (
+        idxCalibratedScore !== -1 &&
+        row[idxCalibratedScore] !== ''
+      ) {
+        sumCalibratedScore +=
+          parseNum(
+            row[idxCalibratedScore]
+          );
+
+        countCalibratedScore += 1;
       }
-      if (idxNonRepetition !== -1 && row[idxNonRepetition] !== '') {
-        sumNonRepetition += parseNum(row[idxNonRepetition]);
-        countNonRepetition++;
+
+      if (
+        idxRawScoreClass !== -1 &&
+        row[idxRawScoreClass] !== ''
+      ) {
+        sumRawScoreClass +=
+          parseNum(
+            row[idxRawScoreClass]
+          );
+
+        countRawScoreClass += 1;
       }
-      if (idxChars !== -1 && row[idxChars] !== '') {
-        sumChars += parseNum(row[idxChars]);
-        countChars++;
+
+      if (
+        idxCalibratedScoreClass !== -1 &&
+        row[idxCalibratedScoreClass] !== ''
+      ) {
+        sumCalibratedScoreClass +=
+          parseNum(
+            row[
+              idxCalibratedScoreClass
+            ]
+          );
+
+        countCalibratedScoreClass += 1;
       }
-      if (idxWords !== -1 && row[idxWords] !== '') {
-        sumWords += parseNum(row[idxWords]);
-        countWords++;
+
+      if (
+        idxReferenceSampleCount !== -1 &&
+        row[
+          idxReferenceSampleCount
+        ] !== ''
+      ) {
+        sumReferenceSamples +=
+          parseNum(
+            row[
+              idxReferenceSampleCount
+            ]
+          );
+
+        countReferenceSamples += 1;
+      }
+
+      if (
+        idxCompletedWeight !== -1 &&
+        row[idxCompletedWeight] !== ''
+      ) {
+        completedWeightSum +=
+          parseNum(
+            row[idxCompletedWeight]
+          );
+      }
+
+      if (
+        idxActiveWeight !== -1 &&
+        row[idxActiveWeight] !== ''
+      ) {
+        activeWeightSum +=
+          parseNum(
+            row[idxActiveWeight]
+          );
       }
 
       if (idxStatus !== -1) {
-        const sigStatus = normalize(row[idxStatus]);
-        if (sigStatus === 'امضا توسط کاربر' || sigStatus === 'امضای خودکار') {
-          totalSignatures++;
-          if (sigStatus === 'امضا توسط کاربر') userSignatures++;
+        const sigStatus =
+          normalize(
+            row[idxStatus]
+          );
+
+        if (
+          sigStatus ===
+            'امضا توسط کاربر' ||
+          sigStatus ===
+            'امضای خودکار'
+        ) {
+          totalSignatures += 1;
+
+          if (
+            sigStatus ===
+            'امضا توسط کاربر'
+          ) {
+            userSignatures += 1;
+          }
         }
       }
 
-      if (idxDate !== -1 && row[idxDate]) {
-        const dStr = normalize(row[idxDate]);
-        if (!minDate || dStr < minDate) minDate = dStr;
-        if (!maxDate || dStr > maxDate) maxDate = dStr;
+      if (
+        idxDate !== -1 &&
+        row[idxDate]
+      ) {
+        const dateString =
+          normalize(
+            row[idxDate]
+          );
+
+        if (
+          !minDate ||
+          dateString < minDate
+        ) {
+          minDate = dateString;
+        }
+
+        if (
+          !maxDate ||
+          dateString > maxDate
+        ) {
+          maxDate = dateString;
+        }
       }
     }
 
-    const D = V - Z;
-    const C = countCompleteness > 0 ? sumCompleteness / countCompleteness : 0;
-    const U = countNonRepetition > 0 ? sumNonRepetition / countNonRepetition : 0;
-    const avg_chars = countChars > 0 ? sumChars / countChars : 0;
-    const avg_words = countWords > 0 ? sumWords / countWords : 0;
-    const quality_score = countQuality > 0 ? sumQuality / countQuality : 0;
-    const density_score = countDensity > 0 ? sumDensity / countDensity : 0;
-    
-    const totalValid = E + G + A + W2 + W1 + Z;
-    const avgStatusScore = totalValid > 0 ? ((E * 5) + (G * 3) + (A * 4) + (W2 * 2) + (W1 * 1) + (Z * 0)) / totalValid : 0;
-    const combo_status = scoreToStatus(avgStatusScore);
+    const D =
+      V - classCounts.Q0;
 
-    const supervision_rate = totalSignatures > 0 ? userSignatures / totalSignatures : 0;
+    const raw_score =
+      countRawScore > 0
+        ? sumRawScore /
+          countRawScore
+        : 0;
+
+    const calibrated_score =
+      countCalibratedScore > 0
+        ? sumCalibratedScore /
+          countCalibratedScore
+        : 0;
+
+    const raw_score_class =
+      countRawScoreClass > 0
+        ? sumRawScoreClass /
+          countRawScoreClass
+        : 0;
+
+    const calibrated_score_class =
+      countCalibratedScoreClass > 0
+        ? sumCalibratedScoreClass /
+          countCalibratedScoreClass
+        : 0;
+
+    const reference_sample_count =
+      countReferenceSamples > 0
+        ? sumReferenceSamples /
+          countReferenceSamples
+        : 0;
+
+    const totalClassified =
+      Object.values(
+        classCounts
+      ).reduce(
+        (sum, value) =>
+          sum + value,
+        0
+      );
+
+    const averageClass =
+      totalClassified > 0
+        ? Object.entries(
+            classCounts
+          ).reduce(
+            (
+              sum,
+              [key, count]
+            ) =>
+              sum +
+              Number(
+                key.substring(1)
+              ) *
+                count,
+            0
+          ) / totalClassified
+        : null;
+
+    const combo_status =
+      qualityClassToStatus(
+        averageClass
+      );
+
+    const supervision_rate =
+      totalSignatures > 0
+        ? userSignatures /
+          totalSignatures
+        : 0;
 
     parsedRows.push({
       name: group.resident,
       faculty: group.faculty,
+
       section: null,
       group_fa: null,
       members_count: null,
       review_sign: null,
-      V, D, C, U, avg_chars, avg_words, E, G, A, W, Z, W2, W1,
+
+      V,
+      D,
+
+      ...classCounts,
+
+      raw_score,
+      calibrated_score,
+      raw_score_class,
+      calibrated_score_class,
+      reference_sample_count,
+
+      completed_weight_sum:
+        completedWeightSum,
+
+      active_weight_sum:
+        activeWeightSum,
+
       combo_status,
       supervision_rate,
-      quality_score,
-      density_score,
+
       start_date: minDate,
       end_date: maxDate,
     });
   }
 
-  const residents = enrichScoringGroup(
-    mergeByName(parsedRows, 'name'),
-    'resident',
-    residentsData
-  );
+  const residents =
+    enrichScoringGroup(
+      mergeByName(
+        parsedRows,
+        'name'
+      ),
+      'resident',
+      residentsData
+    );
 
-  const faculty = enrichScoringGroup(
-    mergeByName(parsedRows, 'faculty'),
-    'faculty'
-  );
+  const faculty =
+    enrichScoringGroup(
+      mergeByName(
+        parsedRows,
+        'faculty'
+      ),
+      'faculty'
+    );
 
-  // Extract raw documents for database storage
   const colMap = (name) => {
     const idx = colIdx(name);
-    return idx !== -1 ? idx : null;
+
+    return idx !== -1
+      ? idx
+      : null;
   };
 
-  const documents = dataRows.map(row => ({
-    visit_id: row[colMap('شناسه مراجعه')] || '',
-    patient_name: row[colMap('نام کامل بیمار')] || '',
-    national_id: row[colMap('کدملی بیمار')] || '',
-    mobile: row[colMap('موبایل بیمار')] || '',
-    doctor_name: row[colMap('نام کامل پزشک')] || '',
-    doctor_national_id: row[colMap('کدملی پزشک')] || '',
-    doctor_medical_code: row[colMap('کد نظام‌پزشکی پزشک')] || '',
-    afrad: row[idxAfrad] || '',
-    center_name: row[colMap('نام مرکز')] || '',
-    clinic_name: row[colMap('نام کلینیک')] || '',
-    clinic_unique_id: row[colMap('شناسه یکتا کلینیک')] || '',
-    electronic_record: row[colMap('پرونده الکترونیک')] || '',
-    status: row[colMap('وضعیت')] || '',
-    date: row[colMap('تاریخ')] || '',
-    quality_score: parseNum(row[colMap('امتیاز کیفیت پرونده')]),
-    completeness: parseNum(row[colMap('امتیاز کامل بودن متن')]),
-    density: parseNum(row[colMap('امتیاز تراکم اطلاعاتی متن')]),
-    non_repetition: parseNum(row[colMap('امتیاز عدم تکرار کلمات')]),
-    total_chars: parseNum(row[colMap('تعداد کل کاراکترهای متن')]),
-    total_words: parseNum(row[colMap('تعداد کل کلمات متن')]),
-    combo_status: row[colMap('وضعیت ترکیبی')] || ''
-  }));
+  const getCell = (
+    row,
+    columnName
+  ) => {
+    const index =
+      colMap(columnName);
+
+    if (index === null) {
+      return '';
+    }
+
+    return row[index];
+  };
+
+  const documents =
+    dataRows.map((row) => ({
+      visit_id:
+        getCell(
+          row,
+          'شناسه مراجعه'
+        ) || '',
+
+      patient_name:
+        getCell(
+          row,
+          'نام کامل بیمار'
+        ) || '',
+
+      national_id:
+        getCell(
+          row,
+          'کدملی بیمار'
+        ) || '',
+
+      mobile:
+        getCell(
+          row,
+          'موبایل بیمار'
+        ) || '',
+
+      doctor_name:
+        getCell(
+          row,
+          'نام کامل پزشک'
+        ) || '',
+
+      doctor_national_id:
+        getCell(
+          row,
+          'کدملی پزشک'
+        ) || '',
+
+      doctor_medical_code:
+        getCell(
+          row,
+          'کد نظام‌پزشکی پزشک'
+        ) || '',
+
+      afrad:
+        idxAfrad !== -1
+          ? row[idxAfrad] || ''
+          : '',
+
+      center_name:
+        getCell(
+          row,
+          'نام مرکز'
+        ) || '',
+
+      clinic_name:
+        getCell(
+          row,
+          'نام کلینیک'
+        ) || '',
+
+      clinic_unique_id:
+        getCell(
+          row,
+          'شناسه یکتا کلینیک'
+        ) || '',
+
+      electronic_record:
+        getCell(
+          row,
+          'پرونده الکترونیک'
+        ) || '',
+
+      status:
+        getCell(
+          row,
+          'وضعیت'
+        ) || '',
+
+      date:
+        getCell(
+          row,
+          'تاریخ'
+        ) || '',
+
+      raw_score:
+        parseOptionalNum(
+          getCell(
+            row,
+            'امتیاز خام'
+          )
+        ),
+
+      calibrated_score:
+        parseOptionalNum(
+          getCell(
+            row,
+            'امتیاز کالیبره'
+          )
+        ),
+
+      raw_score_class:
+        parseOptionalNum(
+          getCell(
+            row,
+            'کلاس امتیاز خام'
+          )
+        ),
+
+      calibrated_score_class:
+        parseOptionalNum(
+          getCell(
+            row,
+            'کلاس امتیاز کالیبره'
+          )
+        ),
+
+      reference_sample_count:
+        parseOptionalNum(
+          getCell(
+            row,
+            'تعداد نمونه مرجع'
+          )
+        ),
+
+      completed_weight_sum:
+        parseOptionalNum(
+          getCell(
+            row,
+            'مجموع وزن تکمیل‌شده'
+          )
+        ),
+
+      active_weight_sum:
+        parseOptionalNum(
+          getCell(
+            row,
+            'مجموع وزن فعال'
+          )
+        ),
+
+      combo_status:
+        getCell(
+          row,
+          'وضعیت ترکیبی'
+        ) || '',
+    }));
 
   let minDate = null;
   let maxDate = null;
 
   for (const doc of documents) {
-    const dStr = normalize(doc.date);
+    const dateString =
+      normalize(doc.date);
 
-    if (!dStr) continue;
-    if (!minDate || dStr < minDate) minDate = dStr;
-    if (!maxDate || dStr > maxDate) maxDate = dStr;
+    if (!dateString) {
+      continue;
+    }
+
+    if (
+      !minDate ||
+      dateString < minDate
+    ) {
+      minDate = dateString;
+    }
+
+    if (
+      !maxDate ||
+      dateString > maxDate
+    ) {
+      maxDate = dateString;
+    }
   }
 
   const toPeriod = (dateStr) => {
-    const match = String(dateStr || '').match(/^(\d{4})[\/\-](\d{1,2})/);
+    const match =
+      String(dateStr || '').match(
+        /^(\d{4})[\/\-](\d{1,2})/
+      );
 
     if (!match) {
       return 'unknown';
     }
 
-    return `${match[1]}/${match[2].padStart(2, '0')}`;
+    return `${match[1]}/${match[2].padStart(
+      2,
+      '0'
+    )}`;
   };
 
-  const period = toPeriod(maxDate);
+  const period =
+    toPeriod(maxDate);
 
-  return { documents, residents, faculty, period, startDate: minDate, endDate: maxDate };
+  return {
+    documents,
+    residents,
+    faculty,
+    period,
+    startDate: minDate,
+    endDate: maxDate,
+  };
 };
 
-export const parseResidentsCSV = async (file) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const text = e.target.result;
-        const lines = text.split('\n').filter(l => l.trim());
-        const headers = lines[0].split(',').map(h => h.trim().replace(/^\ufeff/, ''));
-        const nameIdx = headers.findIndex(h => h.includes('نام') && !h.includes('خانوادگی'));
-        const familyIdx = headers.findIndex(h => h.includes('خانوادگی'));
-        const yearIdx = headers.findIndex(h => h.includes('سال'));
+export const parseResidentsCSV = async (
+  file
+) =>
+  new Promise(
+    (resolve, reject) => {
+      const reader =
+        new FileReader();
 
-        const residents = [];
-        for (let i = 1; i < lines.length; i++) {
-          const cols = lines[i].split(',').map(c => c.trim());
-          if (cols.length >= 3 && nameIdx !== -1 && familyIdx !== -1 && yearIdx !== -1) {
-            residents.push({ name: `${cols[nameIdx]} ${cols[familyIdx]}`.trim(), year: cols[yearIdx] });
+      reader.onload = (e) => {
+        try {
+          const text =
+            e.target.result;
+
+          const lines =
+            text
+              .split('\n')
+              .filter((line) =>
+                line.trim()
+              );
+
+          if (
+            lines.length === 0
+          ) {
+            resolve([]);
+            return;
           }
+
+          const headers =
+            lines[0]
+              .split(',')
+              .map((header) =>
+                header
+                  .trim()
+                  .replace(
+                    /^\ufeff/,
+                    ''
+                  )
+              );
+
+          const nameIdx =
+            headers.findIndex(
+              (header) =>
+                header.includes(
+                  'نام'
+                ) &&
+                !header.includes(
+                  'خانوادگی'
+                )
+            );
+
+          const familyIdx =
+            headers.findIndex(
+              (header) =>
+                header.includes(
+                  'خانوادگی'
+                )
+            );
+
+          const yearIdx =
+            headers.findIndex(
+              (header) =>
+                header.includes(
+                  'سال'
+                )
+            );
+
+          const residents = [];
+
+          for (
+            let i = 1;
+            i < lines.length;
+            i += 1
+          ) {
+            const cols =
+              lines[i]
+                .split(',')
+                .map((column) =>
+                  column.trim()
+                );
+
+            if (
+              nameIdx === -1 ||
+              familyIdx === -1 ||
+              yearIdx === -1
+            ) {
+              continue;
+            }
+
+            const name =
+              `${cols[nameIdx] || ''} ${
+                cols[familyIdx] || ''
+              }`.trim();
+
+            if (!name) {
+              continue;
+            }
+
+            residents.push({
+              name,
+              year:
+                cols[yearIdx] || '',
+            });
+          }
+
+          resolve(residents);
+        } catch (error) {
+          reject(error);
         }
-        resolve(residents);
-      } catch (error) {
-        reject(error);
-      }
-    };
-    reader.onerror = (error) => reject(error);
-    reader.readAsText(file, 'utf-8');
-  });
-};
+      };
+
+      reader.onerror =
+        (error) =>
+          reject(error);
+
+      reader.readAsText(
+        file,
+        'utf-8'
+      );
+    }
+  );

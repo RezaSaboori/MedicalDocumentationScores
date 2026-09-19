@@ -14,7 +14,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--spacing-md);
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: var(--spacing-md);
 }
 
 .chart-panel__heading {
@@ -28,12 +28,14 @@
   color: var(--color-gray12);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
+  padding: 0 var(--spacing-sm);
 }
 
 .chart-panel__subtitle {
   margin: var(--spacing-xs) 0 0;
   color: var(--color-gray7);
   font-size: var(--font-size-sm);
+  padding: 0 var(--spacing-sm);
 }
 
 .chart-panel__download {
@@ -46,7 +48,7 @@
   padding: 0;
   border: none;
   border-radius: var(--border-radius-pill);
-  color: #ffffff;
+  color: var(--color-gray10);
   cursor: pointer;
 }
 

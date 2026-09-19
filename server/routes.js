@@ -27,8 +27,32 @@ export const createRouter = (db) => {
 
         const docStmt = db.prepare(`
           INSERT INTO documents 
-          (snapshot_id, visit_id, patient_name, national_id, mobile, doctor_name, doctor_national_id, doctor_medical_code, afrad, center_name, clinic_name, clinic_unique_id, electronic_record, status, date, quality_score, completeness, density, non_repetition, total_chars, total_words, combo_status)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          (
+            snapshot_id,
+            visit_id,
+            patient_name,
+            national_id,
+            mobile,
+            doctor_name,
+            doctor_national_id,
+            doctor_medical_code,
+            afrad,
+            center_name,
+            clinic_name,
+            clinic_unique_id,
+            electronic_record,
+            status,
+            date,
+            raw_score,
+            calibrated_score,
+            raw_score_class,
+            calibrated_score_class,
+            reference_sample_count,
+            completed_weight_sum,
+            active_weight_sum,
+            combo_status
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
         
         for (const doc of documents) {
@@ -36,9 +60,16 @@ export const createRouter = (db) => {
             snapshotId, doc.visit_id, doc.patient_name, doc.national_id, doc.mobile,
             doc.doctor_name, doc.doctor_national_id, doc.doctor_medical_code,
             doc.afrad, doc.center_name, doc.clinic_name, doc.clinic_unique_id,
-            doc.electronic_record, doc.status, doc.date,
-            doc.quality_score, doc.completeness,
-            doc.density, doc.non_repetition, doc.total_chars, doc.total_words,
+            doc.electronic_record,
+            doc.status,
+            doc.date,
+            doc.raw_score,
+            doc.calibrated_score,
+            doc.raw_score_class,
+            doc.calibrated_score_class,
+            doc.reference_sample_count,
+            doc.completed_weight_sum,
+            doc.active_weight_sum,
             doc.combo_status
           );
         }
@@ -54,7 +85,47 @@ export const createRouter = (db) => {
 
       const aggStmt = db.prepare(`
           INSERT INTO aggregated_scores 
-          (snapshot_id, category, name, faculty, section, group_fa, members_count, review_sign, V, D, C, U, avg_chars, avg_words, E, G, A, W, Z, W2, W1, combo_status, supervision_rate, quality_score, density_score, start_date, end_date, WQS_adj, COV_adj, LAQ, INT, PDI, flags)
+          (
+            snapshot_id,
+            category,
+            name,
+            faculty,
+            section,
+            group_fa,
+            members_count,
+            review_sign,
+
+            V,
+            D,
+
+            raw_score,
+            calibrated_score,
+            raw_score_class,
+            calibrated_score_class,
+            reference_sample_count,
+            completed_weight_sum,
+            active_weight_sum,
+
+            Q0,
+            Q1,
+            Q2,
+            Q3,
+            Q4,
+            Q5,
+
+            combo_status,
+            supervision_rate,
+
+            start_date,
+            end_date,
+
+            WQS_adj,
+            COV_adj,
+            LAQ,
+            INT,
+            PDI,
+            flags
+          )
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
         
@@ -65,12 +136,45 @@ export const createRouter = (db) => {
 
         for (const agg of allAgg) {
           aggStmt.run(
-            snapshotId, agg.category, agg.name, agg.faculty, agg.section, agg.group_fa,
-            agg.members_count, agg.review_sign, agg.V, agg.D, agg.C, agg.U, agg.avg_chars, agg.avg_words,
-            agg.E, agg.G, agg.A, agg.W, agg.Z, agg.W2, agg.W1, agg.combo_status,
-            agg.supervision_rate, agg.quality_score, agg.density_score,
-            agg.start_date, agg.end_date,
-            agg.WQS_adj, agg.COV_adj, agg.LAQ, agg.INT, agg.PDI, agg.flags
+            snapshotId,
+            agg.category,
+            agg.name,
+            agg.faculty,
+            agg.section,
+            agg.group_fa,
+            agg.members_count,
+            agg.review_sign,
+
+            agg.V,
+            agg.D,
+
+            agg.raw_score,
+            agg.calibrated_score,
+            agg.raw_score_class,
+            agg.calibrated_score_class,
+            agg.reference_sample_count,
+            agg.completed_weight_sum,
+            agg.active_weight_sum,
+
+            agg.Q0,
+            agg.Q1,
+            agg.Q2,
+            agg.Q3,
+            agg.Q4,
+            agg.Q5,
+
+            agg.combo_status,
+            agg.supervision_rate,
+
+            agg.start_date,
+            agg.end_date,
+
+            agg.WQS_adj,
+            agg.COV_adj,
+            agg.LAQ,
+            agg.INT,
+            agg.PDI,
+            agg.flags
           );
         }
 
@@ -113,21 +217,24 @@ export const createRouter = (db) => {
       review_sign,
       V,
       D,
-      C,
-      U,
-      avg_chars,
-      avg_words,
-      E,
-      G,
-      A,
-      W,
-      Z,
-      W2,
-      W1,
+
+      raw_score,
+      calibrated_score,
+      raw_score_class,
+      calibrated_score_class,
+      reference_sample_count,
+      completed_weight_sum,
+      active_weight_sum,
+
+      Q0,
+      Q1,
+      Q2,
+      Q3,
+      Q4,
+      Q5,
+
       combo_status,
       supervision_rate,
-      quality_score,
-      density_score,
       start_date,
       end_date,
       WQS_adj,
