@@ -83,6 +83,29 @@
   height: auto !important;
   max-height: none !important;
   overflow: visible !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+.chart-panel--exporting::before {
+  content: none !important;
+  display: none !important;
+}
+
+.chart-panel--exporting .chart-panel__header {
+  display: block !important;
+  text-align: center !important;
+}
+
+.chart-panel--exporting .chart-panel__heading {
+  text-align: center !important;
+}
+
+.chart-panel--exporting .chart-panel__title,
+.chart-panel--exporting .chart-panel__subtitle {
+  text-align: center !important;
 }
 
 .chart-panel--exporting .chart-panel__body {
@@ -93,8 +116,21 @@
   overflow: visible !important;
 }
 
+.chart-panel--exporting .chart-panel__footer {
+  align-items: center !important;
+}
+
+.chart-panel--exporting .chart-legend,
+.chart-panel--exporting .qm-status {
+  flex-wrap: nowrap !important;
+  justify-content: center !important;
+}
+
+.chart-panel--exporting .chart-legend-item,
+.chart-panel--exporting .qm-status-item {
+  white-space: nowrap !important;
+}
+
 .chart-panel--exporting .chart-panel__download {
-  visibility: hidden !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
+  display: none !important;
 }

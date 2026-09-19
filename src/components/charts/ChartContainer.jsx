@@ -17,7 +17,7 @@ const ChartContainer = ({
     try {
       await downloadElementAsSvg(panelRef.current, title);
     } catch (error) {
-      console.error('Failed to export chart as SVG:', error);
+      console.error('Failed to export chart as PNG:', error);
     }
   };
 
@@ -39,8 +39,8 @@ const ChartContainer = ({
           type="button"
           className="chart-panel__download blue-glass"
           onClick={handleDownload}
-          title="دانلود نمودار به صورت SVG"
-          aria-label="دانلود نمودار به صورت SVG"
+          title="دانلود نمودار به صورت PNG"
+          aria-label="دانلود نمودار به صورت PNG"
           data-export-ignore="true"
         >
           <svg

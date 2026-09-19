@@ -90,7 +90,7 @@ const QualityMixChartBase = ({
 
     const longest = chartData.reduce((m, r) => (r.name.length > m.length ? r.name : m), '');
     const labelWidth = measureTextWidth(longest, `${tickSize}px IRANSansX, IRANSansXV, sans-serif`);
-    const nameWidth = Math.ceil(labelWidth) + TICK_SPACE;
+    const nameWidth = Math.ceil(labelWidth) + TICK_SPACE + 12;
     const badgeWidth = hasComparison ? RANK_BADGE_SPACE : 0;
 
     const aboveCount = chartData.filter(r => r.score >= PDI_THRESHOLD).length;

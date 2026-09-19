@@ -1,4 +1,6 @@
-import { domToSvg } from 'modern-screenshot';
+import { domToPng } from 'modern-screenshot';
+
+const EXPORT_SCALE = 3;
 
 const sanitizeFilename = (value) => {
   const cleaned = String(value || 'chart')
@@ -84,7 +86,7 @@ const createExportClone = (element) => {
 
 export const downloadElementAsSvg = async (element, title) => {
   if (!element) {
-    throw new Error('SVG export target was not found.');
+    throw new Error('PNG export target was not found.');
   }
 
   if (document.fonts?.ready) {
@@ -100,27 +102,27 @@ export const downloadElementAsSvg = async (element, title) => {
     const width = Math.ceil(exportRect.width);
     const height = Math.ceil(exportRect.height);
 
-    const svgDataUrl = await domToSvg(clone, {
+    const pngDataUrl = await domToPng(clone, {
       width,
       height,
-      scale: 1,
+      scale: EXPORT_SCALE,
       backgroundColor: null,
       font: {
         preferredFormat: 'woff',
       },
     });
 
-    const response = await fetch(svgDataUrl);
+    const response = await fetch(pngDataUrl);
 
     if (!response.ok) {
-      throw new Error('Failed to create SVG download.');
+      throw new Error('Failed to create PNG download.');
     }
 
     const blob = await response.blob();
 
     downloadBlob(
       blob,
-      `${sanitizeFilename(title)}.svg`
+      `${sanitizeFilename(title)}.png`
     );
   } finally {
     stage.remove();
