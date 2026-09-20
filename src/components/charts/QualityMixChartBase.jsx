@@ -23,8 +23,7 @@ const SCORE_MAX = 100;
 const TITLE_BLOCK = 24; // panel title (20) + its margin (4)
 const TICK_SPACE = 21;
 const RANK_BADGE_SPACE = 34;
-const CALIBRATED_BADGE_WIDTH = 154;
-const VISIT_BADGE_WIDTH = 112;
+const META_BADGE_WIDTH = 136;
 const SCORE_GUTTER = 72; // fixed right gutter for score-change labels
 const AXIS_HEIGHT = 34;
 
@@ -251,8 +250,7 @@ const QualityMixChartBase = ({
     const leftInset =
       badgeWidth +
       nameWidth +
-      CALIBRATED_BADGE_WIDTH +
-      VISIT_BADGE_WIDTH;
+      META_BADGE_WIDTH * 2;
 
     const aboveCount =
       chartData.filter(
@@ -386,7 +384,15 @@ const QualityMixChartBase = ({
         )}
 
         <div className="qm-panel qm-panel-left">
-          <div className="qm-panel-title">توزیع کیفیت پرونده‌ها</div>
+          <div
+            className="qm-panel-title"
+            style={{
+              marginLeft:
+                layout.leftInset,
+            }}
+          >
+            توزیع کیفیت پرونده‌ها
+          </div>
 
           <div className="qm-rows">
             {displayRows.map(row => (
@@ -432,7 +438,7 @@ const QualityMixChartBase = ({
 
                     {row.currentRank != null && (
                       <span className="qm-order">
-                        {row.currentRank}.
+                        .{row.currentRank}
                       </span>
                     )}
                   </span>
@@ -442,7 +448,7 @@ const QualityMixChartBase = ({
                   className="qm-meta-cell"
                   style={{
                     width:
-                      CALIBRATED_BADGE_WIDTH,
+                      META_BADGE_WIDTH,
                     fontSize:
                       layout.tickSize,
                   }}
@@ -469,7 +475,7 @@ const QualityMixChartBase = ({
                   className="qm-meta-cell"
                   style={{
                     width:
-                      VISIT_BADGE_WIDTH,
+                      META_BADGE_WIDTH,
                     fontSize:
                       layout.tickSize,
                   }}
@@ -536,7 +542,15 @@ const QualityMixChartBase = ({
         </div>
 
         <div className="qm-panel qm-panel-right">
-          <div className="qm-panel-title">امتیاز</div>
+          <div
+            className="qm-panel-title"
+            style={{
+              marginRight:
+                SCORE_GUTTER,
+            }}
+          >
+            امتیاز
+          </div>
 
           <div className="qm-score">
             {/* 0..50 red / 50..100 green; right edge == 100% == max bar length */}

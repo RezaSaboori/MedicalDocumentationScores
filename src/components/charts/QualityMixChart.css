@@ -12,8 +12,8 @@
 }
 
 .qm-panel { display: flex; flex-direction: column; min-width: 0; }
-.qm-panel-left { flex: 70 1 0%; }
-.qm-panel-right { flex: 30 1 0%; }
+.qm-panel-left { flex: 76 1 0%; }
+.qm-panel-right { flex: 24 1 0%; }
 
 .qm-panel-title {
   height: 20px;
@@ -92,7 +92,13 @@
 }
 
 /* Left panel: stacked quality mix bar (percent widths, always sum to 100%) */
-.qm-mixbar { flex: 1; display: flex; min-width: 0; }
+.qm-mixbar {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
 
 .qm-mixbar__seg {
   display: flex;
@@ -156,6 +162,8 @@
   position: relative;
   display: flex;
   align-items: center;
+  margin-top: 2px;
+  margin-bottom: 2px;
 }
 
 .qm-scorebar {

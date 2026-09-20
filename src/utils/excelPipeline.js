@@ -333,10 +333,18 @@ export const parseAndProcessExcel = async (
     colIdx('کلاس امتیاز خام');
 
   const idxCalibratedScoreClass =
-    colIdx('کلاس امتیاز کالیبره');
+    colIdxAny(
+      'کلاس امتیاز کالیبره',
+      'کلاس امتیاز کالیبره‌شده',
+      'کلاس امتیاز کالیبره شده'
+    );
 
   const idxReferenceSampleCount =
-    colIdx('تعداد نمونه مرجع');
+    colIdxAny(
+      'تعداد نمونه مرجع',
+      'تعداد نمونه‌های مرجع',
+      'تعداد نمونه های مرجع'
+    );
 
   const idxCompletedWeight =
     colIdx('مجموع وزن تکمیل‌شده');
@@ -905,20 +913,22 @@ export const parseAndProcessExcel = async (
         ),
 
       calibrated_score_class:
-        parseOptionalNum(
-          getCell(
-            row,
-            'کلاس امتیاز کالیبره'
-          )
-        ),
+        idxCalibratedScoreClass !== -1
+          ? parseOptionalNum(
+              row[
+                idxCalibratedScoreClass
+              ]
+            )
+          : null,
 
       reference_sample_count:
-        parseOptionalNum(
-          getCell(
-            row,
-            'تعداد نمونه مرجع'
-          )
-        ),
+        idxReferenceSampleCount !== -1
+          ? parseOptionalNum(
+              row[
+                idxReferenceSampleCount
+              ]
+            )
+          : null,
 
       completed_weight_sum:
         parseOptionalNum(
