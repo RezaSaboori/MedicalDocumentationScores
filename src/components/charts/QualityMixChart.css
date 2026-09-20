@@ -198,7 +198,30 @@
 }
 
 /* ── Axes (percent-positioned, aligned with the bar areas) ────── */
-.qm-axis { position: relative; margin-top: 2px; }
+.qm-axis {
+  position: relative;
+  margin-top: 2px;
+}
+
+.qm-axis--left {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.qm-axis__meta {
+  position: relative;
+  flex-shrink: 0;
+  min-width: 0;
+  height: 100%;
+}
+
+.qm-axis__plot {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
 
 .qm-axis__tick {
   position: absolute;

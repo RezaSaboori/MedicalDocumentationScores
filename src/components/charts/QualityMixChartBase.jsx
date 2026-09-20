@@ -23,7 +23,7 @@ const SCORE_MAX = 100;
 const TITLE_BLOCK = 24; // panel title (20) + its margin (4)
 const TICK_SPACE = 21;
 const RANK_BADGE_SPACE = 34;
-const META_BADGE_WIDTH = 136;
+const META_BADGE_WIDTH = 60;
 const SCORE_GUTTER = 72; // fixed right gutter for score-change labels
 const AXIS_HEIGHT = 34;
 
@@ -462,7 +462,6 @@ const QualityMixChartBase = ({
                         row.calibratedTextColor,
                     }}
                   >
-                    میانگین نمره:{' '}
                     {row.displayCalibratedScore != null
                       ? row.displayCalibratedScore.toLocaleString(
                           'en-US'
@@ -488,7 +487,6 @@ const QualityMixChartBase = ({
                       color: '#FFFFFF',
                     }}
                   >
-                    ویزیت:{' '}
                     {row.visitCount.toLocaleString(
                       'en-US'
                     )}
@@ -525,19 +523,77 @@ const QualityMixChartBase = ({
           </div>
 
           <div
-            className="qm-axis"
+            className="qm-axis qm-axis--left"
             style={{
               marginLeft:
-                layout.leftInset,
+                layout.badgeWidth +
+                layout.nameWidth,
               height: AXIS_HEIGHT,
             }}
           >
-            {[0, 20, 40, 60, 80, 100].map(t => (
-              <span key={t} className="qm-axis__tick" style={{ left: `${t}%`, fontSize: layout.tickSize }}>
-                {t}٪
+            <div
+              className="qm-axis__meta"
+              style={{
+                width:
+                  META_BADGE_WIDTH,
+              }}
+            >
+              <span
+                className="qm-axis__legend"
+                style={{
+                  fontSize:
+                    layout.tickSize,
+                }}
+              >
+                میانگین نمره
               </span>
-            ))}
-            <span className="qm-axis__legend" style={{ fontSize: layout.tickSize }}>سهم از پرونده‌ها</span>
+            </div>
+
+            <div
+              className="qm-axis__meta"
+              style={{
+                width:
+                  META_BADGE_WIDTH,
+              }}
+            >
+              <span
+                className="qm-axis__legend"
+                style={{
+                  fontSize:
+                    layout.tickSize,
+                }}
+              >
+                ویزیت
+              </span>
+            </div>
+
+            <div className="qm-axis__plot">
+              {[0, 20, 40, 60, 80, 100].map(
+                (t) => (
+                  <span
+                    key={t}
+                    className="qm-axis__tick"
+                    style={{
+                      left: `${t}%`,
+                      fontSize:
+                        layout.tickSize,
+                    }}
+                  >
+                    {t}٪
+                  </span>
+                )
+              )}
+
+              <span
+                className="qm-axis__legend"
+                style={{
+                  fontSize:
+                    layout.tickSize,
+                }}
+              >
+                توزیع کیفیت پرونده‌ها
+              </span>
+            </div>
           </div>
         </div>
 
