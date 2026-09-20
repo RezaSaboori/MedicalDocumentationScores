@@ -14,12 +14,11 @@ const QualityMixChart = () => {
   } = useDashboard();
 
   const showingResidents =
-    mode === DASHBOARD_MODES.RESIDENTS ||
-    (
-      mode === DASHBOARD_MODES.FACULTY &&
-      filters.reviewResidents &&
-      filters.selectedFaculty !== 'all'
-    );
+    mode === DASHBOARD_MODES.RESIDENTS;
+
+  const reviewingResidents =
+    mode === DASHBOARD_MODES.FACULTY &&
+    filters.reviewResidents;
 
   return (
     <QualityMixChartBase
@@ -33,7 +32,9 @@ const QualityMixChart = () => {
       title={
         showingResidents
           ? 'رتبه‌بندی رزیدنت‌ها و توزیع کیفیت پرونده‌های آنان'
-          : 'رتبه‌بندی اساتید و توزیع کیفیت پرونده‌های آنان'
+          : reviewingResidents
+            ? 'رتبه‌بندی اساتید بر اساس کیفیت مستندسازی دستیاران تحت نظارت'
+            : 'رتبه‌بندی اساتید و توزیع کیفیت پرونده‌های ثبت‌شده توسط خود آنان'
       }
       subtitle="مرتب‌شده از کمترین امتیاز تا بیشترین امتیاز"
     />

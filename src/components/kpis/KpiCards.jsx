@@ -6,7 +6,7 @@ import { Skeleton } from '../ui/Skeleton';
 import './KpiCards.css';
 
 const KpiCards = () => {
-  const { data, loading, mode, filters } = useDashboard();
+  const { data, loading, mode } = useDashboard();
   const d = data.current;
 
   const kpis = useMemo(() => {
@@ -47,11 +47,10 @@ const KpiCards = () => {
     );
   }
 
-  const isFacultyFiltered =
-    mode === DASHBOARD_MODES.FACULTY &&
-    filters.reviewResidents &&
-    filters.selectedFaculty !== 'all';
-  const firstKpiTitle = isFacultyFiltered ? 'تعداد رزیدنت‌ها' : (mode === DASHBOARD_MODES.FACULTY ? 'تعداد اساتید' : 'تعداد رزیدنت‌ها');
+  const firstKpiTitle =
+    mode === DASHBOARD_MODES.FACULTY
+      ? 'تعداد اساتید'
+      : 'تعداد رزیدنت‌ها';
 
   const cards = [
     { title: firstKpiTitle, value: formatNumber(kpis.n_physicians), color: 'var(--color-blue)' },

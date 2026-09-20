@@ -172,7 +172,11 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
     try {
       await uploadDataToServer({
         documents: processed.documents,
-        aggregated: { residents: previewResidents, faculty: previewFaculty },
+        aggregated: {
+          residents: previewResidents,
+          faculty: previewFaculty,
+          facultySupervision: processed.facultySupervision || [],
+        },
         period: processed.period,
         startDate: processed.startDate,
         endDate: processed.endDate,

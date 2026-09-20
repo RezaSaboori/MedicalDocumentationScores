@@ -86,10 +86,11 @@ export const DashboardProvider = ({ children }) => {
       filters.selectedFaculty !== 'all';
 
     const dbCategory =
-      mode === DASHBOARD_MODES.RESIDENTS ||
-      isFacultyFilterActive
+      mode === DASHBOARD_MODES.RESIDENTS
         ? 'resident'
-        : 'faculty';
+        : isFacultyReviewMode
+          ? 'faculty_supervision'
+          : 'faculty';
 
     const scoreSnapshot = (rows) => [
       ...enrichScoringGroup(
@@ -97,9 +98,18 @@ export const DashboardProvider = ({ children }) => {
         'resident',
         residentsMaster
       ),
+
       ...enrichScoringGroup(
         rows.filter((row) => row.category === 'faculty'),
         'faculty'
+      ),
+
+      ...enrichScoringGroup(
+        rows.filter(
+          (row) =>
+            row.category === 'faculty_supervision'
+        ),
+        'faculty_supervision'
       ),
     ];
 
@@ -129,12 +139,22 @@ export const DashboardProvider = ({ children }) => {
       .filter((d) => d.category === dbCategory)
       .map(attachYear);
 
-    // Extract unique faculty names from resident data regardless of current mode
-    const residentRows = scoredCurrentData.filter(d => d.category === 'resident');
-    const facultyNamesSet = new Set(
-      residentRows.map((r) => r.faculty).filter((f) => f && String(f).trim() !== '')
-    );
-    const availableFacultyList = Array.from(facultyNamesSet).sort();
+    const facultySupervisionRows =
+      scoredCurrentData.filter(
+        (row) =>
+          row.category ===
+          'faculty_supervision'
+      );
+
+    const availableFacultyList = [
+      ...new Set(
+        facultySupervisionRows
+          .map((row) =>
+            String(row.name || '').trim()
+          )
+          .filter(Boolean)
+      ),
+    ].sort();
 
     const enrichRow = (row) => {
       const flags = row.flags || 'OK';
@@ -197,9 +217,11 @@ export const DashboardProvider = ({ children }) => {
     const inFacultyScope = (rows) =>
       isFacultyFilterActive
         ? rows.filter(
-            (r) =>
-              String(r.faculty || '').trim() ===
-              filters.selectedFaculty
+            (row) =>
+              String(row.name || '').trim() ===
+              String(
+                filters.selectedFaculty
+              ).trim()
           )
         : rows;
 

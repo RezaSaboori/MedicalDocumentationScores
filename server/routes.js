@@ -130,8 +130,20 @@ export const createRouter = (db) => {
         `);
         
         const allAgg = [
-          ...aggregated.residents.map(r => ({ ...r, category: 'resident' })),
-          ...aggregated.faculty.map(f => ({ ...f, category: 'faculty' }))
+          ...aggregated.residents.map((row) => ({
+            ...row,
+            category: 'resident',
+          })),
+
+          ...aggregated.faculty.map((row) => ({
+            ...row,
+            category: 'faculty',
+          })),
+
+          ...(aggregated.facultySupervision || []).map((row) => ({
+            ...row,
+            category: 'faculty_supervision',
+          })),
         ];
 
         for (const agg of allAgg) {

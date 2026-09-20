@@ -681,6 +681,15 @@ export const parseAndProcessExcel = async (
       'faculty'
     );
 
+  const facultySupervision =
+    enrichScoringGroup(
+      mergeByName(
+        parsedResidentRows,
+        'faculty'
+      ),
+      'faculty_supervision'
+    );
+
   const colMap = (name) => {
     const idx = colIdx(name);
 
@@ -900,6 +909,7 @@ export const parseAndProcessExcel = async (
     documents,
     residents,
     faculty,
+    facultySupervision,
     period,
     startDate: minDate,
     endDate: maxDate,
