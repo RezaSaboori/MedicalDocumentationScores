@@ -1,21 +1,30 @@
 import React, { useMemo, useState } from 'react';
-import { pdiGradientColor } from '../../utils/formatters';
+import {
+  pdiGradientColor,
+  visitCountGradientColor,
+} from '../../utils/formatters';
 import { measureTextWidth } from '../../utils/textMeasure';
 import {
   buildMonthComparison,
+  buildCurrentRanks,
   formatRankChange,
   formatScoreChange,
   changeColor,
 } from '../../utils/comparison';
+import {
+  calibratedScoreToQualityClass,
+} from '../../utils/qualityClasses';
 import ChartContainer from './ChartContainer';
 import ChartTooltip from './ChartTooltip';
 import './QualityMixChart.css';
 
-const PDI_THRESHOLD = 50;
+const PDI_THRESHOLD = 38.99;
 const SCORE_MAX = 100;
 const TITLE_BLOCK = 24; // panel title (20) + its margin (4)
 const TICK_SPACE = 21;
 const RANK_BADGE_SPACE = 34;
+const CALIBRATED_BADGE_WIDTH = 154;
+const VISIT_BADGE_WIDTH = 112;
 const SCORE_GUTTER = 72; // fixed right gutter for score-change labels
 const AXIS_HEIGHT = 34;
 
@@ -50,6 +59,15 @@ const QualityMixChartBase = ({
   );
   const hasComparison = comparison.size > 0;
 
+  const currentRanks = useMemo(
+    () =>
+      buildCurrentRanks(
+        comparisonRows || rows,
+        scoreKey
+      ),
+    [comparisonRows, rows, scoreKey]
+  );
+
   const chartData = useMemo(() => {
     const valid = (rows || [])
       .filter(r => r && r.name && r.N > 0 && r[scoreKey] != null && !Number.isNaN(Number(r[scoreKey])))
@@ -66,20 +84,99 @@ const QualityMixChartBase = ({
       Object.keys(categories).forEach(k => {
         ratios[k] = total > 0 ? counts[k] / total : 0;
       });
-      const score = Math.min(SCORE_MAX, Math.max(0, Number(row[scoreKey])));
-      const cmp = comparison.get(String(row.name).trim());
+      const score = Math.min(
+        SCORE_MAX,
+        Math.max(
+          0,
+          Number(row[scoreKey])
+        )
+      );
+
+      const normalizedName =
+        String(row.name).trim();
+
+      const calibratedScoreValue =
+        Number(row.calibrated_score);
+
+      const calibratedScore =
+        Number.isFinite(
+          calibratedScoreValue
+        )
+          ? Math.min(
+              SCORE_MAX,
+              Math.max(
+                0,
+                calibratedScoreValue
+              )
+            )
+          : 0;
+
+      const calibratedClass =
+        calibratedScoreToQualityClass(
+          calibratedScore
+        );
+
+      const calibratedCategory =
+        categories[
+          `Q${calibratedClass}`
+        ] || {};
+
+      const visitCount =
+        Math.max(
+          0,
+          Number(row.V) || 0
+        );
+
+      const cmp =
+        comparison.get(
+          normalizedName
+        );
+
       return {
-        name: `${row.name} (${row.V})`,
+        name: normalizedName,
+        currentRank:
+          currentRanks.get(
+            normalizedName
+          ) ?? null,
+        visitCount,
+        visitColor:
+          visitCountGradientColor(
+            visitCount
+          ),
+        calibratedScore,
+        calibratedColor:
+          calibratedCategory.color ||
+          '#B0BEC5',
+        calibratedTextColor:
+          calibratedCategory.textColor ||
+          '#263238',
         score,
-        barColor: pdiGradientColor(score, PDI_THRESHOLD),
-        status: score >= PDI_THRESHOLD ? 'قابل قبول' : 'غیر قابل قبول',
-        rankChange: cmp?.rankChange ?? null,
-        scoreChange: cmp?.scoreChange ?? null,
-        raw: { ...row, ...counts },
+        barColor: pdiGradientColor(
+          score,
+          PDI_THRESHOLD
+        ),
+        status:
+          score >= PDI_THRESHOLD
+            ? 'قابل قبول'
+            : 'غیر قابل قبول',
+        rankChange:
+          cmp?.rankChange ?? null,
+        scoreChange:
+          cmp?.scoreChange ?? null,
+        raw: {
+          ...row,
+          ...counts,
+        },
         ...ratios,
       };
     });
-  }, [rows, scoreKey, categories, comparison]);
+  }, [
+    rows,
+    scoreKey,
+    categories,
+    comparison,
+    currentRanks,
+  ]);
 
   // Highest score at the top (data[0] was at the bottom in the Nivo version)
   const displayRows = useMemo(() => [...chartData].reverse(), [chartData]);
@@ -88,19 +185,70 @@ const QualityMixChartBase = ({
     const rowCount = chartData.length;
     const { rowHeight, tickSize } = rowMetrics(rowCount);
 
-    const longest = chartData.reduce((m, r) => (r.name.length > m.length ? r.name : m), '');
-    const labelWidth = measureTextWidth(longest, `${tickSize}px IRANSansX, IRANSansXV, sans-serif`);
-    const nameWidth = Math.ceil(labelWidth) + TICK_SPACE + 12;
-    const badgeWidth = hasComparison ? RANK_BADGE_SPACE : 0;
+    const longest = chartData.reduce(
+      (currentLongest, row) => {
+        const rankedName =
+          row.currentRank != null
+            ? `${row.currentRank}. ${row.name}`
+            : row.name;
 
-    const aboveCount = chartData.filter(r => r.score >= PDI_THRESHOLD).length;
-    const belowCount = rowCount - aboveCount;
-    const sepTop = TITLE_BLOCK + aboveCount * rowHeight;
+        return rankedName.length >
+          currentLongest.length
+          ? rankedName
+          : currentLongest;
+      },
+      ''
+    );
+
+    const labelWidth =
+      measureTextWidth(
+        longest,
+        `${tickSize}px IRANSansX, IRANSansXV, sans-serif`
+      );
+
+    const nameWidth =
+      Math.ceil(labelWidth) +
+      TICK_SPACE +
+      12;
+
+    const badgeWidth =
+      hasComparison
+        ? RANK_BADGE_SPACE
+        : 0;
+
+    const leftInset =
+      badgeWidth +
+      nameWidth +
+      CALIBRATED_BADGE_WIDTH +
+      VISIT_BADGE_WIDTH;
+
+    const aboveCount =
+      chartData.filter(
+        (r) =>
+          r.score >=
+          PDI_THRESHOLD
+      ).length;
+
+    const belowCount =
+      rowCount - aboveCount;
+
+    const sepTop =
+      TITLE_BLOCK +
+      aboveCount * rowHeight;
 
     return {
-      rowCount, rowHeight, tickSize, nameWidth, badgeWidth,
-      aboveCount, belowCount, sepTop,
-      showSeparator: aboveCount > 0 && belowCount > 0,
+      rowCount,
+      rowHeight,
+      tickSize,
+      nameWidth,
+      badgeWidth,
+      leftInset,
+      aboveCount,
+      belowCount,
+      sepTop,
+      showSeparator:
+        aboveCount > 0 &&
+        belowCount > 0,
     };
   }, [chartData, hasComparison]);
 
@@ -191,17 +339,101 @@ const QualityMixChartBase = ({
               <div key={row.name} className="qm-row" style={{ height: layout.rowHeight }}>
                 <div
                   className="qm-name"
-                  style={{ width: layout.badgeWidth + layout.nameWidth, fontSize: layout.tickSize }}
+                  style={{
+                    width:
+                      layout.badgeWidth +
+                      layout.nameWidth,
+                    fontSize:
+                      layout.tickSize,
+                  }}
                 >
                   {hasComparison && (
                     <span
                       className="qm-rank"
-                      style={{ color: row.rankChange != null ? changeColor(row.rankChange, positiveColor) : '#90A4AE' }}
+                      style={{
+                        color:
+                          row.rankChange != null
+                            ? changeColor(
+                                row.rankChange,
+                                positiveColor
+                              )
+                            : '#90A4AE',
+                      }}
                     >
-                      {row.rankChange != null ? formatRankChange(row.rankChange) : 'n/a'}
+                      {row.rankChange != null
+                        ? formatRankChange(
+                            row.rankChange
+                          )
+                        : 'n/a'}
                     </span>
                   )}
-                  <span className="qm-name-text" title={row.name}>{row.name}</span>
+
+                  <span
+                    className="qm-name-text"
+                    title={row.name}
+                  >
+                    {row.currentRank != null && (
+                      <span className="qm-order">
+                        {row.currentRank}.
+                      </span>
+                    )}
+
+                    <span className="qm-physician-name">
+                      {row.name}
+                    </span>
+                  </span>
+                </div>
+
+                <div
+                  className="qm-meta-cell"
+                  style={{
+                    width:
+                      CALIBRATED_BADGE_WIDTH,
+                    fontSize:
+                      layout.tickSize,
+                  }}
+                >
+                  <div
+                    className="qm-meta-badge"
+                    style={{
+                      backgroundColor:
+                        row.calibratedColor,
+                      color:
+                        row.calibratedTextColor,
+                    }}
+                  >
+                    میانگین نمره:{' '}
+                    {row.calibratedScore.toLocaleString(
+                      'en-US',
+                      {
+                        maximumFractionDigits: 1,
+                      }
+                    )}
+                  </div>
+                </div>
+
+                <div
+                  className="qm-meta-cell"
+                  style={{
+                    width:
+                      VISIT_BADGE_WIDTH,
+                    fontSize:
+                      layout.tickSize,
+                  }}
+                >
+                  <div
+                    className="qm-meta-badge"
+                    style={{
+                      backgroundColor:
+                        row.visitColor,
+                      color: '#FFFFFF',
+                    }}
+                  >
+                    ویزیت:{' '}
+                    {row.visitCount.toLocaleString(
+                      'en-US'
+                    )}
+                  </div>
                 </div>
 
                 <div
@@ -233,7 +465,14 @@ const QualityMixChartBase = ({
             ))}
           </div>
 
-          <div className="qm-axis" style={{ marginLeft: layout.badgeWidth + layout.nameWidth, height: AXIS_HEIGHT }}>
+          <div
+            className="qm-axis"
+            style={{
+              marginLeft:
+                layout.leftInset,
+              height: AXIS_HEIGHT,
+            }}
+          >
             {[0, 20, 40, 60, 80, 100].map(t => (
               <span key={t} className="qm-axis__tick" style={{ left: `${t}%`, fontSize: layout.tickSize }}>
                 {t}٪

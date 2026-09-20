@@ -125,6 +125,37 @@ export const resolveQualityClass = (status, calibratedClass) => {
   return null;
 };
 
+export const calibratedScoreToQualityClass = (
+  value
+) => {
+  const score = Number(value);
+
+  if (
+    !Number.isFinite(score) ||
+    score <= 0
+  ) {
+    return 0;
+  }
+
+  if (score <= 25) {
+    return 1;
+  }
+
+  if (score <= 50) {
+    return 2;
+  }
+
+  if (score <= 75) {
+    return 3;
+  }
+
+  if (score <= 95) {
+    return 4;
+  }
+
+  return 5;
+};
+
 export const qualityClassToStatus = (value) => {
   const numericValue = Number(value);
 

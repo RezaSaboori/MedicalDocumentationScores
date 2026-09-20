@@ -38,13 +38,58 @@
 }
 
 .qm-name-text {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
   padding-right: 3px;
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.qm-rank { font-weight: 600; flex-shrink: 0; }
+.qm-rank {
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.qm-order {
+  flex-shrink: 0;
+  font-weight: 600;
+  direction: ltr;
+}
+
+.qm-physician-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+}
+
+.qm-meta-cell {
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  padding: 2px 3px;
+}
+
+.qm-meta-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+  padding: 0 8px;
+  box-sizing: border-box;
+  border-radius: 2px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+}
 
 /* Left panel: stacked quality mix bar (percent widths, always sum to 100%) */
 .qm-mixbar { flex: 1; display: flex; min-width: 0; }

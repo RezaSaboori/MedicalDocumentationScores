@@ -4,6 +4,52 @@ export const formatPercent = (value, digits = 1) =>
 export const formatNumber = (value, digits = 0) =>
   Number(value).toLocaleString('en-US', { maximumFractionDigits: digits });
 
+export const visitCountGradientColor = (
+  value,
+  maxVisits = 250
+) => {
+  const count = Math.max(
+    0,
+    Number(value) || 0
+  );
+
+  const upperBound = Math.max(
+    1,
+    Number(maxVisits) || 250
+  );
+
+  const t = Math.min(
+    count / upperBound,
+    1
+  );
+
+  const start = [25, 118, 210];
+  const end = [40, 53, 147];
+
+  const r = Math.round(
+    start[0] +
+      (end[0] - start[0]) * t
+  );
+
+  const g = Math.round(
+    start[1] +
+      (end[1] - start[1]) * t
+  );
+
+  const b = Math.round(
+    start[2] +
+      (end[2] - start[2]) * t
+  );
+
+  return `#${r
+    .toString(16)
+    .padStart(2, '0')}${g
+    .toString(16)
+    .padStart(2, '0')}${b
+    .toString(16)
+    .padStart(2, '0')}`;
+};
+
 export const pdiGradientColor = (value, threshold) => {
   value = Math.min(Math.max(value, 0.0), 100.0);
   threshold = Math.min(Math.max(threshold, 1e-9), 100.0 - 1e-9);

@@ -31,6 +31,33 @@ export const buildMonthComparison = (currentRows, previousRows, scoreKey) => {
   return map;
 };
 
+export const buildCurrentRanks = (rows, scoreKey) => {
+  const ranked = (rows || [])
+    .filter(
+      (row) =>
+        row &&
+        row.name &&
+        row[scoreKey] != null &&
+        !Number.isNaN(Number(row[scoreKey]))
+    )
+    .map((row) => ({
+      name: String(row.name).trim(),
+      score: Number(row[scoreKey]),
+    }))
+    .sort(
+      (a, b) =>
+        a.score - b.score ||
+        a.name.localeCompare(b.name)
+    );
+
+  return new Map(
+    ranked.map((row, index) => [
+      row.name,
+      ranked.length - index,
+    ])
+  );
+};
+
 export const formatRankChange = (value) => {
   const v = Math.round(value);
   if (v > 0) return `+${Math.abs(v)}`;

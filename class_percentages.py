@@ -315,7 +315,7 @@ def calculate_class_percentages(
 # =============================================================
 if __name__ == "__main__":
     result = calculate_class_percentages(
-        input_file="MedicalDocsStatus_2026-09-19_08_31_58.xlsx",
+        input_file="MedicalDocsStatus_2026-09-20_10_09_27.xlsx",
         output_file="class_percentages_3.xlsx",
         sheet_name="Medical Docs Status",
     )
