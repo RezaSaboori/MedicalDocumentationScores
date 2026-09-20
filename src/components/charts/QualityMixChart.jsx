@@ -1,10 +1,25 @@
 import React from 'react';
 import { useDashboard } from '../../context/DashboardContext';
-import { QUALITY_CATEGORIES } from '../../utils/constants';
+import {
+  DASHBOARD_MODES,
+  QUALITY_CATEGORIES,
+} from '../../utils/constants';
 import QualityMixChartBase from './QualityMixChartBase';
 
 const QualityMixChart = () => {
-  const { data } = useDashboard();
+  const {
+    data,
+    mode,
+    filters,
+  } = useDashboard();
+
+  const showingResidents =
+    mode === DASHBOARD_MODES.RESIDENTS ||
+    (
+      mode === DASHBOARD_MODES.FACULTY &&
+      filters.reviewResidents &&
+      filters.selectedFaculty !== 'all'
+    );
 
   return (
     <QualityMixChartBase
@@ -15,7 +30,11 @@ const QualityMixChart = () => {
       scoreKey="PDI"
       categories={QUALITY_CATEGORIES}
       positiveColor="#15C062"
-      title="رتبه‌بندی رزیدنت‌ها و توزیع کیفیت پرونده‌های آنان"
+      title={
+        showingResidents
+          ? 'رتبه‌بندی رزیدنت‌ها و توزیع کیفیت پرونده‌های آنان'
+          : 'رتبه‌بندی اساتید و توزیع کیفیت پرونده‌های آنان'
+      }
       subtitle="مرتب‌شده از کمترین امتیاز تا بیشترین امتیاز"
     />
   );

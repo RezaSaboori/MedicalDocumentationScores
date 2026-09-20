@@ -47,7 +47,10 @@ const KpiCards = () => {
     );
   }
 
-  const isFacultyFiltered = mode === DASHBOARD_MODES.FACULTY && filters.selectedFaculty !== 'all';
+  const isFacultyFiltered =
+    mode === DASHBOARD_MODES.FACULTY &&
+    filters.reviewResidents &&
+    filters.selectedFaculty !== 'all';
   const firstKpiTitle = isFacultyFiltered ? 'تعداد رزیدنت‌ها' : (mode === DASHBOARD_MODES.FACULTY ? 'تعداد اساتید' : 'تعداد رزیدنت‌ها');
 
   const cards = [

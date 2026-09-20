@@ -186,9 +186,14 @@
 }
 
 /* ── Dropdown panel ──────────────────────────────────────────── */
-.ui-dropdown {
-  position: relative;
-  width: 100%;
+.ui-dropdown.is-disabled .ui-input-shell {
+  opacity: 0.5;
+  box-shadow: none;
+}
+
+.ui-dropdown.is-disabled .ui-dropdown__text,
+.ui-dropdown.is-disabled .ui-dropdown__chevron {
+  cursor: not-allowed;
 }
 
 .ui-dropdown__panel {

@@ -15,6 +15,7 @@ export const DropdownInput = ({
   displayValue,
   busy = false,
   searchable = false,
+  disabled = false,
 }) => {
   const [open, setOpen] = useState(false);
   const [hoveredOption, setHoveredOption] = useState(null);
@@ -25,7 +26,11 @@ export const DropdownInput = ({
   const triggerRef = useRef(null);
 
   const safeValue = multiple ? (Array.isArray(value) ? value : []) : value;
-
+  useEffect(() => {
+    if (disabled) {
+      setOpen(false);
+    }
+  }, [disabled]);
   // The portal target MUST be created after React's first commit.
   // Creating it during render (previous version) broke on page refresh:
   // React 18/19 resets the root container at the initial commit and removed
@@ -69,6 +74,10 @@ export const DropdownInput = ({
     multiple ? safeValue.includes(opt) : safeValue === opt;
 
   const handleSelect = (opt) => {
+    if (disabled) {
+      return;
+    }
+
     if (multiple) {
       const next = safeValue.includes(opt)
         ? safeValue.filter((v) => v !== opt)
@@ -183,22 +192,43 @@ export const DropdownInput = ({
   );
 
   return (
-    <div className={`ui-dropdown ${className}`.trim()} ref={ref}>
+    <div
+      className={`ui-dropdown${disabled ? " is-disabled" : ""} ${className}`.trim()}
+      ref={ref}
+    >
       <div
         ref={triggerRef}
         className={`ui-input-shell${open ? " ui-input-shell--open" : ""}`}
         role="button"
-        tabIndex={0}
+        tabIndex={disabled ? -1 : 0}
         aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
+        aria-disabled={disabled}
+        onClick={() => {
+          if (!disabled) {
+            setOpen((o) => !o);
+          }
+        }}
         onKeyDown={(e) => {
+          if (disabled) {
+            return;
+          }
+
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             setOpen((o) => !o);
           }
-          if (e.key === "Escape") setOpen(false);
+
+          if (e.key === "Escape") {
+            setOpen(false);
+          }
         }}
-        style={{ cursor: busy ? "progress" : "pointer" }}
+        style={{
+          cursor: disabled
+            ? "not-allowed"
+            : busy
+              ? "progress"
+              : "pointer",
+        }}
       >
         <span className={`ui-dropdown__text${!displayText ? " ui-dropdown__text--placeholder" : ""}`}>
           {displayText || placeholder}
@@ -211,7 +241,7 @@ export const DropdownInput = ({
         </span>
       </div>
 
-      {portalRoot && ReactDOM.createPortal(panel, portalRoot)}
+      {portalRoot && !disabled && ReactDOM.createPortal(panel, portalRoot)}
     </div>
   );
 };

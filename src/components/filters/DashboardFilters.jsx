@@ -2,6 +2,7 @@ import React from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 import { BASE_FLAG_FA, DASHBOARD_MODES } from '../../utils/constants';
 import { DropdownInput } from '../inputs/DropdownInput';
+import { RadioToggle } from '../inputs/RadioToggle';
 import './DashboardFilters.css';
 
 const ChevronIcon = () => (
@@ -45,6 +46,14 @@ const DashboardFilters = () => {
     }
   };
 
+  const handleReviewResidentsChange = (checked) => {
+    updateFilters({
+      reviewResidents: checked,
+      ...(!checked
+        ? { selectedFaculty: 'all' }
+        : {}),
+    });
+  };
   const clearFacultyFilter = () => {
     updateFilters({ selectedFaculty: 'all' });
   };
@@ -99,35 +108,66 @@ const DashboardFilters = () => {
       )}
       
       {mode === DASHBOARD_MODES.FACULTY && (
-        <div className="filter-group filter-group--with-clear">
-          <label className="filter-label">فیلتر بر اساس هیئت علمی:</label>
-          <div className="filter-with-clear">
-            <DropdownInput
-              dir="rtl"
-              searchable
-              busy={loading}
-              options={facultyDropdownOptions}
-              value={facultyValue}
-              onChange={handleFacultyChange}
-              chevronIcon={<ChevronIcon />}
-              placeholder="انتخاب استاد..."
+        <>
+          <div className="filter-group filter-group--review-residents">
+            <label className="filter-label">نوع بررسی:</label>
+            <RadioToggle
+              checked={Boolean(filters.reviewResidents)}
+              onChange={handleReviewResidentsChange}
+              label="بررسی دستیاران"
             />
-            {isFacultyFilterActive && (
-              <button
-                type="button"
-                className="filter-clear-btn glass"
-                onClick={clearFacultyFilter}
-                title="حذف فیلتر"
-                aria-label="حذف فیلتر هیئت علمی"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            )}
           </div>
-        </div>
+
+          <div
+            className={`filter-group filter-group--with-clear${
+              filters.reviewResidents
+                ? ''
+                : ' filter-group--disabled'
+            }`}
+          >
+            <label className="filter-label">
+              فیلتر بر اساس هیئت علمی:
+            </label>
+
+            <div className="filter-with-clear">
+              <DropdownInput
+                dir="rtl"
+                searchable
+                busy={loading}
+                disabled={!filters.reviewResidents}
+                options={facultyDropdownOptions}
+                value={facultyValue}
+                onChange={handleFacultyChange}
+                chevronIcon={<ChevronIcon />}
+                placeholder="انتخاب استاد..."
+              />
+
+              {filters.reviewResidents && isFacultyFilterActive && (
+                <button
+                  type="button"
+                  className="filter-clear-btn glass"
+                  onClick={clearFacultyFilter}
+                  title="حذف فیلتر"
+                  aria-label="حذف فیلتر هیئت علمی"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

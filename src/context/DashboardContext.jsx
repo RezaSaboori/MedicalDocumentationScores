@@ -23,6 +23,7 @@ export const DashboardProvider = ({ children }) => {
     selectedYear: 'all',
     selectedFaculty: 'all',
     selectedFlags: Object.keys(BASE_FLAG_FA),
+    reviewResidents: false,
   });
 
   const refresh = useCallback(async () => {
@@ -76,10 +77,19 @@ export const DashboardProvider = ({ children }) => {
   }, [selectedPeriod]);
 
   const { data, availableYears, availableFaculties } = useMemo(() => {
-    // CRITICAL FIX: If a faculty filter is active, switch to 'resident' mode to show their residents.
-    // Otherwise, in Faculty mode, show 'faculty' data. In Resident mode, show 'resident' data.
-    const isFacultyFilterActive = mode === DASHBOARD_MODES.FACULTY && filters.selectedFaculty !== 'all';
-    const dbCategory = (mode === DASHBOARD_MODES.RESIDENTS || isFacultyFilterActive) ? 'resident' : 'faculty';
+    const isFacultyReviewMode =
+      mode === DASHBOARD_MODES.FACULTY &&
+      filters.reviewResidents;
+
+    const isFacultyFilterActive =
+      isFacultyReviewMode &&
+      filters.selectedFaculty !== 'all';
+
+    const dbCategory =
+      mode === DASHBOARD_MODES.RESIDENTS ||
+      isFacultyFilterActive
+        ? 'resident'
+        : 'faculty';
 
     const scoreSnapshot = (rows) => [
       ...enrichScoringGroup(

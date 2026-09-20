@@ -53,11 +53,13 @@ const DashboardLayout = () => {
         <DashboardFilters />
       </div>
 
-      {mode === DASHBOARD_MODES.FACULTY && filters.selectedFaculty !== 'all' && (
-        <div className="u-container u-container--md">
-          <FacultyImpactChart faculty={filters.selectedFaculty} />
-        </div>
-      )}
+      {mode === DASHBOARD_MODES.FACULTY &&
+        filters.reviewResidents &&
+        filters.selectedFaculty !== 'all' && (
+          <div className="u-container u-container--md">
+            <FacultyImpactChart faculty={filters.selectedFaculty} />
+          </div>
+        )}
 
       <div className="charts-grid-2">
         <GroupDonutChart />

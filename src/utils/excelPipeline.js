@@ -317,17 +317,24 @@ export const parseAndProcessExcel = async (
       resident,
     } = parseAfrad(afradStr);
 
-    if (!faculty || !resident) {
+    if (!faculty) {
       continue;
     }
 
+    const hasResident =
+      Boolean(resident);
+
     const groupKey =
-      `${faculty}__${resident}`;
+      hasResident
+        ? `resident__${faculty}__${resident}`
+        : `faculty__${faculty}`;
 
     if (!groups.has(groupKey)) {
       groups.set(groupKey, {
         faculty,
-        resident,
+        resident: hasResident
+          ? resident
+          : null,
         rows: [],
       });
     }
@@ -338,7 +345,8 @@ export const parseAndProcessExcel = async (
       .push(row);
   }
 
-  const parsedRows = [];
+  const parsedResidentRows = [];
+  const parsedFacultyRows = [];
 
   for (const group of groups.values()) {
     const rows = group.rows;
@@ -609,10 +617,7 @@ export const parseAndProcessExcel = async (
           totalSignatures
         : 0;
 
-    parsedRows.push({
-      name: group.resident,
-      faculty: group.faculty,
-
+    const aggregateRow = {
       section: null,
       group_fa: null,
       members_count: null,
@@ -640,13 +645,27 @@ export const parseAndProcessExcel = async (
 
       start_date: minDate,
       end_date: maxDate,
-    });
+    };
+
+    if (group.resident) {
+      parsedResidentRows.push({
+        name: group.resident,
+        faculty: group.faculty,
+        ...aggregateRow,
+      });
+    } else {
+      parsedFacultyRows.push({
+        name: group.faculty,
+        faculty: null,
+        ...aggregateRow,
+      });
+    }
   }
 
   const residents =
     enrichScoringGroup(
       mergeByName(
-        parsedRows,
+        parsedResidentRows,
         'name'
       ),
       'resident',
@@ -656,8 +675,8 @@ export const parseAndProcessExcel = async (
   const faculty =
     enrichScoringGroup(
       mergeByName(
-        parsedRows,
-        'faculty'
+        parsedFacultyRows,
+        'name'
       ),
       'faculty'
     );

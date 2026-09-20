@@ -75,3 +75,16 @@
 .filter-clear-btn:hover {
   color: var(--color-gray12);
 }
+
+.filter-group--review-residents {
+  flex: 0 0 auto;
+  min-width: 170px;
+}
+
+.filter-group--review-residents .ui-radio-toggle {
+  min-height: var(--ui-input-height);
+}
+
+.filter-group--disabled .filter-label {
+  opacity: 0.5;
+}
