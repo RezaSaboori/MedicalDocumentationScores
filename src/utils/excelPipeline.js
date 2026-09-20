@@ -92,7 +92,6 @@ const mergeByName = (rows, keyField) => {
 
   const weightedAverageFields = [
     'raw_score',
-    'calibrated_score',
     'raw_score_class',
     'calibrated_score_class',
     'reference_sample_count',
@@ -148,6 +147,42 @@ const mergeByName = (rows, keyField) => {
       (existing.active_weight_sum || 0) +
       (row.active_weight_sum || 0);
 
+    existing.calibrated_score_sum =
+      (
+        existing
+          .calibrated_score_sum ||
+        0
+      ) +
+      (
+        row
+          .calibrated_score_sum ||
+        0
+      );
+
+    existing.calibrated_score_count =
+      (
+        existing
+          .calibrated_score_count ||
+        0
+      ) +
+      (
+        row
+          .calibrated_score_count ||
+        0
+      );
+
+    if (
+      existing
+        .calibrated_score_count >
+      0
+    ) {
+      existing.calibrated_score =
+        existing
+          .calibrated_score_sum /
+        existing
+          .calibrated_score_count;
+    }
+
     if (totalV > 0) {
       weightedAverageFields.forEach((field) => {
         existing[field] =
@@ -183,8 +218,16 @@ const mergeByName = (rows, keyField) => {
   return Array.from(map.values()).map((row) => {
     const {
       V_prev,
+      calibrated_score_sum = 0,
+      calibrated_score_count = 0,
       ...rest
     } = row;
+
+    rest.calibrated_score =
+      calibrated_score_count > 0
+        ? calibrated_score_sum /
+          calibrated_score_count
+        : null;
 
     const totalClassified = Array.from(
       { length: 6 },
@@ -246,8 +289,26 @@ export const parseAndProcessExcel = async (
 
   const colIdx = (name) =>
     headers.findIndex(
-      (header) => header === name
+      (header) =>
+        header === name
     );
+
+  const colIdxAny = (
+    ...names
+  ) => {
+    for (
+      const name of names
+    ) {
+      const index =
+        colIdx(name);
+
+      if (index !== -1) {
+        return index;
+      }
+    }
+
+    return -1;
+  };
 
   const idxAfrad =
     colIdx('افراد');
@@ -262,7 +323,11 @@ export const parseAndProcessExcel = async (
     colIdx('امتیاز خام');
 
   const idxCalibratedScore =
-    colIdx('امتیاز کالیبره');
+    colIdxAny(
+      'امتیاز کالیبره',
+      'امتیاز کالیبره‌شده',
+      'امتیاز کالیبره شده'
+    );
 
   const idxRawScoreClass =
     colIdx('کلاس امتیاز خام');
@@ -426,15 +491,25 @@ export const parseAndProcessExcel = async (
       }
 
       if (
-        idxCalibratedScore !== -1 &&
-        row[idxCalibratedScore] !== ''
+        idxCalibratedScore !== -1
       ) {
-        sumCalibratedScore +=
-          parseNum(
-            row[idxCalibratedScore]
+        const calibratedValue =
+          parseOptionalNum(
+            row[
+              idxCalibratedScore
+            ]
           );
 
-        countCalibratedScore += 1;
+        if (
+          calibratedValue !==
+          null
+        ) {
+          sumCalibratedScore +=
+            calibratedValue;
+
+          countCalibratedScore +=
+            1;
+        }
       }
 
       if (
@@ -630,6 +705,13 @@ export const parseAndProcessExcel = async (
 
       raw_score,
       calibrated_score,
+
+      calibrated_score_sum:
+        sumCalibratedScore,
+
+      calibrated_score_count:
+        countCalibratedScore,
+
       raw_score_class,
       calibrated_score_class,
       reference_sample_count,
@@ -806,12 +888,13 @@ export const parseAndProcessExcel = async (
         ),
 
       calibrated_score:
-        parseOptionalNum(
-          getCell(
-            row,
-            'امتیاز کالیبره'
-          )
-        ),
+        idxCalibratedScore !== -1
+          ? parseOptionalNum(
+              row[
+                idxCalibratedScore
+              ]
+            )
+          : null,
 
       raw_score_class:
         parseOptionalNum(

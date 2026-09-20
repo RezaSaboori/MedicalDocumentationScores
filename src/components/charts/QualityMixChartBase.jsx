@@ -95,8 +95,23 @@ const QualityMixChartBase = ({
       const normalizedName =
         String(row.name).trim();
 
+      const displayScore =
+        Math.ceil(score);
+
+      const sourceCalibratedScore =
+        row.calibrated_score;
+
       const calibratedScoreValue =
-        Number(row.calibrated_score);
+        sourceCalibratedScore ===
+          null ||
+        sourceCalibratedScore ===
+          undefined ||
+        sourceCalibratedScore ===
+          ''
+          ? null
+          : Number(
+              sourceCalibratedScore
+            );
 
       const calibratedScore =
         Number.isFinite(
@@ -109,17 +124,28 @@ const QualityMixChartBase = ({
                 calibratedScoreValue
               )
             )
-          : 0;
+          : null;
+
+      const displayCalibratedScore =
+        calibratedScore != null
+          ? Math.ceil(
+              calibratedScore
+            )
+          : null;
 
       const calibratedClass =
-        calibratedScoreToQualityClass(
-          calibratedScore
-        );
+        calibratedScore != null
+          ? calibratedScoreToQualityClass(
+              calibratedScore
+            )
+          : null;
 
       const calibratedCategory =
-        categories[
-          `Q${calibratedClass}`
-        ] || {};
+        calibratedClass != null
+          ? categories[
+              `Q${calibratedClass}`
+            ] || {}
+          : {};
 
       const visitCount =
         Math.max(
@@ -144,13 +170,19 @@ const QualityMixChartBase = ({
             visitCount
           ),
         calibratedScore,
+        displayCalibratedScore,
         calibratedColor:
-          calibratedCategory.color ||
-          '#B0BEC5',
+          calibratedScore != null
+            ? calibratedCategory.color ||
+              '#B0BEC5'
+            : '#ECEFF1',
         calibratedTextColor:
-          calibratedCategory.textColor ||
-          '#263238',
+          calibratedScore != null
+            ? calibratedCategory.textColor ||
+              '#263238'
+            : '#78909C',
         score,
+        displayScore,
         barColor: pdiGradientColor(
           score,
           PDI_THRESHOLD
@@ -291,14 +323,36 @@ const QualityMixChartBase = ({
       label: categories[k].label,
       value: `${Math.round(row[k] * 100)}٪ (${Number(row.raw?.[k] ?? 0).toLocaleString('en-US')})`,
     })),
-    { label: scoreKey, value: row.score.toFixed(1) },
-    { label: 'وضعیت', value: row.status },
+    {
+      label: scoreKey,
+      value:
+        row.displayScore,
+    },
+    {
+      label: 'وضعیت',
+      value: row.status,
+    },
   ];
 
   const scoreTooltipRows = (row) => [
-    { label: scoreKey, value: `${row.score.toFixed(1)}٪` },
-    { label: 'وضعیت', value: row.status },
-    { label: 'تعداد پرونده‌ها', value: Number(row.raw?.N ?? 0).toLocaleString('en-US') },
+    {
+      label: scoreKey,
+      value:
+        `${row.displayScore}٪`,
+    },
+    {
+      label: 'وضعیت',
+      value: row.status,
+    },
+    {
+      label: 'تعداد پرونده‌ها',
+      value:
+        Number(
+          row.raw?.N ?? 0
+        ).toLocaleString(
+          'en-US'
+        ),
+    },
   ];
 
   return (
@@ -372,15 +426,15 @@ const QualityMixChartBase = ({
                     className="qm-name-text"
                     title={row.name}
                   >
+                    <span className="qm-physician-name">
+                      {row.name}
+                    </span>
+
                     {row.currentRank != null && (
                       <span className="qm-order">
                         {row.currentRank}.
                       </span>
                     )}
-
-                    <span className="qm-physician-name">
-                      {row.name}
-                    </span>
                   </span>
                 </div>
 
@@ -403,12 +457,11 @@ const QualityMixChartBase = ({
                     }}
                   >
                     میانگین نمره:{' '}
-                    {row.calibratedScore.toLocaleString(
-                      'en-US',
-                      {
-                        maximumFractionDigits: 1,
-                      }
-                    )}
+                    {row.displayCalibratedScore != null
+                      ? row.displayCalibratedScore.toLocaleString(
+                          'en-US'
+                        )
+                      : '—'}
                   </div>
                 </div>
 
@@ -522,11 +575,21 @@ const QualityMixChartBase = ({
                       className="qm-scorebar"
                       style={{ width: `${row.score}%`, backgroundColor: row.barColor }}
                     >
-                      {row.score >= 15 && <span>{row.score.toFixed(1)}</span>}
+                      {row.score >= 15 && (
+                        <span>
+                          {row.displayScore}
+                        </span>
+                      )}
                     </div>
                     {row.score < 15 && (
-                      <span className="qm-scorebar__outside" style={{ left: `calc(${row.score}% + 4px)` }}>
-                        {row.score.toFixed(1)}
+                      <span
+                        className="qm-scorebar__outside"
+                        style={{
+                          left:
+                            `calc(${row.score}% + 4px)`,
+                        }}
+                      >
+                        {row.displayScore}
                       </span>
                     )}
                   </div>

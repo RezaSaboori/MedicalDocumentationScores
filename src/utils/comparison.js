@@ -1,62 +1,191 @@
-/**
- * Month-over-month comparison, ported from build_month_comparison() in dashboard.py.
- * Returns a Map keyed by trimmed physician name: { rankChange, scoreChange }.
- */
-export const buildMonthComparison = (currentRows, previousRows, scoreKey) => {
-  const map = new Map();
-  if (!Array.isArray(previousRows) || previousRows.length === 0) return map;
-
-  const clean = (rows) => (rows || [])
-    .filter(r => r && r.name && r[scoreKey] != null && !Number.isNaN(Number(r[scoreKey])))
-    .map(r => ({ name: String(r.name).trim(), score: Number(r[scoreKey]) }))
-    .sort((a, b) => a.score - b.score || a.name.localeCompare(b.name));
-
-  const current = clean(currentRows);
-  const previous = clean(previousRows);
-  if (current.length === 0 || previous.length === 0) return map;
-
-  const prevRank = new Map(previous.map((r, i) => [r.name, previous.length - i]));
-  const prevScore = new Map(previous.map(r => [r.name, r.score]));
-
-  current.forEach((r, i) => {
-    const currentRank = current.length - i;
-    const pRank = prevRank.get(r.name);
-    const pScore = prevScore.get(r.name);
-    map.set(r.name, {
-      rankChange: pRank != null ? pRank - currentRank : null,
-      scoreChange: pScore != null ? r.score - pScore : null,
-    });
-  });
-
-  return map;
-};
-
-export const buildCurrentRanks = (rows, scoreKey) => {
+const buildCompetitionRanks = (
+  rows,
+  scoreKey
+) => {
   const ranked = (rows || [])
     .filter(
       (row) =>
         row &&
         row.name &&
         row[scoreKey] != null &&
-        !Number.isNaN(Number(row[scoreKey]))
+        !Number.isNaN(
+          Number(row[scoreKey])
+        )
     )
-    .map((row) => ({
-      name: String(row.name).trim(),
-      score: Number(row[scoreKey]),
-    }))
+    .map((row) => {
+      const rawScore =
+        Number(row[scoreKey]);
+
+      return {
+        name:
+          String(row.name).trim(),
+        rawScore,
+        roundedScore:
+          Math.ceil(rawScore),
+      };
+    })
     .sort(
       (a, b) =>
-        a.score - b.score ||
-        a.name.localeCompare(b.name)
+        b.roundedScore -
+          a.roundedScore ||
+        b.rawScore -
+          a.rawScore ||
+        a.name.localeCompare(
+          b.name
+        )
     );
 
-  return new Map(
-    ranked.map((row, index) => [
-      row.name,
-      ranked.length - index,
-    ])
+  const ranks = new Map();
+
+  let previousScore = null;
+  let currentRank = 0;
+
+  ranked.forEach(
+    (row, index) => {
+      if (
+        previousScore === null ||
+        row.roundedScore !==
+          previousScore
+      ) {
+        currentRank =
+          index + 1;
+
+        previousScore =
+          row.roundedScore;
+      }
+
+      ranks.set(
+        row.name,
+        currentRank
+      );
+    }
   );
+
+  return ranks;
 };
+
+/**
+ * Month-over-month comparison, ported from build_month_comparison() in dashboard.py.
+ * Returns a Map keyed by trimmed physician name: { rankChange, scoreChange }.
+ */
+export const buildMonthComparison = (
+  currentRows,
+  previousRows,
+  scoreKey
+) => {
+  const map = new Map();
+
+  if (
+    !Array.isArray(
+      previousRows
+    ) ||
+    previousRows.length === 0
+  ) {
+    return map;
+  }
+
+  const clean = (rows) =>
+    (rows || [])
+      .filter(
+        (row) =>
+          row &&
+          row.name &&
+          row[scoreKey] != null &&
+          !Number.isNaN(
+            Number(
+              row[scoreKey]
+            )
+          )
+      )
+      .map((row) => ({
+        name:
+          String(
+            row.name
+          ).trim(),
+        score:
+          Number(
+            row[scoreKey]
+          ),
+      }));
+
+  const current =
+    clean(currentRows);
+
+  const previous =
+    clean(previousRows);
+
+  if (
+    current.length === 0 ||
+    previous.length === 0
+  ) {
+    return map;
+  }
+
+  const currentRanks =
+    buildCompetitionRanks(
+      currentRows,
+      scoreKey
+    );
+
+  const previousRanks =
+    buildCompetitionRanks(
+      previousRows,
+      scoreKey
+    );
+
+  const previousScores =
+    new Map(
+      previous.map(
+        (row) => [
+          row.name,
+          row.score,
+        ]
+      )
+    );
+
+  current.forEach((row) => {
+    const currentRank =
+      currentRanks.get(
+        row.name
+      );
+
+    const previousRank =
+      previousRanks.get(
+        row.name
+      );
+
+    const previousScore =
+      previousScores.get(
+        row.name
+      );
+
+    map.set(row.name, {
+      rankChange:
+        previousRank != null &&
+        currentRank != null
+          ? previousRank -
+            currentRank
+          : null,
+
+      scoreChange:
+        previousScore != null
+          ? row.score -
+            previousScore
+          : null,
+    });
+  });
+
+  return map;
+};
+
+export const buildCurrentRanks = (
+  rows,
+  scoreKey
+) =>
+  buildCompetitionRanks(
+    rows,
+    scoreKey
+  );
 
 export const formatRankChange = (value) => {
   const v = Math.round(value);
