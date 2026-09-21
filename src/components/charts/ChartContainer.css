@@ -38,6 +38,14 @@
   padding: 0 var(--spacing-sm);
 }
 
+.chart-panel__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
 .chart-panel__download {
   flex: 0 0 auto;
   width: 2.5rem;
@@ -134,5 +142,10 @@
 }
 
 .chart-panel--exporting .chart-panel__download {
+  display: none !important;
+}
+
+.chart-panel--exporting
+[data-export-ignore="true"] {
   display: none !important;
 }

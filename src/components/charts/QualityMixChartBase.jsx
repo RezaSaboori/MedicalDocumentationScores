@@ -17,6 +17,9 @@ import {
 import ChartContainer from './ChartContainer';
 import QualityMixTooltip from './QualityMixTooltip';
 import QualityMixLegendFooter from './QualityMixLegendFooter';
+import QualityMixSortControl, {
+  QUALITY_MIX_SORTS,
+} from './QualityMixSortControl';
 import './QualityMixChart.css';
 
 const PDI_THRESHOLD = 40;
@@ -44,6 +47,11 @@ const QualityMixChartBase = ({
 }) => {
   const [tooltip, setTooltip] = useState(null);
 
+  const [sortBy, setSortBy] =
+    useState(
+      QUALITY_MIX_SORTS.SCORE
+    );
+
   // Ranks/changes over the full resident sets when provided (faculty mode),
   // so a supervised resident keeps the exact numbers of the residents dashboard.
   const comparison = useMemo(
@@ -67,8 +75,16 @@ const QualityMixChartBase = ({
 
   const chartData = useMemo(() => {
     const valid = (rows || [])
-      .filter(r => r && r.name && r.N > 0 && r[scoreKey] != null && !Number.isNaN(Number(r[scoreKey])))
-      .sort((a, b) => Number(a[scoreKey]) - Number(b[scoreKey]) || String(a.name).localeCompare(String(b.name)));
+      .filter(
+        (r) =>
+          r &&
+          r.name &&
+          r.N > 0 &&
+          r[scoreKey] != null &&
+          !Number.isNaN(
+            Number(r[scoreKey])
+          )
+      );
 
     return valid.map(row => {
       const counts = {};
@@ -207,8 +223,141 @@ const QualityMixChartBase = ({
     currentRanks,
   ]);
 
-  // Highest score at the top (data[0] was at the bottom in the Nivo version)
-  const displayRows = useMemo(() => [...chartData].reverse(), [chartData]);
+  const displayRows = useMemo(() => {
+    const compareNames = (
+      a,
+      b
+    ) =>
+      a.name.localeCompare(
+        b.name,
+        'fa',
+        {
+          sensitivity: 'base',
+        }
+      );
+
+    const normalizeNumber = (
+      value
+    ) => {
+      if (
+        value === null ||
+        value === undefined ||
+        value === ''
+      ) {
+        return null;
+      }
+
+      const numeric =
+        Number(value);
+
+      return Number.isFinite(
+        numeric
+      )
+        ? numeric
+        : null;
+    };
+
+    const compareDescending = (
+      aValue,
+      bValue
+    ) => {
+      const a =
+        normalizeNumber(
+          aValue
+        );
+
+      const b =
+        normalizeNumber(
+          bValue
+        );
+
+      if (
+        a === null &&
+        b === null
+      ) {
+        return 0;
+      }
+
+      if (a === null) {
+        return 1;
+      }
+
+      if (b === null) {
+        return -1;
+      }
+
+      return b - a;
+    };
+
+    return [...chartData].sort(
+      (a, b) => {
+        switch (sortBy) {
+          case QUALITY_MIX_SORTS.VISITS:
+            return (
+              compareDescending(
+                a.visitCount,
+                b.visitCount
+              ) ||
+              compareNames(a, b)
+            );
+
+          case QUALITY_MIX_SORTS.CALIBRATED_SCORE:
+            return (
+              compareDescending(
+                a.displayCalibratedScore,
+                b.displayCalibratedScore
+              ) ||
+              compareDescending(
+                a.calibratedScore,
+                b.calibratedScore
+              ) ||
+              compareNames(a, b)
+            );
+
+          case QUALITY_MIX_SORTS.SCORE_CHANGE:
+            return (
+              compareDescending(
+                a.scoreChange,
+                b.scoreChange
+              ) ||
+              compareNames(a, b)
+            );
+
+          case QUALITY_MIX_SORTS.RANK_CHANGE:
+            return (
+              compareDescending(
+                a.rankChange,
+                b.rankChange
+              ) ||
+              compareNames(a, b)
+            );
+
+          case QUALITY_MIX_SORTS.ALPHABETICAL:
+            return compareNames(
+              a,
+              b
+            );
+
+          case QUALITY_MIX_SORTS.SCORE:
+          default:
+            return (
+              compareDescending(
+                a.displayScore,
+                b.displayScore
+              ) ||
+              compareDescending(
+                a.score,
+                b.score
+              ) ||
+              compareNames(a, b)
+            );
+        }
+      }
+    );
+  }, [
+    chartData,
+    sortBy,
+  ]);
 
   const layout = useMemo(() => {
     const rowCount = chartData.length;
@@ -268,10 +417,16 @@ const QualityMixChartBase = ({
       belowCount,
       sepTop,
       showSeparator:
+        sortBy ===
+          QUALITY_MIX_SORTS.SCORE &&
         aboveCount > 0 &&
         belowCount > 0,
     };
-  }, [chartData, hasComparison]);
+  }, [
+    chartData,
+    hasComparison,
+    sortBy,
+  ]);
 
   const qualityKeys = Object.keys(categories);
 
@@ -312,6 +467,14 @@ const QualityMixChartBase = ({
       subtitle={statusHeader}
       className="qm-container"
       legendItems={[]}
+      headerActions={
+        <QualityMixSortControl
+          value={sortBy}
+          onChange={
+            setSortBy
+          }
+        />
+      }
       footerContent={
         <QualityMixLegendFooter
           categories={categories}

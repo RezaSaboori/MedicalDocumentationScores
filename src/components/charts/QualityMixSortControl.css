@@ -1,0 +1,30 @@
+.qm-sort-control {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  width: 270px;
+  min-width: 0;
+  direction: rtl;
+}
+
+.qm-sort-control__label {
+  flex: 0 0 auto;
+  color: var(--color-gray8);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+
+.qm-sort-control__dropdown {
+  flex: 1;
+  min-width: 0;
+}
+
+.qm-sort-control__dropdown .ui-input-shell {
+  height: 2.5rem;
+  min-height: 2.5rem;
+}
+
+.qm-sort-control__dropdown .ui-dropdown__text {
+  font-size: var(--font-size-xs);
+}

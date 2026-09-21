@@ -17,6 +17,7 @@ const ChartContainer = ({
   subtitle,
   legendItems = [],
   footerContent = null,
+  headerActions = null,
   className = '',
   children,
 }) => {
@@ -105,30 +106,36 @@ const ChartContainer = ({
       className={`glass u-container u-container--md chart-panel ${className}`.trim()}
     >
       <header className="chart-panel__header">
-        <button
-          type="button"
-          className="chart-panel__download frost-glass"
-          onClick={handleDownload}
-          title="دانلود نمودار به صورت PNG"
-          aria-label="دانلود نمودار به صورت PNG"
+        <div
+          className="chart-panel__controls"
           data-export-ignore="true"
         >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
+          {headerActions}
+
+          <button
+            type="button"
+            className="chart-panel__download frost-glass"
+            onClick={handleDownload}
+            title="دانلود نمودار به صورت PNG"
+            aria-label="دانلود نمودار به صورت PNG"
           >
-            <path d="M12 3v12" />
-            <path d="m7 10 5 5 5-5" />
-            <path d="M5 21h14" />
-          </svg>
-        </button>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 3v12" />
+              <path d="m7 10 5 5 5-5" />
+              <path d="M5 21h14" />
+            </svg>
+          </button>
+        </div>
 
         <div className="chart-panel__heading">
           <h3 className="chart-panel__title">
