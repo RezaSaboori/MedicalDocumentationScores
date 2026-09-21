@@ -1,5 +1,11 @@
 import React, { useRef } from 'react';
 import { downloadElementAsSvg } from '../../utils/svgExport';
+import {
+  useDashboard,
+} from '../../context/DashboardContext';
+import {
+  formatPeriodLabel,
+} from '../../utils/period';
 import ChartLegend from './ChartLegend';
 import './ChartContainer.css';
 
@@ -13,9 +19,27 @@ const ChartContainer = ({
 }) => {
   const panelRef = useRef(null);
 
+  const {
+    selectedPeriod,
+  } = useDashboard();
+
+  const periodLabel =
+    formatPeriodLabel(
+      selectedPeriod
+    );
+
+  const displayTitle =
+    typeof title === 'string' &&
+    periodLabel
+      ? `${title} - ${periodLabel}`
+      : title;
+
   const handleDownload = async () => {
     try {
-      await downloadElementAsSvg(panelRef.current, title);
+      await downloadElementAsSvg(
+        panelRef.current,
+        displayTitle
+      );
     } catch (error) {
       console.error('Failed to export chart as PNG:', error);
     }
@@ -53,7 +77,9 @@ const ChartContainer = ({
         </button>
 
         <div className="chart-panel__heading">
-          <h3 className="chart-panel__title">{title}</h3>
+          <h3 className="chart-panel__title">
+            {displayTitle}
+          </h3>
 
           {subtitle && (
             <p className="chart-panel__subtitle">{subtitle}</p>
@@ -67,15 +93,18 @@ const ChartContainer = ({
         {children}
       </div>
 
-      <footer className="chart-panel__footer">
-        {footerContent}
+      {(footerContent ||
+        legendItems.length > 0) && (
+        <footer className="chart-panel__footer">
+          {footerContent}
 
-        {legendItems.length > 0 && (
-          <ChartLegend
-            items={legendItems}
-          />
-        )}
-      </footer>
+          {legendItems.length > 0 && (
+            <ChartLegend
+              items={legendItems}
+            />
+          )}
+        </footer>
+      )}
     </section>
   );
 };

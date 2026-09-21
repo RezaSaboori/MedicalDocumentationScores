@@ -3,6 +3,9 @@ import { useDashboard } from '../../context/DashboardContext';
 import { BASE_FLAG_FA, DASHBOARD_MODES } from '../../utils/constants';
 import { DropdownInput } from '../inputs/DropdownInput';
 import { RadioToggle } from '../inputs/RadioToggle';
+import {
+  formatPeriodLabel,
+} from '../../utils/period';
 import './DashboardFilters.css';
 
 const ChevronIcon = () => (
@@ -12,15 +15,64 @@ const ChevronIcon = () => (
 );
 
 const DashboardFilters = () => {
-  const { filters, updateFilters, availableYears, availableFaculties, mode, loading } = useDashboard();
+  const {
+    filters,
+    updateFilters,
+    availableYears,
+    availableFaculties,
+    mode,
+    loading,
+    snapshots,
+    selectedPeriod,
+    setSelectedPeriod,
+  } = useDashboard();
 
-  const flagEntries = Object.entries(BASE_FLAG_FA);
-  const totalFlags = flagEntries.length;
+  const flagEntries =
+    Object.entries(BASE_FLAG_FA);
+
+  const totalFlags =
+    flagEntries.length;
+
+  const periodEntries =
+    (snapshots || []).map(
+      (snapshot) => ({
+        period:
+          snapshot.period,
+
+        label:
+          formatPeriodLabel(
+            snapshot.period
+          ) ||
+          snapshot.period,
+      })
+    );
+
+  const periodDropdownOptions =
+    periodEntries.map(
+      (entry) =>
+        entry.label
+    );
 
   const yearDropdownOptions = ['همه سال‌ها', ...availableYears.map(y => `سال ${y}`)];
   const flagDropdownOptions = flagEntries.map(([_, label]) => label);
   const FACULTY_ALL_LABEL = 'همه اساتید';
   const facultyDropdownOptions = [FACULTY_ALL_LABEL, ...(availableFaculties || [])];
+  const handlePeriodChange = (
+    label
+  ) => {
+    const match =
+      periodEntries.find(
+        (entry) =>
+          entry.label ===
+          label
+      );
+
+    if (match) {
+      setSelectedPeriod(
+        match.period
+      );
+    }
+  };
 
   const handleFlagChange = (selectedLabels) => {
     const selectedValues = flagEntries
@@ -58,6 +110,18 @@ const DashboardFilters = () => {
     updateFilters({ selectedFaculty: 'all' });
   };
 
+  const periodValue =
+    periodEntries.find(
+      (entry) =>
+        entry.period ===
+        selectedPeriod
+    )?.label ||
+    formatPeriodLabel(
+      selectedPeriod
+    ) ||
+    selectedPeriod ||
+    '';
+
   const yearValue = filters.selectedYear === 'all'
     ? 'همه سال‌ها'
     : `سال ${filters.selectedYear}`;
@@ -77,6 +141,28 @@ const DashboardFilters = () => {
 
   return (
     <div className="filters-wrapper">
+      <div className="filter-group filter-group--period">
+        <label className="filter-label">
+          بازه زمانی گزارش:
+        </label>
+
+        <DropdownInput
+          dir="rtl"
+          busy={loading}
+          options={
+            periodDropdownOptions
+          }
+          value={periodValue}
+          onChange={
+            handlePeriodChange
+          }
+          chevronIcon={
+            <ChevronIcon />
+          }
+          placeholder="انتخاب ماه..."
+        />
+      </div>
+
       <div className="filter-group">
         <label className="filter-label">فیلتر بر اساس گروه رفتاری:</label>
         <DropdownInput

@@ -347,22 +347,6 @@ const QualityMixChartBase = ({
       subtitle={statusHeader}
       className="qm-container"
       legendItems={[]}
-      footerContent={
-        <QualityMixLegendFooter
-          categories={categories}
-          qualityKeys={qualityKeys}
-          nameOffset={
-            layout.badgeWidth +
-            layout.nameWidth
-          }
-          metaWidth={
-            META_BADGE_WIDTH
-          }
-          scoreGutter={
-            SCORE_GUTTER
-          }
-        />
-      }
     >
       <div className="qm-panels" style={{ '--qm-sep-top': `${layout.sepTop}px` }}>
         {layout.showSeparator && (
@@ -590,6 +574,21 @@ const QualityMixChartBase = ({
 
         </div>
       </div>
+
+      <QualityMixLegendFooter
+        categories={categories}
+        qualityKeys={qualityKeys}
+        nameOffset={
+          layout.badgeWidth +
+          layout.nameWidth
+        }
+        metaWidth={
+          META_BADGE_WIDTH
+        }
+        scoreGutter={
+          SCORE_GUTTER
+        }
+      />
 
       {tooltip && (
         <div className="qm-tooltip" style={{ left: tooltip.x + 12, top: tooltip.y + 12 }}>

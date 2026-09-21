@@ -5,58 +5,15 @@ import {
   QUALITY_CATEGORIES,
 } from '../../utils/constants';
 import QualityMixChartBase from './QualityMixChartBase';
-
-const JALALI_MONTHS = [
-  'فروردین',
-  'اردیبهشت',
-  'خرداد',
-  'تیر',
-  'مرداد',
-  'شهریور',
-  'مهر',
-  'آبان',
-  'آذر',
-  'دی',
-  'بهمن',
-  'اسفند',
-];
-
-const toPersianDigits = (value) =>
-  String(value ?? '').replace(
-    /\d/g,
-    (digit) => '۰۱۲۳۴۵۶۷۸۹'[Number(digit)]
-  );
-
-const formatPeriodLabel = (period) => {
-  const match =
-    String(period || '').match(
-      /^(\d{4})[/-](\d{1,2})$/
-    );
-
-  if (!match) {
-    return '';
-  }
-
-  const year = match[1];
-  const monthIndex =
-    Number(match[2]) - 1;
-
-  if (
-    monthIndex < 0 ||
-    monthIndex >= JALALI_MONTHS.length
-  ) {
-    return '';
-  }
-
-  return `${JALALI_MONTHS[monthIndex]} ${toPersianDigits(year)}`;
-};
+import {
+  toPersianDigits,
+} from '../../utils/period';
 
 const QualityMixChart = () => {
   const {
     data,
     mode,
     filters,
-    selectedPeriod,
   } = useDashboard();
 
   const showingResidents =
@@ -80,16 +37,6 @@ const QualityMixChart = () => {
         ? 'رتبه‌بندی اساتید بر اساس کیفیت مستندسازی دستیاران تحت نظارت'
         : 'رتبه‌بندی اساتید و توزیع کیفیت پرونده‌های ثبت‌شده توسط خود آنان';
 
-  const periodLabel =
-    formatPeriodLabel(
-      selectedPeriod
-    );
-
-  const chartTitle =
-    periodLabel
-      ? `${baseTitle} - ${periodLabel}`
-      : baseTitle;
-
   return (
     <QualityMixChartBase
       rows={data.current}
@@ -99,7 +46,7 @@ const QualityMixChart = () => {
       scoreKey="PDI"
       categories={QUALITY_CATEGORIES}
       positiveColor="#15C062"
-      title={chartTitle}
+      title={baseTitle}
     />
   );
 };
