@@ -21,9 +21,6 @@ const QualityMixTooltip = ({
     return null;
   }
 
-  const classifiedCount =
-    Number(row.raw?.N) || 0;
-
   const documentedCount =
     Number(row.raw?.D) || 0;
 
@@ -135,23 +132,6 @@ const QualityMixTooltip = ({
           </strong>
         </div>
 
-        <div
-          className="qm-rich-tooltip__stat"
-          style={{
-            '--qm-stat-color':
-              '#607D8B',
-          }}
-        >
-          <span className="qm-rich-tooltip__stat-label">
-            پرونده طبقه‌بندی‌شده
-          </span>
-
-          <strong className="qm-rich-tooltip__stat-value">
-            {formatInteger(
-              classifiedCount
-            )}
-          </strong>
-        </div>
       </div>
 
       <div className="qm-rich-tooltip__section">
@@ -270,7 +250,7 @@ const QualityMixTooltip = ({
 
             <tr>
               <td>
-                تغییر PDI نسبت به دوره قبل
+                تغییر امتیاز کیفیت ثبت نسبت به دوره قبل
               </td>
               <td
                 className="qm-rich-tooltip__number"

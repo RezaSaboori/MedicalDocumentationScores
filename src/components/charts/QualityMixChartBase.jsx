@@ -19,7 +19,7 @@ import QualityMixTooltip from './QualityMixTooltip';
 import QualityMixLegendFooter from './QualityMixLegendFooter';
 import './QualityMixChart.css';
 
-const PDI_THRESHOLD = 38.99;
+const PDI_THRESHOLD = 40;
 const SCORE_MAX = 100;
 const TICK_SPACE = 21;
 const RANK_BADGE_SPACE = 34;
