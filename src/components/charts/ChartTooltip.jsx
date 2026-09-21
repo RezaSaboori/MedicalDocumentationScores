@@ -14,7 +14,12 @@ if (typeof window !== 'undefined') {
   );
 }
 
-const ChartTooltip = ({ title, rows = [] }) => {
+const ChartTooltip = ({
+  title,
+  rows = [],
+  children = null,
+  className = '',
+}) => {
   const nodeRef = useRef(null);
 
   // Quadrant placement (right-down / left-down / right-up / left-up) done with
@@ -53,17 +58,33 @@ const ChartTooltip = ({ title, rows = [] }) => {
   // Portaled to <body>: fixed position + top z-index, out of every container's
   // flow — never enlarges a card, never creates a scrollbar.
   return ReactDOM.createPortal(
-    <div className="chart-tooltip chart-tooltip--portal" ref={nodeRef}>
-      <div className="chart-tooltip__title">{title}</div>
-      {rows.length > 0 && (
-        <div className="chart-tooltip__rows">
-          {rows.map((row, i) => (
-            <div key={i} className="chart-tooltip__row">
-              <span className="chart-tooltip__label">{row.label}:</span>
-              <span className="chart-tooltip__value">{row.value}</span>
-            </div>
-          ))}
-        </div>
+    <div
+      className={`chart-tooltip chart-tooltip--portal ${className}`.trim()}
+      ref={nodeRef}
+    >
+      <div className="chart-tooltip__title">
+        {title}
+      </div>
+
+      {children || (
+        rows.length > 0 && (
+          <div className="chart-tooltip__rows">
+            {rows.map((row, i) => (
+              <div
+                key={i}
+                className="chart-tooltip__row"
+              >
+                <span className="chart-tooltip__label">
+                  {row.label}:
+                </span>
+
+                <span className="chart-tooltip__value">
+                  {row.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        )
       )}
     </div>,
     document.body

@@ -1,4 +1,7 @@
-import React, { useRef } from 'react';
+import React, {
+  useEffect,
+  useRef,
+} from 'react';
 import { downloadElementAsSvg } from '../../utils/svgExport';
 import {
   useDashboard,
@@ -18,10 +21,61 @@ const ChartContainer = ({
   children,
 }) => {
   const panelRef = useRef(null);
+  const bodyRef = useRef(null);
 
   const {
     selectedPeriod,
   } = useDashboard();
+
+  useEffect(() => {
+    const panel =
+      panelRef.current;
+
+    const body =
+      bodyRef.current;
+
+    if (!panel || !body) {
+      return undefined;
+    }
+
+    const syncScrollbarWidth =
+      () => {
+        const scrollbarWidth =
+          Math.max(
+            0,
+            body.offsetWidth -
+              body.clientWidth
+          );
+
+        panel.style.setProperty(
+          '--chart-body-scrollbar-width',
+          `${scrollbarWidth}px`
+        );
+      };
+
+    syncScrollbarWidth();
+
+    const observer =
+      new ResizeObserver(
+        syncScrollbarWidth
+      );
+
+    observer.observe(body);
+
+    window.addEventListener(
+      'resize',
+      syncScrollbarWidth
+    );
+
+    return () => {
+      observer.disconnect();
+
+      window.removeEventListener(
+        'resize',
+        syncScrollbarWidth
+      );
+    };
+  }, []);
 
   const periodLabel =
     formatPeriodLabel(
@@ -89,7 +143,10 @@ const ChartContainer = ({
 
       </header>
 
-      <div className="chart-panel__body">
+      <div
+        ref={bodyRef}
+        className="chart-panel__body"
+      >
         {children}
       </div>
 

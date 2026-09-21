@@ -15,7 +15,7 @@ import {
   calibratedScoreToQualityClass,
 } from '../../utils/qualityClasses';
 import ChartContainer from './ChartContainer';
-import ChartTooltip from './ChartTooltip';
+import QualityMixTooltip from './QualityMixTooltip';
 import QualityMixLegendFooter from './QualityMixLegendFooter';
 import './QualityMixChart.css';
 
@@ -300,46 +300,11 @@ const QualityMixChartBase = ({
     );
   }
 
-  const moveTooltip = (e, tipTitle, tipRows) =>
-    setTooltip({ x: e.clientX, y: e.clientY, title: tipTitle, rows: tipRows });
-  const hideTooltip = () => setTooltip(null);
+  const showTooltip = (row) =>
+    setTooltip(row);
 
-  const mixTooltipRows = (row) => [
-    ...qualityKeys.filter(k => row[k] > 0).map(k => ({
-      label: categories[k].label,
-      value: `${Math.round(row[k] * 100)}٪ (${Number(row.raw?.[k] ?? 0).toLocaleString('en-US')})`,
-    })),
-    {
-      label: scoreKey,
-      value:
-        row.displayScore,
-    },
-    {
-      label: 'وضعیت',
-      value: row.status,
-    },
-  ];
-
-  const scoreTooltipRows = (row) => [
-    {
-      label: scoreKey,
-      value:
-        `${row.displayScore}٪`,
-    },
-    {
-      label: 'وضعیت',
-      value: row.status,
-    },
-    {
-      label: 'تعداد پرونده‌ها',
-      value:
-        Number(
-          row.raw?.N ?? 0
-        ).toLocaleString(
-          'en-US'
-        ),
-    },
-  ];
+  const hideTooltip = () =>
+    setTooltip(null);
 
   return (
     <ChartContainer
@@ -347,6 +312,22 @@ const QualityMixChartBase = ({
       subtitle={statusHeader}
       className="qm-container"
       legendItems={[]}
+      footerContent={
+        <QualityMixLegendFooter
+          categories={categories}
+          qualityKeys={qualityKeys}
+          nameOffset={
+            layout.badgeWidth +
+            layout.nameWidth
+          }
+          metaWidth={
+            META_BADGE_WIDTH
+          }
+          scoreGutter={
+            SCORE_GUTTER
+          }
+        />
+      }
     >
       <div className="qm-panels" style={{ '--qm-sep-top': `${layout.sepTop}px` }}>
         {layout.showSeparator && (
@@ -426,6 +407,12 @@ const QualityMixChartBase = ({
                     fontSize:
                       layout.tickSize,
                   }}
+                  onMouseEnter={() =>
+                    showTooltip(row)
+                  }
+                  onMouseLeave={
+                    hideTooltip
+                  }
                 >
                   <div
                     className="qm-meta-badge"
@@ -452,6 +439,12 @@ const QualityMixChartBase = ({
                     fontSize:
                       layout.tickSize,
                   }}
+                  onMouseEnter={() =>
+                    showTooltip(row)
+                  }
+                  onMouseLeave={
+                    hideTooltip
+                  }
                 >
                   <div
                     className="qm-meta-badge"
@@ -469,8 +462,12 @@ const QualityMixChartBase = ({
 
                 <div
                   className="qm-mixbar"
-                  onMouseMove={(e) => moveTooltip(e, row.name, mixTooltipRows(row))}
-                  onMouseLeave={hideTooltip}
+                  onMouseEnter={() =>
+                    showTooltip(row)
+                  }
+                  onMouseLeave={
+                    hideTooltip
+                  }
                 >
                   {qualityKeys.map(k => row[k] > 0 && (
                     <div
@@ -530,8 +527,12 @@ const QualityMixChartBase = ({
                 <div key={row.name} className="qm-row" style={{ height: layout.rowHeight }}>
                   <div
                     className="qm-scorebar-wrap"
-                    onMouseMove={(e) => moveTooltip(e, row.name, scoreTooltipRows(row))}
-                    onMouseLeave={hideTooltip}
+                    onMouseEnter={() =>
+                      showTooltip(row)
+                    }
+                    onMouseLeave={
+                      hideTooltip
+                    }
                   >
                     <div
                       className="qm-scorebar"
@@ -575,25 +576,17 @@ const QualityMixChartBase = ({
         </div>
       </div>
 
-      <QualityMixLegendFooter
-        categories={categories}
-        qualityKeys={qualityKeys}
-        nameOffset={
-          layout.badgeWidth +
-          layout.nameWidth
-        }
-        metaWidth={
-          META_BADGE_WIDTH
-        }
-        scoreGutter={
-          SCORE_GUTTER
-        }
-      />
+
 
       {tooltip && (
-        <div className="qm-tooltip" style={{ left: tooltip.x + 12, top: tooltip.y + 12 }}>
-          <ChartTooltip title={tooltip.title} rows={tooltip.rows} />
-        </div>
+        <QualityMixTooltip
+          row={tooltip}
+          categories={categories}
+          qualityKeys={qualityKeys}
+          positiveColor={
+            positiveColor
+          }
+        />
       )}
     </ChartContainer>
   );
