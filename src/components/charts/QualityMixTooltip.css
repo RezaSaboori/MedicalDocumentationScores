@@ -73,36 +73,26 @@
   min-height: 54px;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 3px;
   overflow: hidden;
   padding: 7px 5px 6px;
   border: 1px solid rgba(96, 125, 139, 0.12);
-  border-radius: var(--border-radius-container-xs);
-  background: rgba(255, 255, 255, 0.72);
-}
-
-.qm-rich-tooltip__stat::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  height: 3px;
+  border-radius: var(--border-radius-item-lg);
   background: var(--qm-stat-color);
 }
 
 .qm-rich-tooltip__stat-label {
   max-width: 100%;
   overflow: hidden;
-  color: var(--color-gray8);
+  color: var(--color-gray1);
   font-size: 9px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .qm-rich-tooltip__stat-value {
-  color: var(--color-gray12);
+  color: var(--color-gray1);
   font-size: 15px;
   font-weight: 750;
   line-height: 1;
@@ -130,7 +120,7 @@
   border:
     1px solid rgba(96, 125, 139, 0.12);
   border-radius:
-    var(--border-radius-container-xs);
+    var(--border-radius-item-lg);
   background:
     rgba(255, 255, 255, 0.62);
   table-layout: fixed;
