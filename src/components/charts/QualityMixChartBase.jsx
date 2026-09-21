@@ -16,16 +16,15 @@ import {
 } from '../../utils/qualityClasses';
 import ChartContainer from './ChartContainer';
 import ChartTooltip from './ChartTooltip';
+import QualityMixLegendFooter from './QualityMixLegendFooter';
 import './QualityMixChart.css';
 
 const PDI_THRESHOLD = 38.99;
 const SCORE_MAX = 100;
-const TITLE_BLOCK = 24; // panel title (20) + its margin (4)
 const TICK_SPACE = 21;
 const RANK_BADGE_SPACE = 34;
 const META_BADGE_WIDTH = 60;
-const SCORE_GUTTER = 72; // fixed right gutter for score-change labels
-const AXIS_HEIGHT = 34;
+const SCORE_GUTTER = 72;
 
 const rowMetrics = (rowCount) => {
   if (rowCount <= 30) return { rowHeight: 36, tickSize: 12 };
@@ -41,7 +40,6 @@ const QualityMixChartBase = ({
   scoreKey,
   categories,
   title,
-  subtitle,
   positiveColor = '#049C49',
 }) => {
   const [tooltip, setTooltip] = useState(null);
@@ -247,11 +245,6 @@ const QualityMixChartBase = ({
         ? RANK_BADGE_SPACE
         : 0;
 
-    const leftInset =
-      badgeWidth +
-      nameWidth +
-      META_BADGE_WIDTH * 2;
-
     const aboveCount =
       chartData.filter(
         (r) =>
@@ -263,7 +256,6 @@ const QualityMixChartBase = ({
       rowCount - aboveCount;
 
     const sepTop =
-      TITLE_BLOCK +
       aboveCount * rowHeight;
 
     return {
@@ -272,7 +264,6 @@ const QualityMixChartBase = ({
       tickSize,
       nameWidth,
       badgeWidth,
-      leftInset,
       aboveCount,
       belowCount,
       sepTop,
@@ -284,28 +275,25 @@ const QualityMixChartBase = ({
 
   const qualityKeys = Object.keys(categories);
 
-  const statusFooter = (
-    <div className="qm-status">
-      <span className="qm-status-item qm-status-bad">
-        غیر قابل قبول · {layout.belowCount} نفر
-      </span>
+  const statusHeader = (
+    <span className="qm-status qm-status--header">
       <span className="qm-status-item qm-status-good">
         قابل قبول · {layout.aboveCount} نفر
       </span>
-    </div>
+
+      <span className="qm-status-item qm-status-bad">
+        غیر قابل قبول · {layout.belowCount} نفر
+      </span>
+    </span>
   );
 
   if (layout.rowCount === 0) {
     return (
       <ChartContainer
         title={title}
-        subtitle={subtitle}
+        subtitle={statusHeader}
         className="qm-container"
-        legendItems={qualityKeys.map((key) => ({
-          label: categories[key].label,
-          color: categories[key].color,
-        }))}
-        footerContent={statusFooter}
+        legendItems={[]}
       >
         <p className="qm-empty">داده‌ای برای نمایش وجود ندارد</p>
       </ChartContainer>
@@ -356,13 +344,25 @@ const QualityMixChartBase = ({
   return (
     <ChartContainer
       title={title}
-      subtitle={subtitle}
+      subtitle={statusHeader}
       className="qm-container"
-      legendItems={qualityKeys.map((key) => ({
-        label: categories[key].label,
-        color: categories[key].color,
-      }))}
-      footerContent={statusFooter}
+      legendItems={[]}
+      footerContent={
+        <QualityMixLegendFooter
+          categories={categories}
+          qualityKeys={qualityKeys}
+          nameOffset={
+            layout.badgeWidth +
+            layout.nameWidth
+          }
+          metaWidth={
+            META_BADGE_WIDTH
+          }
+          scoreGutter={
+            SCORE_GUTTER
+          }
+        />
+      }
     >
       <div className="qm-panels" style={{ '--qm-sep-top': `${layout.sepTop}px` }}>
         {layout.showSeparator && (
@@ -384,16 +384,6 @@ const QualityMixChartBase = ({
         )}
 
         <div className="qm-panel qm-panel-left">
-          <div
-            className="qm-panel-title"
-            style={{
-              marginLeft:
-                layout.leftInset,
-            }}
-          >
-            توزیع کیفیت پرونده‌ها
-          </div>
-
           <div className="qm-rows">
             {displayRows.map(row => (
               <div key={row.name} className="qm-row" style={{ height: layout.rowHeight }}>
@@ -522,92 +512,10 @@ const QualityMixChartBase = ({
             ))}
           </div>
 
-          <div
-            className="qm-axis qm-axis--left"
-            style={{
-              marginLeft:
-                layout.badgeWidth +
-                layout.nameWidth,
-              height: AXIS_HEIGHT,
-            }}
-          >
-            <div
-              className="qm-axis__meta"
-              style={{
-                width:
-                  META_BADGE_WIDTH,
-              }}
-            >
-              <span
-                className="qm-axis__legend"
-                style={{
-                  fontSize:
-                    layout.tickSize,
-                }}
-              >
-                میانگین نمره
-              </span>
-            </div>
 
-            <div
-              className="qm-axis__meta"
-              style={{
-                width:
-                  META_BADGE_WIDTH,
-              }}
-            >
-              <span
-                className="qm-axis__legend"
-                style={{
-                  fontSize:
-                    layout.tickSize,
-                }}
-              >
-                ویزیت
-              </span>
-            </div>
-
-            <div className="qm-axis__plot">
-              {[0, 20, 40, 60, 80, 100].map(
-                (t) => (
-                  <span
-                    key={t}
-                    className="qm-axis__tick"
-                    style={{
-                      left: `${t}%`,
-                      fontSize:
-                        layout.tickSize,
-                    }}
-                  >
-                    {t}٪
-                  </span>
-                )
-              )}
-
-              <span
-                className="qm-axis__legend"
-                style={{
-                  fontSize:
-                    layout.tickSize,
-                }}
-              >
-                توزیع کیفیت پرونده‌ها
-              </span>
-            </div>
-          </div>
         </div>
 
         <div className="qm-panel qm-panel-right">
-          <div
-            className="qm-panel-title"
-            style={{
-              marginRight:
-                SCORE_GUTTER,
-            }}
-          >
-            امتیاز
-          </div>
-
           <div className="qm-score">
             {/* 0..50 red / 50..100 green; right edge == 100% == max bar length */}
             <div className="qm-score__zones" style={{ right: SCORE_GUTTER }} />
@@ -679,14 +587,7 @@ const QualityMixChartBase = ({
             </div>
           </div>
 
-          <div className="qm-axis" style={{ marginRight: SCORE_GUTTER, height: AXIS_HEIGHT }}>
-            {[0, 25, 50, 75, 100].map(t => (
-              <span key={t} className="qm-axis__tick" style={{ left: `${t}%`, fontSize: layout.tickSize }}>
-                {t}٪
-              </span>
-            ))}
-            <span className="qm-axis__legend" style={{ fontSize: layout.tickSize }}>امتیاز کیفیت ثبت پرونده‌ها</span>
-          </div>
+
         </div>
       </div>
 

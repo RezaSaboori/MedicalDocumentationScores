@@ -70,7 +70,11 @@ const ChartContainer = ({
       <footer className="chart-panel__footer">
         {footerContent}
 
-        <ChartLegend items={legendItems} />
+        {legendItems.length > 0 && (
+          <ChartLegend
+            items={legendItems}
+          />
+        )}
       </footer>
     </section>
   );
