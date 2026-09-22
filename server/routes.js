@@ -353,13 +353,43 @@ export const createRouter = (db) => {
           a.PDI,
 
           a.group_fa,
-          a.flags
+          a.flags,
+
+          (
+            SELECT AVG(r.PDI)
+            FROM aggregated_scores r
+            WHERE
+              r.snapshot_id = s.id
+              AND r.category = 'resident'
+              AND r.PDI IS NOT NULL
+          ) AS residents_PDI,
+
+          (
+            SELECT AVG(r.calibrated_score)
+            FROM aggregated_scores r
+            WHERE
+              r.snapshot_id = s.id
+              AND r.category = 'resident'
+              AND r.calibrated_score IS NOT NULL
+          ) AS residents_calibrated_score,
+
+          (
+            SELECT AVG(r.raw_score)
+            FROM aggregated_scores r
+            WHERE
+              r.snapshot_id = s.id
+              AND r.category = 'resident'
+              AND r.raw_score IS NOT NULL
+          ) AS residents_raw_score
+
         FROM snapshots s
+
         LEFT JOIN aggregated_scores a
           ON
             a.snapshot_id = s.id
             AND a.category = ?
             AND a.name = ?
+
         ORDER BY s.period ASC
       `)
       .all(

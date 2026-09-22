@@ -7,6 +7,12 @@ import {
   formatPeriodLabel,
 } from '../../utils/period';
 
+const RESIDENTS_OPACITY =
+  0.22;
+
+const DIMMED_OPACITY =
+  0.14;
+
 const formatMetricValue = (
   value,
   digits
@@ -62,7 +68,9 @@ const buildSegments = (
         currentSegment = [];
       }
 
-      currentSegment.push(node);
+      currentSegment.push(
+        node
+      );
     }
   );
 
@@ -167,28 +175,69 @@ const PhysicianScoreTrendLayer = ({
     <g>
       {seriesConfig.map(
         (series) => {
-          const seriesNodes =
+          const physicianNodes =
             nodes.filter(
               (node) =>
                 node.serieId ===
                 series.id
             );
 
-          const opacity =
+          const residentsNodes =
+            nodes.filter(
+              (node) =>
+                node.serieId ===
+                series.residentsId
+            );
+
+          const metricOpacity =
             hoveredSeries &&
             hoveredSeries !==
               series.id
-              ? 0.14
+              ? DIMMED_OPACITY
               : 1;
 
           return (
             <g
               key={series.id}
-              opacity={opacity}
+              opacity={
+                metricOpacity
+              }
               className="physician-score-trend__series"
             >
               {buildSegments(
-                seriesNodes
+                residentsNodes
+              ).map(
+                (
+                  segment,
+                  segmentIndex
+                ) => (
+                  <polyline
+                    key={`${series.residentsId}-${segmentIndex}`}
+                    points={
+                      segment
+                        .map(
+                          (node) =>
+                            `${node.x},${node.y}`
+                        )
+                        .join(' ')
+                    }
+                    fill="none"
+                    stroke={
+                      series.color
+                    }
+                    strokeWidth="2.25"
+                    strokeOpacity={
+                      RESIDENTS_OPACITY
+                    }
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    pointerEvents="none"
+                  />
+                )
+              )}
+
+              {buildSegments(
+                physicianNodes
               ).map(
                 (
                   segment,
@@ -216,7 +265,7 @@ const PhysicianScoreTrendLayer = ({
                 )
               )}
 
-              {seriesNodes.map(
+              {physicianNodes.map(
                 (node) => (
                   <circle
                     key={node.id}

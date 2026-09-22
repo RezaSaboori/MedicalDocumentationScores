@@ -13,7 +13,11 @@ import PhysicianScoreTrendLayer from './PhysicianScoreTrendLayer';
 const SERIES_CONFIG = [
   {
     id: 'pdi',
+    residentsId:
+      'pdi-residents',
     dataKey: 'PDI',
+    residentsDataKey:
+      'residents_PDI',
     label:
       'امتیاز کیفیت ثبت پرونده‌ها',
     color:
@@ -22,8 +26,12 @@ const SERIES_CONFIG = [
   },
   {
     id: 'calibrated',
+    residentsId:
+      'calibrated-residents',
     dataKey:
       'calibrated_score',
+    residentsDataKey:
+      'residents_calibrated_score',
     label:
       'میانگین نمرات پرونده‌ها - کالیبره‌شده',
     color:
@@ -32,8 +40,12 @@ const SERIES_CONFIG = [
   },
   {
     id: 'raw',
+    residentsId:
+      'raw-residents',
     dataKey:
       'raw_score',
+    residentsDataKey:
+      'residents_raw_score',
     label:
       'میانگین نمرات پرونده‌ها - خام',
     color:
@@ -65,49 +77,100 @@ const PhysicianScoreTrendChart = ({
   const series =
     useMemo(
       () =>
-        SERIES_CONFIG.map(
-          (config) => ({
-            id: config.id,
+        SERIES_CONFIG.flatMap(
+          (config) => {
+            const physicianSeries = {
+              id: config.id,
 
-            data: data
-              .map(
-                (
-                  row,
-                  index
-                ) => {
-                  const value =
-                    Number(
-                      row[
-                        config
-                          .dataKey
-                      ]
-                    );
-
-                  if (
-                    !Number.isFinite(
-                      value
-                    )
-                  ) {
-                    return null;
-                  }
-
-                  return {
-                    x: index,
-                    y: value,
+              data: data
+                .map(
+                  (
                     row,
-                  };
-                }
-              )
-              .filter(Boolean),
-          })
+                    index
+                  ) => {
+                    const value =
+                      Number(
+                        row[
+                          config
+                            .dataKey
+                        ]
+                      );
+
+                    if (
+                      !Number.isFinite(
+                        value
+                      )
+                    ) {
+                      return null;
+                    }
+
+                    return {
+                      x: index,
+                      y: value,
+                      row,
+                    };
+                  }
+                )
+                .filter(Boolean),
+            };
+
+            const residentsSeries = {
+              id:
+                config.residentsId,
+
+              data: data
+                .map(
+                  (
+                    row,
+                    index
+                  ) => {
+                    const value =
+                      Number(
+                        row[
+                          config
+                            .residentsDataKey
+                        ]
+                      );
+
+                    if (
+                      !Number.isFinite(
+                        value
+                      )
+                    ) {
+                      return null;
+                    }
+
+                    return {
+                      x: index,
+                      y: value,
+                      row,
+                    };
+                  }
+                )
+                .filter(Boolean),
+            };
+
+            return [
+              physicianSeries,
+              residentsSeries,
+            ];
+          }
         ),
       [data]
     );
 
   const hasValues =
-    series.some(
-      (item) =>
-        item.data.length > 0
+    SERIES_CONFIG.some(
+      (config) =>
+        data.some((row) =>
+          Number.isFinite(
+            Number(
+              row[
+                config.dataKey
+              ]
+            )
+          )
+        )
     );
 
   const tickValues =
@@ -129,9 +192,15 @@ const PhysicianScoreTrendChart = ({
   return (
     <section className="glass u-container u-container--md physician-trend-chart">
       <header className="physician-trend-chart__header">
-        <h3 className="physician-trend-chart__title">
-          روند امتیازها
-        </h3>
+        <div>
+          <h3 className="physician-trend-chart__title">
+            روند امتیازها
+          </h3>
+
+          <p className="physician-trend-chart__subtitle">
+            خطوط کم‌رنگ = روند همه رزیدنت‌ها
+          </p>
+        </div>
       </header>
 
       {!hasValues ? (
