@@ -14,6 +14,9 @@ import {
 import {
   calibratedScoreToQualityClass,
 } from '../../utils/qualityClasses';
+import {
+  PDI_THRESHOLD,
+} from '../../utils/constants';
 import ChartContainer from './ChartContainer';
 import QualityMixTooltip from './QualityMixTooltip';
 import QualityMixLegendFooter from './QualityMixLegendFooter';
@@ -22,7 +25,6 @@ import QualityMixSortControl, {
 } from './QualityMixSortControl';
 import './QualityMixChart.css';
 
-const PDI_THRESHOLD = 39.001;
 const SCORE_MAX = 100;
 const TICK_SPACE = 21;
 const RANK_BADGE_SPACE = 34;
@@ -479,6 +481,7 @@ const QualityMixChartBase = ({
         <QualityMixLegendFooter
           categories={categories}
           qualityKeys={qualityKeys}
+          pdiThreshold={PDI_THRESHOLD}
           nameOffset={
             layout.badgeWidth +
             layout.nameWidth
@@ -492,7 +495,13 @@ const QualityMixChartBase = ({
         />
       }
     >
-      <div className="qm-panels" style={{ '--qm-sep-top': `${layout.sepTop}px` }}>
+      <div
+        className="qm-panels"
+        style={{
+          '--qm-sep-top': `${layout.sepTop}px`,
+          '--qm-pdi-threshold': `${PDI_THRESHOLD}%`,
+        }}
+      >
         {layout.showSeparator && (
           <svg
             className="qm-separator"
@@ -661,9 +670,7 @@ const QualityMixChartBase = ({
 
         <div className="qm-panel qm-panel-right">
           <div className="qm-score">
-            {/* 0..50 red / 50..100 green; right edge == 100% == max bar length */}
             <div className="qm-score__zones" style={{ right: SCORE_GUTTER }} />
-            {/* 50% threshold line, rendered above the score bars */}
             <div
               className="qm-score__threshold"
               style={{ right: SCORE_GUTTER }}
@@ -676,9 +683,9 @@ const QualityMixChartBase = ({
               >
                 <line
                   className="qm-score__threshold-line"
-                  x1="50"
+                  x1={PDI_THRESHOLD}
                   y1="0"
-                  x2="50"
+                  x2={PDI_THRESHOLD}
                   y2="100"
                   vectorEffect="non-scaling-stroke"
                 />

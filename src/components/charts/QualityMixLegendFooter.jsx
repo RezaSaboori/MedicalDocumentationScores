@@ -3,6 +3,7 @@ import React from 'react';
 const QualityMixLegendFooter = ({
   categories,
   qualityKeys,
+  pdiThreshold,
   nameOffset,
   metaWidth,
   scoreGutter,
@@ -15,6 +16,17 @@ const QualityMixLegendFooter = ({
     ${categories.Q3?.color || '#BFD200'} 75%,
     ${categories.Q4?.color || '#38B000'} 95%,
     ${categories.Q5?.color || '#004B23'} 100%
+  )`;
+
+  const scoreGradient = `linear-gradient(
+    to right,
+    #6A1B9A 0%,
+    #C62828 ${pdiThreshold / 3}%,
+    #E65100 ${(pdiThreshold * 2) / 3}%,
+    #F9A825 ${pdiThreshold}%,
+    #808B1D ${pdiThreshold}%,
+    #7CB342 ${pdiThreshold + (100 - pdiThreshold) / 2}%,
+    #1B5E20 100%
   )`;
 
   return (
@@ -100,7 +112,12 @@ const QualityMixLegendFooter = ({
               امتیاز کیفیت ثبت پرونده‌ها
             </div>
 
-            <div className="qm-footer__gradient qm-footer__gradient--score" />
+            <div
+              className="qm-footer__gradient qm-footer__gradient--score"
+              style={{
+                background: scoreGradient,
+              }}
+            />
           </div>
         </div>
       </div>

@@ -10,7 +10,7 @@ export const DASHBOARD_MODES = {
   FACULTY: "faculty",
 };
 
-export const PDI_THRESHOLD = 50;
+export const PDI_THRESHOLD = 39.01;
 
 export const BASE_FLAG_COLOR = {
   ENGAGEMENT_TRAINING: "#ff9f1c",

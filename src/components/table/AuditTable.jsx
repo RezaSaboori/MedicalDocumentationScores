@@ -115,7 +115,7 @@ const AuditTable = () => {
               </tr>
             ))}
 
-            {!loading && sortedData.slice(0, 50).map((row, i) => {
+            {!loading && sortedData.map((row, i) => {
               const isPdiAcceptable =
                 Number(row.PDI) >= PDI_THRESHOLD;
 
@@ -151,7 +151,7 @@ const AuditTable = () => {
                     {row.PDI?.toFixed(1)}
                   </td>
 
-                  <td>
+                  <td className="audit-table__status-cell">
                     <span
                       className="audit-table__status"
                       style={{

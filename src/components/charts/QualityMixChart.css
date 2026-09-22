@@ -124,14 +124,14 @@
   background: linear-gradient(
     to right,
     rgba(214, 69, 69, 0.055) 0%,
-    rgba(214, 69, 69, 0.055) 50%,
-    rgba(46, 125, 50, 0.055) 50%,
+    rgba(214, 69, 69, 0.055) var(--qm-pdi-threshold),
+    rgba(46, 125, 50, 0.055) var(--qm-pdi-threshold),
     rgba(46, 125, 50, 0.055) 100%
   );
   pointer-events: none;
 }
 
-/* 50% threshold line as a separate overlay so it stays ABOVE the bars */
+/* Threshold line rendered above the score bars */
 .qm-score__threshold {
   position: absolute;
   top: 0;
@@ -307,19 +307,6 @@
     );
 }
 
-.qm-footer__gradient--score {
-  background:
-    linear-gradient(
-      to right,
-      #6A1B9A 0%,
-      #C62828 13%,
-      #E65100 26%,
-      #F9A825 38.8%,
-      #808B1D 39%,
-      #7CB342 69.5%,
-      #1B5E20 100%
-    );
-}
 
 .qm-footer__quality-items {
   display: flex;
