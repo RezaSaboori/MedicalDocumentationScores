@@ -15,7 +15,7 @@ const readField = (node, key) => {
   return undefined;
 };
 
-const BubbleNodesLayer = ({ nodes, sizeKey, maxValue, minR = 4, maxR = 17.5 }) => {
+const BubbleNodesLayer = ({ nodes, sizeKey, maxValue, minR = 2.5, maxR = 10 }) => {
   const tooltip = useTooltip();
 
   // Supports both nivo tooltip APIs (old: showTooltip, new: showTooltipFromEvent).
