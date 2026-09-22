@@ -6,6 +6,7 @@ import React, {
 } from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 import { formatPercent } from '../../utils/formatters';
+import { measureTextWidth } from '../../utils/textMeasure';
 import {
   DASHBOARD_MODES,
   PDI_THRESHOLD,
@@ -21,13 +22,21 @@ const formatFixed = (value, digits) => {
     : '—';
 };
 
-const createColumns = (showYearColumn) => {
+const getPdiStatusValue = (row) =>
+  Number(row.PDI) >= PDI_THRESHOLD
+    ? 1
+    : 0;
+
+const createColumns = (
+  showYearColumn,
+  nameColumnWidth
+) => {
   const columns = [
     {
       key: 'name',
       label: 'نام',
       sortKey: 'name',
-      width: 360,
+      width: nameColumnWidth,
       className: 'audit-table__cell--name',
       render: (row) => (
         <span
@@ -93,11 +102,13 @@ const createColumns = (showYearColumn) => {
     {
       key: 'status',
       label: 'وضعیت',
+      sortKey: 'status',
+      sortValue: getPdiStatusValue,
       width: 160,
       className: 'audit-table__cell--status',
       render: (row) => {
         const isAcceptable =
-          Number(row.PDI) >= PDI_THRESHOLD;
+          getPdiStatusValue(row) === 1;
 
         return (
           <span
@@ -116,8 +127,8 @@ const createColumns = (showYearColumn) => {
 
             <span>
               {isAcceptable
-                ? 'مطلوب'
-                : 'نیازمند بهبود'}
+                ? 'قابل قبول'
+                : 'غیر قابل قبول'}
             </span>
           </span>
         );
@@ -179,12 +190,48 @@ const AuditTable = () => {
   const showYearColumn =
     mode === DASHBOARD_MODES.RESIDENTS;
 
+  const nameColumnWidth = useMemo(() => {
+    const font =
+      '500 13px IRANSansX, IRANSansXV, sans-serif';
+
+    const headerWidth =
+      measureTextWidth(
+        'نام',
+        font
+      );
+
+    const widestNameWidth =
+      (data.current || []).reduce(
+        (widest, row) => {
+          const currentWidth =
+            measureTextWidth(
+              String(row.name || ''),
+              font
+            );
+
+          return Math.max(
+            widest,
+            currentWidth
+          );
+        },
+        headerWidth
+      );
+
+    return Math.ceil(
+      widestNameWidth + 48
+    );
+  }, [data.current]);
+
   const columns = useMemo(
     () =>
       createColumns(
-        showYearColumn
+        showYearColumn,
+        nameColumnWidth
       ),
-    [showYearColumn]
+    [
+      showYearColumn,
+      nameColumnWidth,
+    ]
   );
 
   /*
@@ -229,22 +276,34 @@ const AuditTable = () => {
       return [];
     }
 
+    const sortColumn =
+      columns.find(
+        (column) =>
+          column.sortKey ===
+          sortConfig.key
+      );
+
+    const getSortValue =
+      sortColumn?.sortValue ||
+      ((row) =>
+        row[sortConfig.key]);
+
     return [...data.current].sort(
       (a, b) => {
-        if (
-          a[sortConfig.key] <
-          b[sortConfig.key]
-        ) {
+        const aValue =
+          getSortValue(a);
+
+        const bValue =
+          getSortValue(b);
+
+        if (aValue < bValue) {
           return sortConfig.direction ===
             'asc'
             ? -1
             : 1;
         }
 
-        if (
-          a[sortConfig.key] >
-          b[sortConfig.key]
-        ) {
+        if (aValue > bValue) {
           return sortConfig.direction ===
             'asc'
             ? 1
@@ -256,6 +315,7 @@ const AuditTable = () => {
     );
   }, [
     data,
+    columns,
     sortConfig,
   ]);
 
@@ -337,19 +397,18 @@ const AuditTable = () => {
           style={tableStyle}
           role="table"
         >
-          <div
-            className="audit-table__row audit-table__row--header"
-            role="row"
-          >
+          <div className="audit-table__header-shell">
+            <div
+              className="audit-table__row audit-table__row--header"
+              role="row"
+            >
             <div className="audit-table__row-viewport">
               <div className="audit-table__track">
                 {trackColumns.map(
                   (column) => (
                     <div
                       key={column.key}
-                      className={`audit-table__cell audit-table__header-cell ${
-                        column.className || ''
-                      }`}
+                      className="audit-table__cell audit-table__header-cell"
                       role="columnheader"
                     >
                       {column.sortKey ? (
@@ -375,11 +434,12 @@ const AuditTable = () => {
               </div>
             </div>
 
-            <div
-              className="audit-table__index-cell"
-              role="columnheader"
-            >
-              ردیف
+              <div
+                className="audit-table__index-cell"
+                role="columnheader"
+              >
+                ردیف
+              </div>
             </div>
           </div>
 
