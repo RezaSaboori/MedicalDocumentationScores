@@ -197,17 +197,17 @@
   background:
     color-mix(
       in srgb,
-      var(--color-gray1) 46%,
+      var(--color-gray1) 16%,
       transparent
     );
 
   -webkit-backdrop-filter:
-    blur(16px)
+    blur(6px)
     saturate(180%)
     brightness(1.08);
 
   backdrop-filter:
-    blur(16px)
+    blur(6px)
     saturate(180%)
     brightness(1.08);
 }
