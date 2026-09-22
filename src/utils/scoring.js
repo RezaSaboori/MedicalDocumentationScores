@@ -3,6 +3,7 @@ import {
   QUALITY_CLASS_WEIGHTS,
   QUALITY_CLASS_MAX_WEIGHT,
 } from './qualityClasses';
+import { PDI_THRESHOLD } from './constants';
 
 const CONFIG = {
   shrink_k: 30,
@@ -10,7 +11,7 @@ const CONFIG = {
   flag_empty_rate: 0.40,
   flag_low_documents: 20,
   flag_exemplar_min_documents: 50,
-  flag_exemplar_min_pdi: 50,
+  flag_exemplar_min_pdi: PDI_THRESHOLD,
 };
 
 const normalize = (text) =>
