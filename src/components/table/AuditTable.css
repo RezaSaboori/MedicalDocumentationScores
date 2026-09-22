@@ -13,6 +13,8 @@
 }
 
 .audit-panel__body {
+  --audit-panel-mask: var(--color-gray2);
+
   width: calc(100% - (2 * var(--audit-panel-inset)));
   min-height: 0;
   max-height: calc(34rem - (2 * var(--audit-panel-inset)));
@@ -106,6 +108,8 @@
 }
 
 .audit-table thead tr {
+  --audit-row-radius: 29px;
+
   --audit-row-surface:
     color-mix(
       in srgb,
@@ -122,6 +126,8 @@
 }
 
 .audit-table tbody tr {
+  --audit-row-radius: 27px;
+
   --audit-row-surface:
     color-mix(
       in srgb,
@@ -212,8 +218,15 @@
       var(--motion-easing-easeOut);
 }
 
-.audit-table tbody tr:hover td {
-  background: var(--audit-row-surface);
+.audit-table th,
+.audit-table td {
+  background-clip: padding-box;
+}
+
+.audit-table th + th,
+.audit-table td + td {
+  border-inline-start: 0;
+  border-inline-end: 0;
 }
 
 .audit-table__index {
@@ -224,27 +237,40 @@
   box-sizing: border-box;
   text-align: center;
   font-variant-numeric: tabular-nums;
-  border-top-color: transparent !important;
-  border-bottom-color: transparent !important;
-  background: var(--color-gray2) !important;
-}
 
-.audit-table__index::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  box-sizing: border-box;
-  background: var(--audit-row-surface);
-  border-top: 1px solid var(--audit-row-border);
-  border-right: 1px solid var(--audit-row-border);
-  border-bottom: 1px solid var(--audit-row-border);
+  background: var(--audit-row-surface) !important;
+
+  border-top: 1px solid var(--audit-row-border) !important;
+  border-right: 1px solid var(--audit-row-border) !important;
+  border-bottom: 1px solid var(--audit-row-border) !important;
+
   border-radius:
     0
-    var(--border-radius-pill)
-    var(--border-radius-pill)
+    var(--audit-row-radius)
+    var(--audit-row-radius)
     0;
+}
+
+.audit-table__index::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+
+  width: var(--audit-row-radius);
+
+  background:
+    radial-gradient(
+      circle at 0 50%,
+      transparent
+        calc(var(--audit-row-radius) - 1px),
+      var(--audit-panel-mask)
+        var(--audit-row-radius)
+    );
+
   pointer-events: none;
+  z-index: 2;
 }
 
 .audit-table th.audit-table__index {
@@ -252,8 +278,6 @@
 }
 
 .audit-table td.audit-table__index {
-  height: 54px;
-  padding-block: 0;
   color: var(--color-gray8);
   font-weight: var(--font-weight-medium);
 }
@@ -262,12 +286,14 @@
   position: sticky !important;
   left: 0;
   z-index: 4;
+
   width: 0 !important;
   min-width: 0 !important;
   max-width: 0 !important;
+
   padding: 0 !important;
   border: 0 !important;
-  isolation: isolate;
+
   overflow: visible !important;
   pointer-events: none;
   background: transparent !important;
@@ -279,10 +305,20 @@
   top: 0;
   bottom: 0;
   left: 0;
-  width: 24px;
-  z-index: 0;
-  background: var(--color-gray2);
+
+  width: var(--audit-row-radius);
+
+  background:
+    radial-gradient(
+      circle at 100% 50%,
+      transparent
+        calc(var(--audit-row-radius) - 1px),
+      var(--audit-panel-mask)
+        var(--audit-row-radius)
+    );
+
   pointer-events: none;
+  z-index: 5;
 }
 
 .audit-table__viewport-cap::after {
@@ -291,19 +327,23 @@
   top: 0;
   bottom: 0;
   left: 0;
-  width: 24px;
-  z-index: 1;
+
+  width: var(--audit-row-radius);
+
   box-sizing: border-box;
-  background: var(--audit-row-surface);
+
   border-top: 1px solid var(--audit-row-border);
   border-bottom: 1px solid var(--audit-row-border);
   border-left: 1px solid var(--audit-row-border);
+
   border-radius:
-    var(--border-radius-pill)
+    var(--audit-row-radius)
     0
     0
-    var(--border-radius-pill);
+    var(--audit-row-radius);
+
   pointer-events: none;
+  z-index: 6;
 }
 
 .audit-table th.audit-table__viewport-cap {
