@@ -1,4 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, {
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 import { formatPercent } from '../../utils/formatters';
 import {
@@ -8,255 +13,474 @@ import {
 import { Skeleton } from '../ui/Skeleton';
 import './AuditTable.css';
 
+const formatFixed = (value, digits) => {
+  const number = Number(value);
+
+  return Number.isFinite(number)
+    ? number.toFixed(digits)
+    : '—';
+};
+
+const createColumns = (showYearColumn) => {
+  const columns = [
+    {
+      key: 'name',
+      label: 'نام',
+      sortKey: 'name',
+      width: 360,
+      className: 'audit-table__cell--name',
+      render: (row) => (
+        <span
+          className="audit-table__name-text"
+          title={row.name}
+        >
+          {row.name}
+        </span>
+      ),
+    },
+  ];
+
+  if (showYearColumn) {
+    columns.push({
+      key: 'year',
+      label: 'سال',
+      sortKey: 'year',
+      width: 80,
+      render: (row) => row.year ?? '—',
+    });
+  }
+
+  columns.push(
+    {
+      key: 'group',
+      label: 'گروه',
+      sortKey: 'group_fa',
+      width: 150,
+      render: (row) => (
+        <span
+          className="audit-table__ellipsis audit-table__group"
+          title={row.group_fa}
+          style={{
+            '--audit-group-color':
+              row.group_color || 'var(--color-gray7)',
+          }}
+        >
+          {row.group_fa}
+        </span>
+      ),
+    },
+    {
+      key: 'visits',
+      label: 'ویزیت',
+      sortKey: 'V',
+      width: 90,
+      render: (row) => row.V,
+    },
+    {
+      key: 'empty-rate',
+      label: 'نرخ خالی',
+      sortKey: 'rho_Z',
+      width: 110,
+      render: (row) => formatPercent(row.rho_Z),
+    },
+    {
+      key: 'pdi',
+      label: 'امتیاز کیفیت ثبت پرونده‌ها',
+      sortKey: 'PDI',
+      width: 170,
+      render: (row) => formatFixed(row.PDI, 1),
+    },
+    {
+      key: 'status',
+      label: 'وضعیت',
+      width: 160,
+      className: 'audit-table__cell--status',
+      render: (row) => {
+        const isAcceptable =
+          Number(row.PDI) >= PDI_THRESHOLD;
+
+        return (
+          <span
+            className="audit-table__status"
+            style={{
+              '--audit-status-color':
+                isAcceptable
+                  ? 'var(--color-green)'
+                  : 'var(--color-red)',
+            }}
+          >
+            <span
+              className="audit-table__status-dot"
+              aria-hidden="true"
+            />
+
+            <span>
+              {isAcceptable
+                ? 'مطلوب'
+                : 'نیازمند بهبود'}
+            </span>
+          </span>
+        );
+      },
+    },
+    {
+      key: 'calibrated-score',
+      label: 'میانگین نمرات پرونده‌ها - کالیبره‌شده',
+      sortKey: 'calibrated_score',
+      width: 180,
+      render: (row) =>
+        formatFixed(row.calibrated_score, 2),
+    },
+    {
+      key: 'raw-score',
+      label: 'میانگین نمرات پرونده‌ها - خام',
+      sortKey: 'raw_score',
+      width: 160,
+      render: (row) =>
+        formatFixed(row.raw_score, 2),
+    },
+    {
+      key: 'adjusted-quality',
+      label: 'کیفیت تعدیل‌شده',
+      sortKey: 'WQS_adj',
+      width: 140,
+      render: (row) =>
+        formatFixed(row.WQS_adj, 2),
+    },
+    {
+      key: 'laq',
+      label: 'LAQ',
+      sortKey: 'LAQ',
+      width: 100,
+      render: (row) =>
+        formatFixed(row.LAQ, 2),
+    },
+  );
+
+  return columns;
+};
+
 const AuditTable = () => {
-  const { data, loading, mode } = useDashboard();
-  const [sortConfig, setSortConfig] = useState({ key: 'PDI', direction: 'desc' });
+  const {
+    data,
+    loading,
+    mode,
+  } = useDashboard();
+
+  const tableRef = useRef(null);
+  const horizontalScrollRef = useRef(null);
+
+  const [sortConfig, setSortConfig] =
+    useState({
+      key: 'PDI',
+      direction: 'desc',
+    });
 
   const showYearColumn =
     mode === DASHBOARD_MODES.RESIDENTS;
 
-  const columnCount =
-    showYearColumn ? 13 : 12;
+  const columns = useMemo(
+    () =>
+      createColumns(
+        showYearColumn
+      ),
+    [showYearColumn]
+  );
+
+  /*
+   * The visual track is rendered from left to right,
+   * while the logical table order remains RTL:
+   *
+   * right:
+   * name → year → group → ... → LAQ
+   *
+   * left:
+   * LAQ → ... → name
+   */
+  const trackColumns = useMemo(
+    () =>
+      [...columns].reverse(),
+    [columns]
+  );
+
+  const trackWidth = useMemo(
+    () =>
+      trackColumns.reduce(
+        (sum, column) =>
+          sum + column.width,
+        0
+      ),
+    [trackColumns]
+  );
+
+  const gridTemplate = useMemo(
+    () =>
+      trackColumns
+        .map(
+          (column) =>
+            `${column.width}px`
+        )
+        .join(' '),
+    [trackColumns]
+  );
 
   const sortedData = useMemo(() => {
-    if (!data.current) return [];
+    if (!data.current) {
+      return [];
+    }
 
-    return [...data.current].sort((a, b) => {
-      if (a[sortConfig.key] < b[sortConfig.key]) {
-        return sortConfig.direction === 'asc' ? -1 : 1;
+    return [...data.current].sort(
+      (a, b) => {
+        if (
+          a[sortConfig.key] <
+          b[sortConfig.key]
+        ) {
+          return sortConfig.direction ===
+            'asc'
+            ? -1
+            : 1;
+        }
+
+        if (
+          a[sortConfig.key] >
+          b[sortConfig.key]
+        ) {
+          return sortConfig.direction ===
+            'asc'
+            ? 1
+            : -1;
+        }
+
+        return 0;
       }
-
-      if (a[sortConfig.key] > b[sortConfig.key]) {
-        return sortConfig.direction === 'asc' ? 1 : -1;
-      }
-
-      return 0;
-    });
-  }, [data, sortConfig]);
+    );
+  }, [
+    data,
+    sortConfig,
+  ]);
 
   const handleSort = (key) => {
-    setSortConfig((prev) => ({
+    setSortConfig((previous) => ({
       key,
       direction:
-        prev.key === key && prev.direction === 'desc'
+        previous.key === key &&
+        previous.direction === 'desc'
           ? 'asc'
           : 'desc',
     }));
   };
 
+  const handleHorizontalScroll = (
+    event
+  ) => {
+    if (!tableRef.current) {
+      return;
+    }
+
+    tableRef.current.style.setProperty(
+      '--audit-scroll-x',
+      `${event.currentTarget.scrollLeft}px`
+    );
+  };
+
+  /*
+   * Start from the RTL side of the data:
+   * name/year/group are visible first.
+   */
+  useLayoutEffect(() => {
+    const scrollElement =
+      horizontalScrollRef.current;
+
+    if (!scrollElement) {
+      return undefined;
+    }
+
+    const frame =
+      requestAnimationFrame(
+        () => {
+          scrollElement.scrollLeft =
+            Math.max(
+              0,
+              scrollElement.scrollWidth -
+                scrollElement.clientWidth
+            );
+
+          handleHorizontalScroll({
+            currentTarget:
+              scrollElement,
+          });
+        }
+      );
+
+    return () =>
+      cancelAnimationFrame(
+        frame
+      );
+  }, [
+    trackWidth,
+  ]);
+
+  const tableStyle = {
+    '--audit-track-width':
+      `${trackWidth}px`,
+
+    '--audit-grid-columns':
+      gridTemplate,
+  };
+
   return (
     <section className="glass u-container u-container--md audit-panel">
       <div className="audit-panel__body">
-        <table
-          className={`audit-table ${
-            showYearColumn
-              ? 'audit-table--with-year'
-              : 'audit-table--without-year'
-          }`}
+        <div
+          ref={tableRef}
+          className="audit-table"
+          style={tableStyle}
+          role="table"
         >
-          <colgroup>
-            <col className="audit-table__col audit-table__col--index" />
-            <col className="audit-table__col audit-table__col--name" />
-
-            {showYearColumn && (
-              <col className="audit-table__col audit-table__col--year" />
-            )}
-
-            <col className="audit-table__col audit-table__col--group" />
-            <col className="audit-table__col audit-table__col--visits" />
-            <col className="audit-table__col audit-table__col--empty-rate" />
-            <col className="audit-table__col audit-table__col--pdi" />
-            <col className="audit-table__col audit-table__col--status" />
-            <col className="audit-table__col audit-table__col--calibrated-score" />
-            <col className="audit-table__col audit-table__col--raw-score" />
-            <col className="audit-table__col audit-table__col--adjusted-quality" />
-            <col className="audit-table__col audit-table__col--laq" />
-            <col className="audit-table__col audit-table__col--viewport-cap" />
-          </colgroup>
-
-          <thead>
-            <tr>
-              <th className="audit-table__index audit-table__static-header">
-                ردیف
-              </th>
-
-              <th onClick={() => handleSort('name')}>
-                نام
-              </th>
-
-              {showYearColumn && (
-                <th onClick={() => handleSort('year')}>
-                  سال
-                </th>
-              )}
-
-              <th onClick={() => handleSort('group_fa')}>
-                گروه
-              </th>
-
-              <th onClick={() => handleSort('V')}>
-                ویزیت
-              </th>
-
-              <th onClick={() => handleSort('rho_Z')}>
-                نرخ خالی
-              </th>
-
-              <th onClick={() => handleSort('PDI')}>
-                امتیاز کیفیت ثبت پرونده‌ها
-              </th>
-
-              <th className="audit-table__static-header">
-                وضعیت
-              </th>
-
-              <th onClick={() => handleSort('calibrated_score')}>
-                میانگین نمرات پرونده‌ها - کالیبره‌شده
-              </th>
-
-              <th onClick={() => handleSort('raw_score')}>
-                میانگین نمرات پرونده‌ها - خام
-              </th>
-
-              <th onClick={() => handleSort('WQS_adj')}>
-                کیفیت تعدیل‌شده
-              </th>
-
-              <th onClick={() => handleSort('LAQ')}>
-                LAQ
-              </th>
-
-              <th
-                className="audit-table__viewport-cap audit-table__static-header"
-                aria-hidden="true"
-              />
-            </tr>
-          </thead>
-
-          <tbody>
-            {loading && Array.from({ length: 10 }).map((_, i) => (
-              <tr key={`skeleton-${i}`}>
-                {Array.from({ length: columnCount }).map((_, j) => {
-                  const isIndex = j === 0;
-                  const isViewportCap =
-                    j === columnCount - 1;
-
-                  return (
-                    <td
-                      key={j}
-                      className={
-                        isIndex
-                          ? 'audit-table__index'
-                          : isViewportCap
-                            ? 'audit-table__viewport-cap'
-                            : undefined
-                      }
+          <div
+            className="audit-table__row audit-table__row--header"
+            role="row"
+          >
+            <div className="audit-table__row-viewport">
+              <div className="audit-table__track">
+                {trackColumns.map(
+                  (column) => (
+                    <div
+                      key={column.key}
+                      className={`audit-table__cell audit-table__header-cell ${
+                        column.className || ''
+                      }`}
+                      role="columnheader"
                     >
-                      {!isViewportCap && (
-                        <Skeleton width="80%" height="0.9rem" />
+                      {column.sortKey ? (
+                        <button
+                          type="button"
+                          className="audit-table__sort-button"
+                          onClick={() =>
+                            handleSort(
+                              column.sortKey
+                            )
+                          }
+                        >
+                          {column.label}
+                        </button>
+                      ) : (
+                        <span>
+                          {column.label}
+                        </span>
                       )}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
 
-            {!loading && sortedData.map((row, i) => {
-              const isPdiAcceptable =
-                Number(row.PDI) >= PDI_THRESHOLD;
+            <div
+              className="audit-table__index-cell"
+              role="columnheader"
+            >
+              ردیف
+            </div>
+          </div>
 
-              return (
-                <tr key={i}>
-                  <td className="audit-table__index">
-                    {i + 1}
-                  </td>
+          <div className="audit-table__rows">
+            {loading &&
+              Array.from({
+                length: 10,
+              }).map((_, rowIndex) => (
+                <div
+                  key={`skeleton-${rowIndex}`}
+                  className="audit-table__row"
+                  role="row"
+                >
+                  <div className="audit-table__row-viewport">
+                    <div className="audit-table__track">
+                      {trackColumns.map(
+                        (column) => (
+                          <div
+                            key={column.key}
+                            className="audit-table__cell"
+                            role="cell"
+                          >
+                            <Skeleton
+                              width="70%"
+                              height="0.9rem"
+                            />
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
 
-                  <td className="audit-table__name">
-                    <span
-                      className="audit-table__name-text"
-                      title={row.name}
+                  <div
+                    className="audit-table__index-cell"
+                    role="cell"
+                  >
+                    <Skeleton
+                      width="40%"
+                      height="0.9rem"
+                    />
+                  </div>
+                </div>
+              ))}
+
+            {!loading &&
+              sortedData.map(
+                (row, rowIndex) => (
+                  <div
+                    key={
+                      row.id ??
+                      row.name ??
+                      rowIndex
+                    }
+                    className="audit-table__row"
+                    role="row"
+                  >
+                    <div className="audit-table__row-viewport">
+                      <div className="audit-table__track">
+                        {trackColumns.map(
+                          (column) => (
+                            <div
+                              key={
+                                column.key
+                              }
+                              className={`audit-table__cell ${
+                                column.className ||
+                                ''
+                              }`}
+                              role="cell"
+                            >
+                              {column.render(
+                                row
+                              )}
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+
+                    <div
+                      className="audit-table__index-cell"
+                      role="cell"
                     >
-                      {row.name}
-                    </span>
-                  </td>
+                      {rowIndex + 1}
+                    </div>
+                  </div>
+                )
+              )}
+          </div>
 
-                  {showYearColumn && (
-                    <td>
-                      {row.year ?? '—'}
-                    </td>
-                  )}
-
-                  <td>
-                    <span
-                      className="audit-table__ellipsis audit-table__group"
-                      title={row.group_fa}
-                      style={{
-                        '--audit-group-color':
-                          row.group_color || 'var(--color-gray7)',
-                      }}
-                    >
-                      {row.group_fa}
-                    </span>
-                  </td>
-
-                  <td>{row.V}</td>
-
-                  <td>
-                    {formatPercent(row.rho_Z)}
-                  </td>
-
-                  <td>
-                    {row.PDI?.toFixed(1)}
-                  </td>
-
-                  <td className="audit-table__status-cell">
-                    <span
-                      className="audit-table__status"
-                      style={{
-                        '--audit-status-color':
-                          isPdiAcceptable
-                            ? 'var(--color-green)'
-                            : 'var(--color-red)',
-                      }}
-                    >
-                      <span
-                        className="audit-table__status-dot"
-                        aria-hidden="true"
-                      />
-
-                      <span>
-                        {isPdiAcceptable
-                          ? 'مطلوب'
-                          : 'نیازمند بهبود'}
-                      </span>
-                    </span>
-                  </td>
-
-                  <td>
-                    {row.calibrated_score?.toFixed(2)}
-                  </td>
-
-                  <td>
-                    {row.raw_score?.toFixed(2)}
-                  </td>
-
-                  <td>
-                    {row.WQS_adj?.toFixed(2)}
-                  </td>
-
-                  <td>
-                    {row.LAQ?.toFixed(2)}
-                  </td>
-
-                  <td
-                    className="audit-table__viewport-cap"
-                    aria-hidden="true"
-                  />
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+          <div
+            ref={horizontalScrollRef}
+            className="audit-table__horizontal-scroll"
+            onScroll={
+              handleHorizontalScroll
+            }
+            aria-label="پیمایش افقی جدول"
+          >
+            <div className="audit-table__horizontal-spacer" />
+          </div>
+        </div>
       </div>
     </section>
   );
