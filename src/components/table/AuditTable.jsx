@@ -16,7 +16,7 @@ const AuditTable = () => {
     mode === DASHBOARD_MODES.RESIDENTS;
 
   const columnCount =
-    showYearColumn ? 12 : 11;
+    showYearColumn ? 13 : 12;
 
   const sortedData = useMemo(() => {
     if (!data.current) return [];
@@ -47,7 +47,13 @@ const AuditTable = () => {
   return (
     <section className="glass u-container u-container--md audit-panel">
       <div className="audit-panel__body">
-        <table className="audit-table">
+        <table
+          className={`audit-table ${
+            showYearColumn
+              ? 'audit-table--with-year'
+              : 'audit-table--without-year'
+          }`}
+        >
           <colgroup>
             <col className="audit-table__col audit-table__col--index" />
             <col className="audit-table__col audit-table__col--name" />
@@ -65,6 +71,7 @@ const AuditTable = () => {
             <col className="audit-table__col audit-table__col--raw-score" />
             <col className="audit-table__col audit-table__col--adjusted-quality" />
             <col className="audit-table__col audit-table__col--laq" />
+            <col className="audit-table__col audit-table__col--viewport-cap" />
           </colgroup>
 
           <thead>
@@ -118,20 +125,39 @@ const AuditTable = () => {
               <th onClick={() => handleSort('LAQ')}>
                 LAQ
               </th>
+
+              <th
+                className="audit-table__viewport-cap audit-table__static-header"
+                aria-hidden="true"
+              />
             </tr>
           </thead>
 
           <tbody>
             {loading && Array.from({ length: 10 }).map((_, i) => (
               <tr key={`skeleton-${i}`}>
-                {Array.from({ length: columnCount }).map((_, j) => (
-                  <td
-                    key={j}
-                    className={j === 0 ? 'audit-table__index' : undefined}
-                  >
-                    <Skeleton width="80%" height="0.9rem" />
-                  </td>
-                ))}
+                {Array.from({ length: columnCount }).map((_, j) => {
+                  const isIndex = j === 0;
+                  const isViewportCap =
+                    j === columnCount - 1;
+
+                  return (
+                    <td
+                      key={j}
+                      className={
+                        isIndex
+                          ? 'audit-table__index'
+                          : isViewportCap
+                            ? 'audit-table__viewport-cap'
+                            : undefined
+                      }
+                    >
+                      {!isViewportCap && (
+                        <Skeleton width="80%" height="0.9rem" />
+                      )}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
 
@@ -147,7 +173,7 @@ const AuditTable = () => {
 
                   <td className="audit-table__name">
                     <span
-                      className="audit-table__ellipsis audit-table__name-text"
+                      className="audit-table__name-text"
                       title={row.name}
                     >
                       {row.name}
@@ -221,6 +247,11 @@ const AuditTable = () => {
                   <td>
                     {row.LAQ?.toFixed(2)}
                   </td>
+
+                  <td
+                    className="audit-table__viewport-cap"
+                    aria-hidden="true"
+                  />
                 </tr>
               );
             })}

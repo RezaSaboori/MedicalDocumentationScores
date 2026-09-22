@@ -38,7 +38,6 @@
 
 .audit-table {
   width: 100%;
-  min-width: 1474px;
   table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0 var(--spacing-sm);
@@ -46,8 +45,20 @@
   font-family: var(--font-family-persian, var(--font-family-base));
 }
 
+.audit-table--with-year {
+  min-width: 1744px;
+}
+
+.audit-table--without-year {
+  min-width: 1664px;
+}
+
 .audit-table__col--index {
   width: 64px;
+}
+
+.audit-table__col--name {
+  width: 320px;
 }
 
 .audit-table__col--year {
@@ -90,30 +101,60 @@
   width: 100px;
 }
 
+.audit-table__col--viewport-cap {
+  width: 20px;
+}
+
+.audit-table thead tr {
+  --audit-row-surface:
+    color-mix(
+      in srgb,
+      var(--color-gray1) 46%,
+      transparent
+    );
+
+  --audit-row-border:
+    color-mix(
+      in srgb,
+      var(--color-gray4) 34%,
+      transparent
+    );
+}
+
+.audit-table tbody tr {
+  --audit-row-surface:
+    color-mix(
+      in srgb,
+      var(--color-gray1) 58%,
+      transparent
+    );
+
+  --audit-row-border:
+    color-mix(
+      in srgb,
+      var(--color-gray3) 56%,
+      transparent
+    );
+}
+
+.audit-table tbody tr:hover {
+  --audit-row-surface:
+    color-mix(
+      in srgb,
+      var(--color-gray3) 24%,
+      var(--color-gray1)
+    );
+}
+
 .audit-table th {
   position: sticky;
   top: var(--spacing-sm);
   z-index: 2;
   height: 58px;
   padding: var(--spacing-sm) var(--spacing-md);
-  border-top: 1px solid
-    color-mix(
-      in srgb,
-      var(--color-gray4) 34%,
-      transparent
-    );
-  border-bottom: 1px solid
-    color-mix(
-      in srgb,
-      var(--color-gray4) 34%,
-      transparent
-    );
-  background:
-    color-mix(
-      in srgb,
-      var(--color-gray1) 46%,
-      transparent
-    );
+  border-top: 1px solid var(--audit-row-border);
+  border-bottom: 1px solid var(--audit-row-border);
+  background: var(--audit-row-surface);
   -webkit-backdrop-filter:
     blur(16px)
     saturate(180%)
@@ -134,33 +175,6 @@
       var(--motion-easing-easeOut);
 }
 
-.audit-table thead tr > th:first-child {
-  border-right: 1px solid
-    color-mix(
-      in srgb,
-      var(--color-gray4) 34%,
-      transparent
-    );
-  border-radius:
-    0
-    var(--border-radius-pill)
-    var(--border-radius-pill)
-    0;
-}
-
-.audit-table thead tr > th:last-child {
-  border-left: 1px solid
-    color-mix(
-      in srgb,
-      var(--color-gray4) 34%,
-      transparent
-    );
-  border-radius:
-    var(--border-radius-pill)
-    0
-    0
-    var(--border-radius-pill);
-}
 
 .audit-table th:not(.audit-table__static-header) {
   cursor: pointer;
@@ -182,24 +196,9 @@
 .audit-table td {
   height: 54px;
   padding: var(--spacing-sm) var(--spacing-md);
-  border-top: 1px solid
-    color-mix(
-      in srgb,
-      var(--color-gray3) 56%,
-      transparent
-    );
-  border-bottom: 1px solid
-    color-mix(
-      in srgb,
-      var(--color-gray3) 56%,
-      transparent
-    );
-  background:
-    color-mix(
-      in srgb,
-      var(--color-gray1) 58%,
-      transparent
-    );
+  border-top: 1px solid var(--audit-row-border);
+  border-bottom: 1px solid var(--audit-row-border);
+  background: var(--audit-row-surface);
   color: var(--color-gray9);
   font-size: var(--font-size-sm);
   vertical-align: middle;
@@ -211,79 +210,104 @@
       var(--motion-easing-easeOut);
 }
 
-.audit-table tbody tr > td:first-child {
-  border-right: 1px solid
-    color-mix(
-      in srgb,
-      var(--color-gray3) 56%,
-      transparent
-    );
-  border-radius:
-    0
-    var(--border-radius-pill)
-    var(--border-radius-pill)
-    0;
-}
-
-.audit-table tbody tr > td:last-child {
-  border-left: 1px solid
-    color-mix(
-      in srgb,
-      var(--color-gray3) 56%,
-      transparent
-    );
-  border-radius:
-    var(--border-radius-pill)
-    0
-    0
-    var(--border-radius-pill);
-}
-
 .audit-table tbody tr:hover td {
-  background:
-    color-mix(
-      in srgb,
-      var(--color-gray3) 24%,
-      var(--color-gray1)
-    );
+  background: var(--audit-row-surface);
 }
 
 .audit-table__index {
   position: sticky;
   right: 0;
-  z-index: 1;
+  z-index: 4;
+  isolation: isolate;
   text-align: center;
   font-variant-numeric: tabular-nums;
-}
-
-.audit-table th.audit-table__index {
-  z-index: 4;
-}
-
-.audit-table td.audit-table__index {
   background:
     color-mix(
       in srgb,
-      var(--color-gray1) 58%,
-      transparent
-    );
+      var(--color-gray1) 88%,
+      var(--color-gray2)
+    ) !important;
+  border-top-color: transparent !important;
+  border-bottom-color: transparent !important;
+}
+
+.audit-table__index::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--audit-row-surface);
+  border-top: 1px solid var(--audit-row-border);
+  border-right: 1px solid var(--audit-row-border);
+  border-bottom: 1px solid var(--audit-row-border);
+  border-radius:
+    0
+    var(--border-radius-pill)
+    var(--border-radius-pill)
+    0;
+  pointer-events: none;
+}
+
+.audit-table th.audit-table__index {
+  z-index: 6;
+}
+
+.audit-table td.audit-table__index {
   color: var(--color-gray8);
   font-weight: var(--font-weight-medium);
 }
 
-.audit-table tbody tr:hover td.audit-table__index {
+.audit-table__viewport-cap {
+  position: sticky !important;
+  left: 0;
+  z-index: 4;
+  padding: 0 !important;
+  isolation: isolate;
+  pointer-events: none;
   background:
     color-mix(
       in srgb,
-      var(--color-gray3) 24%,
-      var(--color-gray1)
-    );
+      var(--color-gray1) 88%,
+      var(--color-gray2)
+    ) !important;
+  border-top-color: transparent !important;
+  border-bottom-color: transparent !important;
+}
+
+.audit-table__viewport-cap::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--audit-row-surface);
+  border-top: 1px solid var(--audit-row-border);
+  border-bottom: 1px solid var(--audit-row-border);
+  border-left: 1px solid var(--audit-row-border);
+  border-radius:
+    var(--border-radius-pill)
+    0
+    0
+    var(--border-radius-pill);
+  pointer-events: none;
+}
+
+.audit-table th.audit-table__viewport-cap {
+  top: var(--spacing-sm);
+  z-index: 6;
 }
 
 .audit-table__name {
   text-align: right;
   color: var(--color-gray11);
   font-weight: var(--font-weight-medium);
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.audit-table__name-text {
+  display: block;
+  white-space: nowrap;
+  color: var(--color-gray11);
 }
 
 .audit-table__ellipsis {
@@ -293,10 +317,7 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-
-.audit-table__name-text {
-  color: var(--color-gray11);
+  color: inherit;
 }
 
 .audit-table__status-cell {
