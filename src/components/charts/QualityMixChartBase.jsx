@@ -22,7 +22,7 @@ import QualityMixSortControl, {
 } from './QualityMixSortControl';
 import './QualityMixChart.css';
 
-const PDI_THRESHOLD = 40;
+const PDI_THRESHOLD = 39.001;
 const SCORE_MAX = 100;
 const TICK_SPACE = 21;
 const RANK_BADGE_SPACE = 34;

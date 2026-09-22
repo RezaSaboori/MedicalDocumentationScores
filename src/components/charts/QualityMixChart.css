@@ -365,9 +365,29 @@
 }
 
 .chart-panel--exporting.qm-container
+.chart-panel__header {
+  order: 1;
+}
+
+.chart-panel--exporting.qm-container
 .chart-panel__footer {
-  padding-left:
-    var(--spacing-lg) !important;
+  order: 2;
+  padding:
+    0
+    var(--spacing-lg)
+    var(--spacing-xs) !important;
+  align-items: stretch !important;
+}
+
+.chart-panel--exporting.qm-container
+.chart-panel__body {
+  order: 3;
+}
+
+.chart-panel--exporting.qm-container
+.chart-panel__body {
+  padding-top:
+    var(--spacing-xs) !important;
 }
 
 /* ── Separator between acceptable / unacceptable rows ─────────── */

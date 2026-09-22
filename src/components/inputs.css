@@ -308,11 +308,14 @@
   white-space: nowrap;
   flex-shrink: 0;
   transition: color var(--motion-duration-normal) var(--motion-easing-easeInOut);
+  border: none;
+  background: none;
 }
 
 .ui-radio-toggle__dot {
   width: 1rem;
   height: 1rem;
+  margin-top: 5px;
   border-radius: 50%;
   flex-shrink: 0;
   transition:
