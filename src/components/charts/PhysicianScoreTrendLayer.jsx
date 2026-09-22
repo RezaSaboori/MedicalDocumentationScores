@@ -1,22 +1,39 @@
-import React from 'react';
+import React, {
+  useMemo,
+  useState,
+} from 'react';
 import {
   useTooltip,
 } from '@nivo/tooltip';
-import ChartTooltip from './ChartTooltip';
 import {
   formatPeriodLabel,
 } from '../../utils/period';
+import PhysicianTrendTooltip from './PhysicianTrendTooltip';
 
 const RESIDENTS_OPACITY =
   0.22;
 
-const DIMMED_OPACITY =
+const LEGEND_DIMMED_OPACITY =
   0.14;
+
+const ACTIVE_LINE_OPACITY =
+  0.16;
+
+const INACTIVE_POINT_OPACITY =
+  0.1;
 
 const formatMetricValue = (
   value,
   digits
 ) => {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ''
+  ) {
+    return '—';
+  }
+
   const number =
     Number(value);
 
@@ -87,11 +104,81 @@ const buildSegments = (
 
 const PhysicianScoreTrendLayer = ({
   nodes,
+  data,
+  xScale,
+  innerWidth,
+  innerHeight,
   seriesConfig,
   hoveredSeries,
 }) => {
   const tooltip =
     useTooltip();
+
+  const [
+    activeMonthIndex,
+    setActiveMonthIndex,
+  ] = useState(null);
+
+  const monthTerritories =
+    useMemo(() => {
+      if (!data.length) {
+        return [];
+      }
+
+      const centers =
+        data.map(
+          (_, index) =>
+            xScale(index)
+        );
+
+      return data.map(
+        (
+          row,
+          index
+        ) => {
+          const center =
+            centers[index];
+
+          const left =
+            index === 0
+              ? 0
+              : (
+                  centers[
+                    index - 1
+                  ] +
+                  center
+                ) /
+                2;
+
+          const right =
+            index ===
+            data.length - 1
+              ? innerWidth
+              : (
+                  center +
+                  centers[
+                    index + 1
+                  ]
+                ) /
+                2;
+
+          return {
+            index,
+            row,
+            x: left,
+            width:
+              Math.max(
+                0,
+                right - left
+              ),
+          };
+        }
+      );
+    }, [
+      data,
+      xScale,
+      innerWidth,
+    ]);
 
   const showTooltip = (
     content,
@@ -132,37 +219,58 @@ const PhysicianScoreTrendLayer = ({
     }
   };
 
-  const handleTooltip = (
+  const showMonthTooltip = (
     event,
-    node
+    monthIndex
   ) => {
     const row =
-      node.data?.row;
+      data[monthIndex];
 
     if (!row) {
       return;
     }
 
+    setActiveMonthIndex(
+      monthIndex
+    );
+
     showTooltip(
-      <ChartTooltip
+      <PhysicianTrendTooltip
         title={
           formatPeriodLabel(
             row.period
           )
         }
+        columns={[
+          'شاخص',
+          'پزشک',
+          'همه رزیدنت‌ها',
+        ]}
         rows={
           seriesConfig.map(
             (series) => ({
               label:
                 series.label,
 
-              value:
+              color:
+                series.color,
+
+              values: [
                 formatMetricValue(
                   row[
                     series.dataKey
                   ],
                   series.digits
                 ),
+
+                formatMetricValue(
+                  row[
+                    series
+                      .residentsDataKey
+                  ],
+                  series.digits
+                ),
+              ],
             })
           )
         }
@@ -170,6 +278,17 @@ const PhysicianScoreTrendLayer = ({
       event
     );
   };
+
+  const clearActiveMonth = () => {
+    setActiveMonthIndex(
+      null
+    );
+
+    hideTooltip();
+  };
+
+  const hasActiveMonth =
+    activeMonthIndex !== null;
 
   return (
     <g>
@@ -189,121 +308,185 @@ const PhysicianScoreTrendLayer = ({
                 series.residentsId
             );
 
-          const metricOpacity =
+          const legendOpacity =
             hoveredSeries &&
             hoveredSeries !==
               series.id
-              ? DIMMED_OPACITY
+              ? LEGEND_DIMMED_OPACITY
               : 1;
+
+          const lineOpacity =
+            hasActiveMonth
+              ? ACTIVE_LINE_OPACITY *
+                legendOpacity
+              : legendOpacity;
 
           return (
             <g
               key={series.id}
-              opacity={
-                metricOpacity
-              }
               className="physician-score-trend__series"
             >
-              {buildSegments(
-                residentsNodes
-              ).map(
-                (
-                  segment,
-                  segmentIndex
-                ) => (
-                  <polyline
-                    key={`${series.residentsId}-${segmentIndex}`}
-                    points={
-                      segment
-                        .map(
-                          (node) =>
-                            `${node.x},${node.y}`
-                        )
-                        .join(' ')
-                    }
-                    fill="none"
-                    stroke={
-                      series.color
-                    }
-                    strokeWidth="2.25"
-                    strokeOpacity={
-                      RESIDENTS_OPACITY
-                    }
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    pointerEvents="none"
-                  />
-                )
-              )}
+              <g
+                opacity={
+                  lineOpacity
+                }
+              >
+                {buildSegments(
+                  residentsNodes
+                ).map(
+                  (
+                    segment,
+                    segmentIndex
+                  ) => (
+                    <polyline
+                      key={`${series.residentsId}-${segmentIndex}`}
+                      points={
+                        segment
+                          .map(
+                            (node) =>
+                              `${node.x},${node.y}`
+                          )
+                          .join(' ')
+                      }
+                      fill="none"
+                      stroke={
+                        series.color
+                      }
+                      strokeWidth="2.25"
+                      strokeOpacity={
+                        RESIDENTS_OPACITY
+                      }
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      pointerEvents="none"
+                    />
+                  )
+                )}
 
-              {buildSegments(
-                physicianNodes
-              ).map(
-                (
-                  segment,
-                  segmentIndex
-                ) => (
-                  <polyline
-                    key={`${series.id}-${segmentIndex}`}
-                    points={
-                      segment
-                        .map(
-                          (node) =>
-                            `${node.x},${node.y}`
-                        )
-                        .join(' ')
-                    }
-                    fill="none"
-                    stroke={
-                      series.color
-                    }
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    pointerEvents="none"
-                  />
-                )
-              )}
+                {buildSegments(
+                  physicianNodes
+                ).map(
+                  (
+                    segment,
+                    segmentIndex
+                  ) => (
+                    <polyline
+                      key={`${series.id}-${segmentIndex}`}
+                      points={
+                        segment
+                          .map(
+                            (node) =>
+                              `${node.x},${node.y}`
+                          )
+                          .join(' ')
+                      }
+                      fill="none"
+                      stroke={
+                        series.color
+                      }
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      pointerEvents="none"
+                    />
+                  )
+                )}
+              </g>
 
               {physicianNodes.map(
-                (node) => (
-                  <circle
-                    key={node.id}
-                    cx={node.x}
-                    cy={node.y}
-                    r="4"
-                    fill={
-                      series.color
-                    }
-                    stroke="var(--color-gray1)"
-                    strokeWidth="1.5"
-                    className="physician-score-trend__point"
-                    onMouseEnter={(
-                      event
-                    ) =>
-                      handleTooltip(
-                        event,
-                        node
-                      )
-                    }
-                    onMouseMove={(
-                      event
-                    ) =>
-                      handleTooltip(
-                        event,
-                        node
-                      )
-                    }
-                    onMouseLeave={
-                      hideTooltip
-                    }
-                  />
-                )
+                (node) => {
+                  const nodeMonthIndex =
+                    Number(
+                      node.data?.x
+                    );
+
+                  const isActivePoint =
+                    activeMonthIndex ===
+                    nodeMonthIndex;
+
+                  const pointOpacity =
+                    hasActiveMonth
+                      ? isActivePoint
+                        ? legendOpacity
+                        : INACTIVE_POINT_OPACITY *
+                          legendOpacity
+                      : legendOpacity;
+
+                  return (
+                    <circle
+                      key={node.id}
+                      cx={node.x}
+                      cy={node.y}
+                      r={
+                        isActivePoint
+                          ? 5
+                          : 4
+                      }
+                      fill={
+                        series.color
+                      }
+                      fillOpacity={
+                        pointOpacity
+                      }
+                      stroke="var(--color-gray1)"
+                      strokeOpacity={
+                        pointOpacity
+                      }
+                      strokeWidth="1.5"
+                      pointerEvents="none"
+                      className="physician-score-trend__point"
+                    />
+                  );
+                }
               )}
             </g>
           );
         }
       )}
+
+      <g
+        className="physician-score-trend__territories"
+        onMouseLeave={
+          clearActiveMonth
+        }
+      >
+        {monthTerritories.map(
+          ({
+            index,
+            x,
+            width,
+          }) => (
+            <rect
+              key={index}
+              x={x}
+              y={0}
+              width={width}
+              height={
+                innerHeight
+              }
+              fill="transparent"
+              pointerEvents="all"
+              className="physician-score-trend__month-territory"
+              onMouseEnter={(
+                event
+              ) =>
+                showMonthTooltip(
+                  event,
+                  index
+                )
+              }
+              onMouseMove={(
+                event
+              ) =>
+                showMonthTooltip(
+                  event,
+                  index
+                )
+              }
+            />
+          )
+        )}
+      </g>
     </g>
   );
 };

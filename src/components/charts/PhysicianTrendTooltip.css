@@ -1,0 +1,176 @@
+.physician-trend-tooltip {
+  width: 460px;
+
+  max-width:
+    min(
+      460px,
+      calc(
+        100vw - 20px
+      )
+    );
+
+  padding: 0;
+
+  overflow: hidden;
+
+  border-color:
+    color-mix(
+      in srgb,
+      var(--color-gray8) 25%,
+      transparent
+    );
+
+  background:
+    color-mix(
+      in srgb,
+      var(--color-gray1) 97%,
+      transparent
+    );
+
+  box-shadow:
+    var(--elevation-4);
+}
+
+.physician-trend-tooltip
+.chart-tooltip__title {
+  margin: 0;
+
+  padding:
+    13px
+    16px
+    8px;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.physician-trend-tooltip__section {
+  padding:
+    6px
+    12px
+    12px;
+}
+
+.physician-trend-tooltip__table {
+  width: 100%;
+
+  overflow: hidden;
+
+  border:
+    1px solid
+    color-mix(
+      in srgb,
+      var(--color-gray8) 14%,
+      transparent
+    );
+
+  border-radius:
+    var(--border-radius-item-lg);
+
+  border-spacing: 0;
+  border-collapse: separate;
+
+  background:
+    color-mix(
+      in srgb,
+      var(--color-gray1) 72%,
+      var(--color-gray2)
+    );
+
+  table-layout: fixed;
+}
+
+.physician-trend-tooltip__table
+th,
+.physician-trend-tooltip__table
+td {
+  padding:
+    7px
+    9px;
+
+  border-bottom:
+    1px solid
+    color-mix(
+      in srgb,
+      var(--color-gray8) 10%,
+      transparent
+    );
+
+  font-size: 10px;
+}
+
+.physician-trend-tooltip__table
+th {
+  color:
+    var(--color-gray8);
+
+  font-weight:
+    var(--font-weight-semibold);
+
+  background:
+    color-mix(
+      in srgb,
+      var(--color-gray2) 68%,
+      transparent
+    );
+}
+
+.physician-trend-tooltip__table
+tr:last-child
+td {
+  border-bottom: none;
+}
+
+.physician-trend-tooltip__table
+th:first-child,
+.physician-trend-tooltip__table
+td:first-child {
+  width: 54%;
+
+  text-align: right;
+}
+
+.physician-trend-tooltip__table
+th:not(:first-child),
+.physician-trend-tooltip__table
+td:not(:first-child) {
+  text-align: center;
+}
+
+.physician-trend-tooltip__metric {
+  display: inline-flex;
+  align-items: center;
+
+  max-width: 100%;
+
+  gap: 7px;
+
+  color:
+    var(--color-gray10);
+
+  line-height: 1.5;
+}
+
+.physician-trend-tooltip__swatch {
+  width: 8px;
+  height: 8px;
+
+  flex:
+    0 0 8px;
+
+  border-radius:
+    var(--border-radius-pill);
+}
+
+.physician-trend-tooltip__value {
+  color:
+    var(--color-gray11);
+
+  font-weight:
+    var(--font-weight-semibold);
+
+  direction: ltr;
+
+  font-variant-numeric:
+    tabular-nums;
+}

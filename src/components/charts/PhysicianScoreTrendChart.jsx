@@ -271,6 +271,7 @@ const PhysicianScoreTrendChart = ({
                     <PhysicianScoreTrendLayer
                       key="score-trend"
                       {...layerProps}
+                      data={data}
                       seriesConfig={
                         SERIES_CONFIG
                       }
