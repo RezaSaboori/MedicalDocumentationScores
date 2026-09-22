@@ -28,22 +28,114 @@ const BubbleNodesLayer = ({ nodes, sizeKey, maxValue, minR = 4, maxR = 17.5 }) =
     if (typeof tooltip.hideTooltip === 'function') tooltip.hideTooltip();
   };
 
-  const handleMove = (event, node) => {
-    const name = readField(node, 'name') ?? '';
-    const group = readField(node, 'group_fa') ?? '';
-    const v = Number(readField(node, 'V')) || 0;
-    const n = Number(readField(node, 'N')) || 0;
-    const pdi = readField(node, 'PDI');
-    const laq = readField(node, 'LAQ');
+  const handleMove = (
+    event,
+    node
+  ) => {
+    const name =
+      readField(
+        node,
+        'name'
+      ) ?? '';
+
+    const group =
+      readField(
+        node,
+        'group_fa'
+      ) ?? '—';
+
+    const visits =
+      Number(
+        readField(
+          node,
+          'V'
+        )
+      ) || 0;
+
+    const pdi =
+      readField(
+        node,
+        'PDI'
+      );
+
+    const calibratedScore =
+      readField(
+        node,
+        'calibrated_score'
+      );
+
+    const rawScore =
+      readField(
+        node,
+        'raw_score'
+      );
+
+    const formatScore = (
+      value
+    ) => {
+      if (
+        value === undefined ||
+        value === null ||
+        value === '' ||
+        !Number.isFinite(
+          Number(value)
+        )
+      ) {
+        return '—';
+      }
+
+      return Number(
+        value
+      ).toLocaleString(
+        'en-US',
+        {
+          maximumFractionDigits: 1,
+        }
+      );
+    };
+
     show(
       <ChartTooltip
         title={name}
         rows={[
-          { label: 'گروه', value: group },
-          { label: 'ویزیت', value: v.toLocaleString('en-US') },
-          { label: 'پرونده طبقه‌بندی‌شده', value: n.toLocaleString('en-US') },
-          ...(pdi !== undefined ? [{ label: 'PDI', value: Number(pdi).toFixed(1) }] : []),
-          ...(laq !== undefined ? [{ label: 'LAQ', value: Number(laq).toFixed(2) }] : []),
+          {
+            label: 'گروه',
+            value: group,
+          },
+          {
+            label: 'ویزیت',
+            value:
+              visits.toLocaleString(
+                'en-US'
+              ),
+          },
+          {
+            label:
+              'امتیاز کیفیت ثبت پرونده‌ها',
+            value:
+              pdi !== undefined &&
+              pdi !== null
+                ? Math.ceil(
+                    Number(pdi)
+                  )
+                : '—',
+          },
+          {
+            label:
+              'میانگین نمرات پرونده‌ها (کالیبره‌شده)',
+            value:
+              formatScore(
+                calibratedScore
+              ),
+          },
+          {
+            label:
+              'میانگین نمرات پرونده‌ها (خام)',
+            value:
+              formatScore(
+                rawScore
+              ),
+          },
         ]}
       />,
       event

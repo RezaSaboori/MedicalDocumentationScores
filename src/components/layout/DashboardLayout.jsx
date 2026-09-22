@@ -3,7 +3,6 @@ import KpiCards from '../kpis/KpiCards';
 import DashboardFilters from '../filters/DashboardFilters';
 import GroupDonutChart from '../charts/GroupDonutChart';
 import FlagMembershipChart from '../charts/FlagMembershipChart';
-import LaqDistributionChart from '../charts/LaqDistributionChart';
 import LoadVsQualityChart from '../charts/LoadVsQualityChart';
 import QualityMixChart from '../charts/QualityMixChart';
 import PdiRankingChart from '../charts/PdiRankingChart';
@@ -69,7 +68,6 @@ const DashboardLayout = () => {
       </div>
 
       <div className="charts-grid-1">
-        <LaqDistributionChart />
         <LoadVsQualityChart />
         <QualityMixChart />
         <PdiRankingChart />

@@ -1,0 +1,32 @@
+.lvq-metric-control {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  width: 330px;
+  min-width: 0;
+  direction: rtl;
+}
+
+.lvq-metric-control__label {
+  flex: 0 0 auto;
+  color: var(--color-gray8);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+
+.lvq-metric-control__dropdown {
+  flex: 1;
+  min-width: 0;
+}
+
+.lvq-metric-control__dropdown
+.ui-input-shell {
+  height: 2.5rem;
+  min-height: 2.5rem;
+}
+
+.lvq-metric-control__dropdown
+.ui-dropdown__text {
+  font-size: var(--font-size-xs);
+}

@@ -1,13 +1,45 @@
-import React, { useEffect, useMemo } from 'react';
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { ResponsiveScatterPlot } from '@nivo/scatterplot';
 import { useDashboard } from '../../context/DashboardContext';
 import BubbleNodesLayer from './BubbleNodesLayer';
 import ChartContainer from './ChartContainer';
+import LoadVsQualityMetricControl, {
+  LOAD_QUALITY_METRICS,
+} from './LoadVsQualityMetricControl';
 import './LoadVsQualityChart.css';
+
+const METRIC_CONFIG = {
+  [LOAD_QUALITY_METRICS.CALIBRATED]: {
+    label:
+      'میانگین نمرات پرونده‌ها (کالیبره‌شده)',
+  },
+
+  [LOAD_QUALITY_METRICS.RAW]: {
+    label:
+      'میانگین نمرات پرونده‌ها (خام)',
+  },
+};
 
 const LoadVsQualityChart = () => {
   const { data } = useDashboard();
+
   const d = data.current;
+
+  const [
+    verticalMetric,
+    setVerticalMetric,
+  ] = useState(
+    LOAD_QUALITY_METRICS.CALIBRATED
+  );
+
+  const metricConfig =
+    METRIC_CONFIG[
+      verticalMetric
+    ];
 
   // Data-sample check: proves V/N reach the chart (CSV headers may carry trailing spaces).
   useEffect(() => {
@@ -15,22 +47,96 @@ const LoadVsQualityChart = () => {
   }, [d]);
 
   const series = useMemo(() => {
-    const byGroup = new Map();
+    const byGroup =
+      new Map();
+
     d.forEach((row) => {
-      if (!byGroup.has(row.group_fa)) byGroup.set(row.group_fa, []);
-      byGroup.get(row.group_fa).push({ ...row, x: Math.max(row.V, 1), y: row.WQS_adj });
+      const sourceValue =
+        row[verticalMetric];
+
+      if (
+        sourceValue === null ||
+        sourceValue === undefined ||
+        sourceValue === ''
+      ) {
+        return;
+      }
+
+      const y =
+        Number(sourceValue);
+
+      if (
+        !Number.isFinite(y)
+      ) {
+        return;
+      }
+
+      const group =
+        row.group_fa ||
+        'بدون گروه';
+
+      if (
+        !byGroup.has(group)
+      ) {
+        byGroup.set(
+          group,
+          []
+        );
+      }
+
+      byGroup
+        .get(group)
+        .push({
+          ...row,
+          x: Math.max(
+            Number(row.V) || 0,
+            1
+          ),
+          y,
+        });
     });
-    return [...byGroup.entries()].map(([id, points]) => ({ id, data: points }));
-  }, [d]);
+
+    return [
+      ...byGroup.entries(),
+    ].map(
+      ([id, points]) => ({
+        id,
+        data: points,
+      })
+    );
+  }, [
+    d,
+    verticalMetric,
+  ]);
 
   const colorByGroup = useMemo(
     () => new Map(d.map((r) => [r.group_fa, r.group_color])),
     [d]
   );
 
-  const maxN = useMemo(() => Math.max(1, ...d.map((r) => Number(r.N) || 0)), [d]);
+  const maxPDI = useMemo(
+    () =>
+      Math.max(
+        1,
+        ...d.map(
+          (row) =>
+            Number(row.PDI) || 0
+        )
+      ),
+    [d]
+  );
 
-  const maxV = useMemo(() => Math.max(10, ...d.map((r) => Number(r.V) || 1)), [d]);
+  const maxV = useMemo(
+    () =>
+      Math.max(
+        10,
+        ...d.map(
+          (row) =>
+            Number(row.V) || 1
+        )
+      ),
+    [d]
+  );
 
   const xTickValues = useMemo(() => {
     const limit = Math.ceil(maxV * 1.25);
@@ -43,13 +149,46 @@ const LoadVsQualityChart = () => {
     }
     return ticks;
   }, [maxV]);
-  const meanQ = useMemo(
-    () => (d.length ? d.reduce((s, r) => s + (r.WQS_adj || 0), 0) / d.length : 0),
-    [d]
-  );
+  const meanMetric = useMemo(() => {
+    const values =
+      d
+        .map(
+          (row) =>
+            row[verticalMetric]
+        )
+        .filter(
+          (value) =>
+            value !== null &&
+            value !== undefined &&
+            value !== '' &&
+            Number.isFinite(
+              Number(value)
+            )
+        )
+        .map(Number);
 
-  const MeanLineLayer = ({ yScale, innerWidth }) => {
-    const y = yScale(meanQ);
+    if (!values.length) {
+      return 0;
+    }
+
+    return (
+      values.reduce(
+        (sum, value) =>
+          sum + value,
+        0
+      ) / values.length
+    );
+  }, [
+    d,
+    verticalMetric,
+  ]);
+
+  const MeanLineLayer = ({
+    yScale,
+    innerWidth,
+  }) => {
+    const y =
+      yScale(meanMetric);
     if (!Number.isFinite(y)) return null; // empty data → auto scale is NaN
     return (
       <g>
@@ -64,10 +203,20 @@ const LoadVsQualityChart = () => {
   if (!d.length) {
     return (
       <ChartContainer
-        title="بار کاری یا حجم ویزیت دربرابر کیفیت"
-        subtitle="(اندازه حباب = تعداد پرونده طبقه‌بندی‌شده)"
+        title="حجم ویزیت در برابر میانگین نمرات پرونده‌ها"
+        subtitle="اندازه حباب = امتیاز کیفیت ثبت پرونده‌ها"
         className="lvq-container"
         legendItems={[]}
+        headerActions={
+          <LoadVsQualityMetricControl
+            value={
+              verticalMetric
+            }
+            onChange={
+              setVerticalMetric
+            }
+          />
+        }
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 240, color: 'var(--color-gray8)', fontFamily: 'var(--font-family-base)' }}>
           داده‌ای برای نمایش وجود ندارد
@@ -78,12 +227,25 @@ const LoadVsQualityChart = () => {
 
   return (
     <ChartContainer
-      title="بار کاری یا حجم ویزیت دربرابر کیفیت"
-      subtitle="(اندازه حباب = تعداد پرونده طبقه‌بندی‌شده)"
+      title="حجم ویزیت در برابر میانگین نمرات پرونده‌ها"
+      subtitle="اندازه حباب = امتیاز کیفیت ثبت پرونده‌ها"
       className="lvq-container"
+      headerActions={
+        <LoadVsQualityMetricControl
+          value={
+            verticalMetric
+          }
+          onChange={
+            setVerticalMetric
+          }
+        />
+      }
       legendItems={series.map((item) => ({
         label: item.id,
-        color: colorByGroup.get(item.id),
+        color:
+          colorByGroup.get(
+            item.id
+          ),
       }))}
     >
       <div className="lvq-body" dir="ltr" style={{ height: 420 }}>
@@ -97,7 +259,16 @@ const LoadVsQualityChart = () => {
             'grid',
             'axes',
             (layerProps) => <MeanLineLayer key="mean" {...layerProps} />,
-            (layerProps) => <BubbleNodesLayer key="bubbles" {...layerProps} sizeKey="N" maxValue={maxN} />,
+            (layerProps) => (
+              <BubbleNodesLayer
+                key="bubbles"
+                {...layerProps}
+                sizeKey="PDI"
+                maxValue={
+                  maxPDI
+                }
+              />
+            ),
           ]}
           axisBottom={{
             legend: 'تعداد ویزیت (مقیاس لگاریتمی)',
@@ -106,8 +277,10 @@ const LoadVsQualityChart = () => {
             tickValues: xTickValues,
           }}
           axisLeft={{
-            legend: 'شاخص کیفیت وزن‌دار تعدیل‌شده (WQS_adj)',
-            legendPosition: 'middle',
+            legend:
+              metricConfig.label,
+            legendPosition:
+              'middle',
             legendOffset: -46,
           }}
         />
