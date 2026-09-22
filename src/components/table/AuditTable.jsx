@@ -36,30 +36,46 @@ const AuditTable = () => {
 
   return (
     <section className="glass u-container u-container--md audit-panel">
-      <header className="audit-panel__header">
-        <h3 className="audit-panel__title">
-          جدول ممیزی — قابل جست‌وجو، مرتب‌سازی و خروجی Excel
-        </h3>
-      </header>
-
       <div className="audit-panel__body">
         <table className="audit-table">
+          <colgroup>
+            <col className="audit-table__col audit-table__col--name" />
+            <col className="audit-table__col audit-table__col--group" />
+            <col className="audit-table__col audit-table__col--visits" />
+            <col className="audit-table__col audit-table__col--empty-rate" />
+            <col className="audit-table__col audit-table__col--pdi" />
+            <col className="audit-table__col audit-table__col--calibrated-score" />
+            <col className="audit-table__col audit-table__col--raw-score" />
+            <col className="audit-table__col audit-table__col--adjusted-quality" />
+            <col className="audit-table__col audit-table__col--laq" />
+          </colgroup>
+
           <thead>
             <tr>
               <th onClick={() => handleSort('name')}>نام</th>
               <th onClick={() => handleSort('group_fa')}>گروه</th>
               <th onClick={() => handleSort('V')}>ویزیت</th>
               <th onClick={() => handleSort('rho_Z')}>نرخ خالی</th>
-              <th onClick={() => handleSort('WQS_adj')}>کیفیت تعدیل‌شده</th>
+              <th onClick={() => handleSort('PDI')}>
+                امتیاز کیفیت ثبت پرونده‌ها
+              </th>
+              <th onClick={() => handleSort('calibrated_score')}>
+                میانگین نمرات پرونده‌ها - کالیبره‌شده
+              </th>
+              <th onClick={() => handleSort('raw_score')}>
+                میانگین نمرات پرونده‌ها - خام
+              </th>
+              <th onClick={() => handleSort('WQS_adj')}>
+                کیفیت تعدیل‌شده
+              </th>
               <th onClick={() => handleSort('LAQ')}>LAQ</th>
-              <th onClick={() => handleSort('PDI')}>PDI</th>
             </tr>
           </thead>
 
           <tbody>
             {loading && Array.from({ length: 10 }).map((_, i) => (
               <tr key={`skeleton-${i}`}>
-                {Array.from({ length: 7 }).map((_, j) => (
+                {Array.from({ length: 9 }).map((_, j) => (
                   <td key={j}>
                     <Skeleton width="80%" height="0.9rem" />
                   </td>
@@ -69,13 +85,31 @@ const AuditTable = () => {
 
             {!loading && sortedData.slice(0, 50).map((row, i) => (
               <tr key={i}>
-                <td>{row.name}</td>
-                <td>{row.group_fa}</td>
+                <td className="audit-table__name">{row.name}</td>
+
+                <td>
+                  <span
+                    className="audit-table__group"
+                    style={{
+                      '--audit-group-color':
+                        row.group_color || 'var(--color-gray7)',
+                    }}
+                  >
+                    <span
+                      className="audit-table__group-dot"
+                      aria-hidden="true"
+                    />
+                    <span>{row.group_fa}</span>
+                  </span>
+                </td>
+
                 <td>{row.V}</td>
                 <td>{formatPercent(row.rho_Z)}</td>
+                <td>{row.PDI?.toFixed(1)}</td>
+                <td>{row.calibrated_score?.toFixed(2)}</td>
+                <td>{row.raw_score?.toFixed(2)}</td>
                 <td>{row.WQS_adj?.toFixed(2)}</td>
                 <td>{row.LAQ?.toFixed(2)}</td>
-                <td>{row.PDI?.toFixed(1)}</td>
               </tr>
             ))}
           </tbody>
