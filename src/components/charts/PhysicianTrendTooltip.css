@@ -1,9 +1,9 @@
 .physician-trend-tooltip {
-  width: 460px;
+  width: 620px;
 
   max-width:
     min(
-      460px,
+      620px,
       calc(
         100vw - 20px
       )
@@ -44,11 +44,37 @@
   font-weight: 700;
 }
 
-.physician-trend-tooltip__section {
+.physician-trend-tooltip__comparison {
   padding:
     6px
     12px
     12px;
+}
+
+.physician-trend-tooltip__physician {
+  padding:
+    11px
+    16px
+    8px;
+
+  border-top:
+    1px solid
+    color-mix(
+      in srgb,
+      var(--color-gray8) 12%,
+      transparent
+    );
+
+  color:
+    var(--color-gray12);
+
+  font-size:
+    13px;
+
+  font-weight:
+    var(--font-weight-bold);
+
+  text-align: right;
 }
 
 .physician-trend-tooltip__table {
@@ -125,7 +151,7 @@ td {
 th:first-child,
 .physician-trend-tooltip__table
 td:first-child {
-  width: 54%;
+  width: 42%;
 
   text-align: right;
 }
@@ -173,4 +199,15 @@ td:not(:first-child) {
 
   font-variant-numeric:
     tabular-nums;
+}
+
+.physician-trend-tooltip
+.qm-rich-tooltip__headline {
+  padding-top: 0;
+}
+
+.physician-trend-tooltip
+.qm-rich-tooltip__section:last-child {
+  padding-bottom:
+    14px;
 }

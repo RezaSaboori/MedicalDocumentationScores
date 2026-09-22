@@ -248,15 +248,19 @@ const PhysicianScoreTrendLayer = ({
         row.resident_year
       ).trim() !== '';
 
+    const showYearComparison =
+      isResident &&
+      hasKnownYear;
+
     const relatedYearLabel =
-      hasKnownYear
+      showYearComparison
         ? `دستیاران سال ${toPersianDigits(
             row.resident_year
           )}`
-        : 'دستیاران همه سال‌ها';
+        : null;
 
     const columns =
-      isResident
+      showYearComparison
         ? [
             'شاخص',
             'پزشک',
@@ -279,7 +283,7 @@ const PhysicianScoreTrendLayer = ({
             series.color,
 
           values:
-            isResident
+            showYearComparison
               ? [
                   formatMetricValue(
                     row[
