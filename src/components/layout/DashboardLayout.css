@@ -42,7 +42,7 @@
 
 /* Filters sit directly on the page — no surface, no scrollbar flashes */
 .filters-container {
-  padding: var(--spacing-md);
+  padding: var(--spacing-md) 0 !important;
   background: transparent !important;
   box-shadow: none !important;
   border: none !important;

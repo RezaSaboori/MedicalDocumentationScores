@@ -11,22 +11,20 @@ const KpiCards = () => {
 
   const kpis = useMemo(() => {
     if (!d || d.length === 0) return null;
-    const hasFlag = (flag) => d.filter(row => row.flags.includes(flag)).length;
+
     return {
       n_physicians: d.length,
       total_visits: d.reduce((sum, row) => sum + (row.V || 0), 0),
       mean_pdi: d.reduce((sum, row) => sum + (row.PDI || 0), 0) / d.length,
       mean_cov: d.reduce((sum, row) => sum + (row.COV || 0), 0) / d.length,
       mean_rho_z: d.reduce((sum, row) => sum + (row.rho_Z || 0), 0) / d.length,
-      n_lazy: hasFlag('ENGAGEMENT_TRAINING'),
-      n_exemplar: hasFlag('EXEMPLAR'),
     };
   }, [d]);
 
   if (loading) {
     return (
       <div className="kpi-grid">
-        {Array.from({ length: 7 }).map((_, i) => (
+        {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="glass u-container u-container--sm kpi-card">
             <Skeleton width="70%" height="0.9rem" />
             <Skeleton width="45%" height="1.6rem" />
@@ -58,8 +56,6 @@ const KpiCards = () => {
     { title: 'میانگین PDI', value: kpis.mean_pdi.toFixed(1), color: 'var(--color-blue)', sub: 'از 100' },
     { title: 'نسبت مستندسازی', value: formatPercent(kpis.mean_cov, 0), color: 'var(--color-green)' },
     { title: 'میانگین نرخ پرونده خالی', value: formatPercent(kpis.mean_rho_z, 0), color: 'var(--color-orange)' },
-    { title: 'گروه کم‌حوصله', value: formatNumber(kpis.n_lazy), color: 'var(--color-orange)', sub: 'پزشک' },
-    { title: 'گروه باحوصله', value: formatNumber(kpis.n_exemplar), color: 'var(--color-green)', sub: 'پزشک' },
   ];
 
   return (
