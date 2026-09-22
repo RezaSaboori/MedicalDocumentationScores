@@ -1,13 +1,22 @@
 import React, { useMemo, useState } from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 import { formatPercent } from '../../utils/formatters';
-import { PDI_THRESHOLD } from '../../utils/constants';
+import {
+  DASHBOARD_MODES,
+  PDI_THRESHOLD,
+} from '../../utils/constants';
 import { Skeleton } from '../ui/Skeleton';
 import './AuditTable.css';
 
 const AuditTable = () => {
-  const { data, loading } = useDashboard();
+  const { data, loading, mode } = useDashboard();
   const [sortConfig, setSortConfig] = useState({ key: 'PDI', direction: 'desc' });
+
+  const showYearColumn =
+    mode === DASHBOARD_MODES.RESIDENTS;
+
+  const columnCount =
+    showYearColumn ? 12 : 11;
 
   const sortedData = useMemo(() => {
     if (!data.current) return [];
@@ -42,6 +51,11 @@ const AuditTable = () => {
           <colgroup>
             <col className="audit-table__col audit-table__col--index" />
             <col className="audit-table__col audit-table__col--name" />
+
+            {showYearColumn && (
+              <col className="audit-table__col audit-table__col--year" />
+            )}
+
             <col className="audit-table__col audit-table__col--group" />
             <col className="audit-table__col audit-table__col--visits" />
             <col className="audit-table__col audit-table__col--empty-rate" />
@@ -62,6 +76,12 @@ const AuditTable = () => {
               <th onClick={() => handleSort('name')}>
                 نام
               </th>
+
+              {showYearColumn && (
+                <th onClick={() => handleSort('year')}>
+                  سال
+                </th>
+              )}
 
               <th onClick={() => handleSort('group_fa')}>
                 گروه
@@ -104,7 +124,7 @@ const AuditTable = () => {
           <tbody>
             {loading && Array.from({ length: 10 }).map((_, i) => (
               <tr key={`skeleton-${i}`}>
-                {Array.from({ length: 11 }).map((_, j) => (
+                {Array.from({ length: columnCount }).map((_, j) => (
                   <td
                     key={j}
                     className={j === 0 ? 'audit-table__index' : undefined}
@@ -126,12 +146,24 @@ const AuditTable = () => {
                   </td>
 
                   <td className="audit-table__name">
-                    {row.name}
+                    <span
+                      className="audit-table__ellipsis audit-table__name-text"
+                      title={row.name}
+                    >
+                      {row.name}
+                    </span>
                   </td>
+
+                  {showYearColumn && (
+                    <td>
+                      {row.year ?? '—'}
+                    </td>
+                  )}
 
                   <td>
                     <span
-                      className="audit-table__group"
+                      className="audit-table__ellipsis audit-table__group"
+                      title={row.group_fa}
                       style={{
                         '--audit-group-color':
                           row.group_color || 'var(--color-gray7)',
