@@ -261,7 +261,7 @@ const PhysicianScoreTrendChart = ({
                 }}
                 enableGridX={false}
                 enableGridY
-                isInteractive={false}
+                isInteractive
                 layers={[
                   'grid',
                   'axes',

@@ -264,7 +264,7 @@ const PhysicianDocumentationBubbleChart = ({
                 }}
                 enableGridX={false}
                 enableGridY
-                isInteractive={false}
+                isInteractive
                 layers={[
                   'grid',
                   'axes',
