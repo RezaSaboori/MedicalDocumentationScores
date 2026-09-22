@@ -336,14 +336,186 @@ export const createRouter = (db) => {
       });
     }
 
-    const rows = db
+    const normalizeName = (value) =>
+      String(value || '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const normalizeYear = (value) => {
+      if (
+        value === null ||
+        value === undefined ||
+        String(value).trim() === ''
+      ) {
+        return null;
+      }
+
+      return String(value).trim();
+    };
+
+    const toFiniteNumber = (value) => {
+      if (
+        value === null ||
+        value === undefined ||
+        value === ''
+      ) {
+        return null;
+      }
+
+      const number =
+        Number(value);
+
+      return Number.isFinite(number)
+        ? number
+        : null;
+    };
+
+    const meanField = (
+      rows,
+      field
+    ) => {
+      const values =
+        rows
+          .map((row) =>
+            toFiniteNumber(
+              row[field]
+            )
+          )
+          .filter(
+            (value) =>
+              value !== null
+          );
+
+      if (!values.length) {
+        return null;
+      }
+
+      return (
+        values.reduce(
+          (sum, value) =>
+            sum + value,
+          0
+        ) / values.length
+      );
+    };
+
+    const groupBySnapshot = (
+      rows
+    ) => {
+      const map =
+        new Map();
+
+      rows.forEach((row) => {
+        const snapshotId =
+          Number(
+            row.snapshot_id
+          );
+
+        if (
+          !map.has(
+            snapshotId
+          )
+        ) {
+          map.set(
+            snapshotId,
+            []
+          );
+        }
+
+        map
+          .get(snapshotId)
+          .push(row);
+      });
+
+      return map;
+    };
+
+    const buildCompetitionRanks = (
+      rows
+    ) => {
+      const ranked =
+        (rows || [])
+          .map((row) => {
+            const score =
+              toFiniteNumber(
+                row.PDI
+              );
+
+            if (
+              !row.name ||
+              score === null
+            ) {
+              return null;
+            }
+
+            return {
+              name:
+                normalizeName(
+                  row.name
+                ),
+
+              rawScore:
+                score,
+
+              roundedScore:
+                Math.ceil(
+                  score
+                ),
+            };
+          })
+          .filter(Boolean)
+          .sort(
+            (a, b) =>
+              b.roundedScore -
+                a.roundedScore ||
+              b.rawScore -
+                a.rawScore ||
+              a.name.localeCompare(
+                b.name
+              )
+          );
+
+      const ranks =
+        new Map();
+
+      let previousScore =
+        null;
+
+      let currentRank = 0;
+
+      ranked.forEach(
+        (row, index) => {
+          if (
+            previousScore ===
+              null ||
+            row.roundedScore !==
+              previousScore
+          ) {
+            currentRank =
+              index + 1;
+
+            previousScore =
+              row.roundedScore;
+          }
+
+          ranks.set(
+            row.name,
+            currentRank
+          );
+        }
+      );
+
+      return ranks;
+    };
+
+    const selectedRows = db
       .prepare(`
         SELECT
+          s.id AS snapshot_id,
           s.period,
 
           a.id AS row_id,
-          a.category,
-          a.name,
+          a.name AS stored_name,
 
           a.V,
           a.D,
@@ -352,35 +524,15 @@ export const createRouter = (db) => {
           a.calibrated_score,
           a.PDI,
 
+          a.Q0,
+          a.Q1,
+          a.Q2,
+          a.Q3,
+          a.Q4,
+          a.Q5,
+
           a.group_fa,
-          a.flags,
-
-          (
-            SELECT AVG(r.PDI)
-            FROM aggregated_scores r
-            WHERE
-              r.snapshot_id = s.id
-              AND r.category = 'resident'
-              AND r.PDI IS NOT NULL
-          ) AS residents_PDI,
-
-          (
-            SELECT AVG(r.calibrated_score)
-            FROM aggregated_scores r
-            WHERE
-              r.snapshot_id = s.id
-              AND r.category = 'resident'
-              AND r.calibrated_score IS NOT NULL
-          ) AS residents_calibrated_score,
-
-          (
-            SELECT AVG(r.raw_score)
-            FROM aggregated_scores r
-            WHERE
-              r.snapshot_id = s.id
-              AND r.category = 'resident'
-              AND r.raw_score IS NOT NULL
-          ) AS residents_raw_score
+          a.flags
 
         FROM snapshots s
 
@@ -395,6 +547,393 @@ export const createRouter = (db) => {
       .all(
         category,
         name
+      );
+
+    const residentRows = db
+      .prepare(`
+        SELECT
+          a.snapshot_id,
+          a.name,
+
+          a.PDI,
+          a.calibrated_score,
+          a.raw_score,
+
+          COALESCE(
+            (
+              SELECT
+                NULLIF(
+                  TRIM(r.year),
+                  ''
+                )
+              FROM residents r
+              WHERE
+                r.snapshot_id =
+                  a.snapshot_id
+                AND TRIM(r.name) =
+                  TRIM(a.name)
+              LIMIT 1
+            ),
+            (
+              SELECT
+                NULLIF(
+                  TRIM(rm.year),
+                  ''
+                )
+              FROM residents_master rm
+              WHERE
+                TRIM(rm.name) =
+                  TRIM(a.name)
+              LIMIT 1
+            )
+          ) AS resident_year
+
+        FROM aggregated_scores a
+
+        WHERE
+          a.category = 'resident'
+      `)
+      .all();
+
+    const residentRowsBySnapshot =
+      groupBySnapshot(
+        residentRows
+      );
+
+    const categoryRows =
+      category === 'resident'
+        ? residentRows
+        : db
+            .prepare(`
+              SELECT
+                snapshot_id,
+                name,
+                PDI
+              FROM aggregated_scores
+              WHERE category = ?
+            `)
+            .all(category);
+
+    const categoryRowsBySnapshot =
+      groupBySnapshot(
+        categoryRows
+      );
+
+    let residentYearBySnapshot =
+      new Map();
+
+    if (
+      category === 'resident'
+    ) {
+      const yearRows = db
+        .prepare(`
+          SELECT
+            s.id AS snapshot_id,
+
+            COALESCE(
+              (
+                SELECT
+                  NULLIF(
+                    TRIM(r.year),
+                    ''
+                  )
+                FROM residents r
+                WHERE
+                  r.snapshot_id =
+                    s.id
+                  AND TRIM(r.name) =
+                    TRIM(?)
+                LIMIT 1
+              ),
+              (
+                SELECT
+                  NULLIF(
+                    TRIM(rm.year),
+                    ''
+                  )
+                FROM residents_master rm
+                WHERE
+                  TRIM(rm.name) =
+                    TRIM(?)
+                LIMIT 1
+              )
+            ) AS resident_year
+
+          FROM snapshots s
+
+          ORDER BY s.period ASC
+        `)
+        .all(
+          name,
+          name
+        );
+
+      residentYearBySnapshot =
+        new Map(
+          yearRows.map(
+            (row) => [
+              Number(
+                row.snapshot_id
+              ),
+
+              normalizeYear(
+                row.resident_year
+              ),
+            ]
+          )
+        );
+    }
+
+    const getRelatedResidentRows = (
+      snapshotId,
+      residentYear
+    ) => {
+      const allResidents =
+        residentRowsBySnapshot.get(
+          Number(snapshotId)
+        ) || [];
+
+      if (
+        category !== 'resident' ||
+        residentYear === null
+      ) {
+        return allResidents;
+      }
+
+      return allResidents.filter(
+        (row) =>
+          normalizeYear(
+            row.resident_year
+          ) ===
+          residentYear
+      );
+    };
+
+    const getRankScope = (
+      snapshotId,
+      residentYear
+    ) => {
+      if (
+        category === 'resident'
+      ) {
+        return getRelatedResidentRows(
+          snapshotId,
+          residentYear
+        );
+      }
+
+      return (
+        categoryRowsBySnapshot.get(
+          Number(snapshotId)
+        ) || []
+      );
+    };
+
+    const normalizedSelectedName =
+      normalizeName(name);
+
+    const rows =
+      selectedRows.map(
+        (
+          row,
+          index
+        ) => {
+          const snapshotId =
+            Number(
+              row.snapshot_id
+            );
+
+          const residentYear =
+            category ===
+            'resident'
+              ? residentYearBySnapshot.get(
+                  snapshotId
+                ) ?? null
+              : null;
+
+          const allResidents =
+            residentRowsBySnapshot.get(
+              snapshotId
+            ) || [];
+
+          const relatedResidents =
+            getRelatedResidentRows(
+              snapshotId,
+              residentYear
+            );
+
+          const benchmarkResidents =
+            category === 'resident'
+              ? relatedResidents
+              : allResidents;
+
+          const currentRanks =
+            buildCompetitionRanks(
+              getRankScope(
+                snapshotId,
+                residentYear
+              )
+            );
+
+          const currentRank =
+            row.row_id !== null
+              ? currentRanks.get(
+                  normalizedSelectedName
+                ) ?? null
+              : null;
+
+          let rankChange =
+            null;
+
+          let scoreChange =
+            null;
+
+          if (
+            row.row_id !== null &&
+            index > 0
+          ) {
+            const previousRow =
+              selectedRows[
+                index - 1
+              ];
+
+            if (
+              previousRow?.row_id !==
+              null
+            ) {
+              const previousSnapshotId =
+                Number(
+                  previousRow.snapshot_id
+                );
+
+              const previousYear =
+                category ===
+                'resident'
+                  ? residentYearBySnapshot.get(
+                      previousSnapshotId
+                    ) ?? null
+                  : null;
+
+              const previousRanks =
+                buildCompetitionRanks(
+                  getRankScope(
+                    previousSnapshotId,
+                    previousYear
+                  )
+                );
+
+              const previousRank =
+                previousRanks.get(
+                  normalizedSelectedName
+                );
+
+              if (
+                currentRank !== null &&
+                previousRank !==
+                  undefined
+              ) {
+                rankChange =
+                  previousRank -
+                  currentRank;
+              }
+
+              const currentPDI =
+                toFiniteNumber(
+                  row.PDI
+                );
+
+              const previousPDI =
+                toFiniteNumber(
+                  previousRow.PDI
+                );
+
+              if (
+                currentPDI !== null &&
+                previousPDI !== null
+              ) {
+                scoreChange =
+                  currentPDI -
+                  previousPDI;
+              }
+            }
+          }
+
+          return {
+            ...row,
+
+            category,
+
+            name:
+              row.stored_name ||
+              name,
+
+            resident_year:
+              residentYear,
+
+            current_rank:
+              currentRank,
+
+            rank_change:
+              rankChange,
+
+            score_change:
+              scoreChange,
+
+            residents_PDI:
+              meanField(
+                allResidents,
+                'PDI'
+              ),
+
+            residents_calibrated_score:
+              meanField(
+                allResidents,
+                'calibrated_score'
+              ),
+
+            residents_raw_score:
+              meanField(
+                allResidents,
+                'raw_score'
+              ),
+
+            year_residents_PDI:
+              meanField(
+                relatedResidents,
+                'PDI'
+              ),
+
+            year_residents_calibrated_score:
+              meanField(
+                relatedResidents,
+                'calibrated_score'
+              ),
+
+            year_residents_raw_score:
+              meanField(
+                relatedResidents,
+                'raw_score'
+              ),
+
+            benchmark_PDI:
+              meanField(
+                benchmarkResidents,
+                'PDI'
+              ),
+
+            benchmark_calibrated_score:
+              meanField(
+                benchmarkResidents,
+                'calibrated_score'
+              ),
+
+            benchmark_raw_score:
+              meanField(
+                benchmarkResidents,
+                'raw_score'
+              ),
+          };
+        }
       );
 
     res.json(rows);

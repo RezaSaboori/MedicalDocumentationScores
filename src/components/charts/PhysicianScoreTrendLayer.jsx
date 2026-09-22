@@ -7,10 +7,11 @@ import {
 } from '@nivo/tooltip';
 import {
   formatPeriodLabel,
+  toPersianDigits,
 } from '../../utils/period';
 import PhysicianTrendTooltip from './PhysicianTrendTooltip';
 
-const RESIDENTS_OPACITY =
+const BENCHMARK_OPACITY =
   0.22;
 
 const LEGEND_DIMMED_OPACITY =
@@ -234,6 +235,94 @@ const PhysicianScoreTrendLayer = ({
       monthIndex
     );
 
+    const isResident =
+      row.category ===
+      'resident';
+
+    const hasKnownYear =
+      row.resident_year !==
+        null &&
+      row.resident_year !==
+        undefined &&
+      String(
+        row.resident_year
+      ).trim() !== '';
+
+    const relatedYearLabel =
+      hasKnownYear
+        ? `دستیاران سال ${toPersianDigits(
+            row.resident_year
+          )}`
+        : 'دستیاران همه سال‌ها';
+
+    const columns =
+      isResident
+        ? [
+            'شاخص',
+            'پزشک',
+            relatedYearLabel,
+            'همه دستیاران',
+          ]
+        : [
+            'شاخص',
+            'پزشک',
+            'همه دستیاران',
+          ];
+
+    const tooltipRows =
+      seriesConfig.map(
+        (series) => ({
+          label:
+            series.label,
+
+          color:
+            series.color,
+
+          values:
+            isResident
+              ? [
+                  formatMetricValue(
+                    row[
+                      series.dataKey
+                    ],
+                    series.digits
+                  ),
+
+                  formatMetricValue(
+                    row[
+                      series
+                        .yearResidentsDataKey
+                    ],
+                    series.digits
+                  ),
+
+                  formatMetricValue(
+                    row[
+                      series
+                        .allResidentsDataKey
+                    ],
+                    series.digits
+                  ),
+                ]
+              : [
+                  formatMetricValue(
+                    row[
+                      series.dataKey
+                    ],
+                    series.digits
+                  ),
+
+                  formatMetricValue(
+                    row[
+                      series
+                        .allResidentsDataKey
+                    ],
+                    series.digits
+                  ),
+                ],
+        })
+      );
+
     showTooltip(
       <PhysicianTrendTooltip
         title={
@@ -241,38 +330,16 @@ const PhysicianScoreTrendLayer = ({
             row.period
           )
         }
-        columns={[
-          'شاخص',
-          'پزشک',
-          'همه رزیدنت‌ها',
-        ]}
+        columns={
+          columns
+        }
         rows={
-          seriesConfig.map(
-            (series) => ({
-              label:
-                series.label,
-
-              color:
-                series.color,
-
-              values: [
-                formatMetricValue(
-                  row[
-                    series.dataKey
-                  ],
-                  series.digits
-                ),
-
-                formatMetricValue(
-                  row[
-                    series
-                      .residentsDataKey
-                  ],
-                  series.digits
-                ),
-              ],
-            })
-          )
+          tooltipRows
+        }
+        qualityRow={
+          row.row_id !== null
+            ? row
+            : null
         }
       />,
       event
@@ -301,11 +368,11 @@ const PhysicianScoreTrendLayer = ({
                 series.id
             );
 
-          const residentsNodes =
+          const benchmarkNodes =
             nodes.filter(
               (node) =>
                 node.serieId ===
-                series.residentsId
+                series.benchmarkId
             );
 
           const legendOpacity =
@@ -332,14 +399,14 @@ const PhysicianScoreTrendLayer = ({
                 }
               >
                 {buildSegments(
-                  residentsNodes
+                  benchmarkNodes
                 ).map(
                   (
                     segment,
                     segmentIndex
                   ) => (
                     <polyline
-                      key={`${series.residentsId}-${segmentIndex}`}
+                      key={`${series.benchmarkId}-${segmentIndex}`}
                       points={
                         segment
                           .map(
@@ -354,7 +421,7 @@ const PhysicianScoreTrendLayer = ({
                       }
                       strokeWidth="2.25"
                       strokeOpacity={
-                        RESIDENTS_OPACITY
+                        BENCHMARK_OPACITY
                       }
                       strokeLinecap="round"
                       strokeLinejoin="round"

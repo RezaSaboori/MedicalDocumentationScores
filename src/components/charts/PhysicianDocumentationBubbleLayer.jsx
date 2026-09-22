@@ -2,13 +2,13 @@ import React from 'react';
 import {
   useTooltip,
 } from '@nivo/tooltip';
-import ChartTooltip from './ChartTooltip';
 import {
   formatPercent,
 } from '../../utils/formatters';
 import {
   formatPeriodLabel,
 } from '../../utils/period';
+import PhysicianTrendTooltip from './PhysicianTrendTooltip';
 
 const PhysicianDocumentationBubbleLayer = ({
   nodes,
@@ -68,38 +68,48 @@ const PhysicianDocumentationBubbleLayer = ({
     }
 
     showTooltip(
-      <ChartTooltip
+      <PhysicianTrendTooltip
         title={
           formatPeriodLabel(
             row.period
           )
         }
+        columns={[
+          'شاخص',
+          'مقدار',
+        ]}
         rows={[
           {
             label: 'گروه',
-            value:
+            color:
+              row.group_color,
+            values: [
               row.group_fa ||
-              '—',
+                '—',
+            ],
           },
           {
             label: 'ویزیت',
-            value:
+            values: [
               Number(
                 row.V
               ).toLocaleString(
                 'en-US'
               ),
+            ],
           },
           {
             label:
               'نسبت مستندسازی',
-            value:
+            values: [
               formatPercent(
                 row.documentation_ratio,
                 1
               ),
+            ],
           },
         ]}
+        qualityRow={row}
       />,
       event
     );

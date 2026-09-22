@@ -13,10 +13,14 @@ import PhysicianScoreTrendLayer from './PhysicianScoreTrendLayer';
 const SERIES_CONFIG = [
   {
     id: 'pdi',
-    residentsId:
-      'pdi-residents',
+    benchmarkId:
+      'pdi-benchmark',
     dataKey: 'PDI',
-    residentsDataKey:
+    benchmarkDataKey:
+      'benchmark_PDI',
+    yearResidentsDataKey:
+      'year_residents_PDI',
+    allResidentsDataKey:
       'residents_PDI',
     label:
       'امتیاز کیفیت ثبت پرونده‌ها',
@@ -26,11 +30,15 @@ const SERIES_CONFIG = [
   },
   {
     id: 'calibrated',
-    residentsId:
-      'calibrated-residents',
+    benchmarkId:
+      'calibrated-benchmark',
     dataKey:
       'calibrated_score',
-    residentsDataKey:
+    benchmarkDataKey:
+      'benchmark_calibrated_score',
+    yearResidentsDataKey:
+      'year_residents_calibrated_score',
+    allResidentsDataKey:
       'residents_calibrated_score',
     label:
       'میانگین نمرات پرونده‌ها - کالیبره‌شده',
@@ -40,11 +48,15 @@ const SERIES_CONFIG = [
   },
   {
     id: 'raw',
-    residentsId:
-      'raw-residents',
+    benchmarkId:
+      'raw-benchmark',
     dataKey:
       'raw_score',
-    residentsDataKey:
+    benchmarkDataKey:
+      'benchmark_raw_score',
+    yearResidentsDataKey:
+      'year_residents_raw_score',
+    allResidentsDataKey:
       'residents_raw_score',
     label:
       'میانگین نمرات پرونده‌ها - خام',
@@ -61,6 +73,13 @@ const PhysicianScoreTrendChart = ({
     hoveredSeries,
     setHoveredSeries,
   ] = useState(null);
+
+  const isResidentTrend =
+    data.some(
+      (row) =>
+        row.category ===
+        'resident'
+    );
 
   const periodLabels =
     useMemo(
@@ -114,9 +133,9 @@ const PhysicianScoreTrendChart = ({
                 .filter(Boolean),
             };
 
-            const residentsSeries = {
+            const benchmarkSeries = {
               id:
-                config.residentsId,
+                config.benchmarkId,
 
               data: data
                 .map(
@@ -128,7 +147,7 @@ const PhysicianScoreTrendChart = ({
                       Number(
                         row[
                           config
-                            .residentsDataKey
+                            .benchmarkDataKey
                         ]
                       );
 
@@ -152,7 +171,7 @@ const PhysicianScoreTrendChart = ({
 
             return [
               physicianSeries,
-              residentsSeries,
+              benchmarkSeries,
             ];
           }
         ),
@@ -198,7 +217,9 @@ const PhysicianScoreTrendChart = ({
           </h3>
 
           <p className="physician-trend-chart__subtitle">
-            خطوط کم‌رنگ = روند همه رزیدنت‌ها
+            {isResidentTrend
+              ? 'خطوط کم‌رنگ = میانگین دستیاران هم‌سال؛ سال نامشخص = همه دستیاران'
+              : 'خطوط کم‌رنگ = روند همه دستیاران'}
           </p>
         </div>
       </header>
