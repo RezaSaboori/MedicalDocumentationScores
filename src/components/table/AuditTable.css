@@ -145,6 +145,10 @@
     var(--motion-easing-easeOut);
 }
 
+.audit-table__row--interactive {
+  cursor: pointer;
+}
+
 .audit-table__row:not(
   .audit-table__row--header
 ):hover {

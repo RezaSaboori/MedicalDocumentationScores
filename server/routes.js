@@ -312,6 +312,64 @@ export const createRouter = (db) => {
     }
   });
 
+  router.get('/api/physician-trend/:category/:name', (req, res) => {
+    const {
+      category,
+      name,
+    } = req.params;
+
+    const allowedCategories =
+      new Set([
+        'resident',
+        'faculty',
+        'faculty_supervision',
+      ]);
+
+    if (
+      !allowedCategories.has(
+        category
+      )
+    ) {
+      return res.status(400).json({
+        error:
+          'دسته‌بندی پزشک نامعتبر است.',
+      });
+    }
+
+    const rows = db
+      .prepare(`
+        SELECT
+          s.period,
+
+          a.id AS row_id,
+          a.category,
+          a.name,
+
+          a.V,
+          a.D,
+
+          a.raw_score,
+          a.calibrated_score,
+          a.PDI,
+
+          a.group_fa,
+          a.flags
+        FROM snapshots s
+        LEFT JOIN aggregated_scores a
+          ON
+            a.snapshot_id = s.id
+            AND a.category = ?
+            AND a.name = ?
+        ORDER BY s.period ASC
+      `)
+      .all(
+        category,
+        name
+      );
+
+    res.json(rows);
+  });
+
   router.get('/api/faculty-impact/:faculty', (req, res) => {
     const { faculty } = req.params;
 

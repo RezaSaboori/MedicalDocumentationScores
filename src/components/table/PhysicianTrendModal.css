@@ -1,0 +1,409 @@
+.physician-trend-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding:
+    var(--spacing-lg);
+
+  background:
+    transparent;
+
+  direction: rtl;
+}
+
+.physician-trend-modal__backdrop {
+  position: absolute;
+  inset: 0;
+
+  background:
+    color-mix(
+      in srgb,
+      var(--color-gray12) 20%,
+      transparent
+    );
+
+  -webkit-backdrop-filter:
+    blur(2px)
+    brightness(1.1);
+
+  backdrop-filter:
+    blur(2px)
+    brightness(1.1);
+}
+
+.physician-trend-modal__panel.u-container {
+  position: relative;
+  z-index: 1;
+
+  flex: 0 1 auto;
+
+  width: min(
+    86vw,
+    88rem
+  );
+
+  max-width: 86vw;
+  max-height:
+    min(
+      92vh,
+      70rem
+    );
+
+  overflow: hidden;
+
+  align-items: stretch;
+  isolation: isolate;
+
+  color:
+    var(--color-gray12);
+
+  --p:
+    var(--spacing-lg);
+
+  --gap:
+    var(--spacing-md);
+
+  --radius:
+    var(
+      --border-radius-container-lg
+    );
+}
+
+.physician-trend-modal__header {
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  width: 100%;
+
+  gap:
+    var(--spacing-md);
+
+  padding:
+    var(--spacing-sm);
+}
+
+.physician-trend-modal__title {
+  margin: 0;
+
+  color:
+    var(--color-gray12);
+
+  font-size:
+    var(--font-size-lg);
+
+  font-weight:
+    var(--font-weight-semibold);
+
+  text-align: right;
+}
+
+.physician-trend-modal__close {
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 2.75rem;
+  height: 2.75rem;
+
+  padding:
+    0 0 5px;
+
+  border: none;
+
+  border-radius:
+    var(--border-radius-pill);
+
+  background-color:
+    var(--color-gray11);
+
+  color:
+    var(--color-gray1);
+
+  font-family: inherit;
+
+  font-size:
+    var(--font-size-lg);
+
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    opacity
+    var(--motion-duration-fast)
+    var(--motion-easing-easeOut);
+}
+
+.physician-trend-modal__close:hover {
+  opacity: 0.8;
+}
+
+.dark
+.physician-trend-modal__close {
+  background-color:
+    var(--color-gray2);
+
+  color:
+    var(--color-gray11);
+}
+
+.physician-trend-modal__body {
+  flex: 1 1 auto;
+
+  display: flex;
+  flex-direction: column;
+
+  width: 100%;
+  min-height: 0;
+
+  gap:
+    var(--spacing-lg);
+
+  padding:
+    var(--spacing-md);
+
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.physician-trend-modal__state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 18rem;
+
+  padding:
+    var(--spacing-lg);
+
+  color:
+    var(--color-gray8);
+
+  font-size:
+    var(--font-size-sm);
+
+  text-align: center;
+}
+
+.physician-trend-modal__state--error {
+  color:
+    var(--color-red);
+}
+
+.physician-trend-chart.u-container {
+  flex: 0 0 auto;
+
+  width: 100%;
+
+  align-items: stretch;
+
+  overflow: hidden;
+
+  --p:
+    var(--spacing-md);
+
+  --gap:
+    var(--spacing-md);
+
+  --radius:
+    var(
+      --border-radius-container-md
+    );
+}
+
+.physician-trend-chart__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  width: 100%;
+
+  padding:
+    0
+    var(--spacing-sm);
+}
+
+.physician-trend-chart__title {
+  margin: 0;
+
+  color:
+    var(--color-gray12);
+
+  font-size:
+    var(--font-size-base);
+
+  font-weight:
+    var(--font-weight-semibold);
+}
+
+.physician-trend-chart__subtitle {
+  margin:
+    var(--spacing-xs)
+    0
+    0;
+
+  color:
+    var(--color-gray7);
+
+  font-size:
+    var(--font-size-sm);
+}
+
+.physician-trend-chart__scroll {
+  width: 100%;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.physician-trend-chart__plot {
+  width: 100%;
+  height: 380px;
+}
+
+.physician-trend-chart__plot
+svg
+text {
+  fill:
+    var(--color-gray8);
+
+  font-family:
+    var(
+      --font-family-persian,
+      var(--font-family-base)
+    );
+
+  font-size:
+    var(--font-size-xs);
+}
+
+.physician-trend-chart__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 16rem;
+
+  color:
+    var(--color-gray8);
+
+  font-size:
+    var(--font-size-sm);
+}
+
+.physician-score-trend__series {
+  transition:
+    opacity
+    var(--motion-duration-fast)
+    var(--motion-easing-easeOut);
+}
+
+.physician-score-trend__point,
+.physician-documentation-bubble__node {
+  cursor: pointer;
+}
+
+.physician-score-trend__legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+
+  width: 100%;
+
+  gap:
+    var(--spacing-sm)
+    var(--spacing-lg);
+
+  padding:
+    var(--spacing-sm)
+    var(--spacing-md);
+}
+
+.physician-score-trend__legend-item {
+  all: unset;
+
+  display: inline-flex;
+  align-items: center;
+
+  gap:
+    var(--spacing-xs);
+
+  color:
+    var(--color-gray10);
+
+  font-family:
+    var(
+      --font-family-persian,
+      var(--font-family-base)
+    );
+
+  font-size:
+    var(--font-size-sm);
+
+  cursor: pointer;
+
+  transition:
+    opacity
+    var(--motion-duration-fast)
+    var(--motion-easing-easeOut);
+}
+
+.physician-score-trend__legend-item--dimmed {
+  opacity: 0.22;
+}
+
+.physician-score-trend__legend-dot {
+  width: 12px;
+  height: 12px;
+
+  flex: 0 0 12px;
+
+  border-radius:
+    var(--border-radius-pill);
+
+  background:
+    var(
+      --physician-trend-series-color
+    );
+}
+
+.physician-documentation-bubble__legend {
+  width: 100%;
+}
+
+.physician-documentation-bubble__legend
+.chart-legend {
+  margin-top: 0;
+}
+
+@media (
+  max-width: 900px
+) {
+  .physician-trend-modal {
+    padding:
+      var(--spacing-md);
+  }
+
+  .physician-trend-modal__panel.u-container {
+    width: 96vw;
+    max-width: 96vw;
+
+    --p:
+      var(--spacing-md);
+  }
+
+  .physician-trend-modal__body {
+    padding:
+      var(--spacing-sm);
+  }
+}

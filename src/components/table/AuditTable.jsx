@@ -12,6 +12,7 @@ import {
   PDI_THRESHOLD,
 } from '../../utils/constants';
 import { Skeleton } from '../ui/Skeleton';
+import PhysicianTrendModal from './PhysicianTrendModal';
 import './AuditTable.css';
 
 const formatFixed = (value, digits) => {
@@ -180,6 +181,11 @@ const AuditTable = () => {
 
   const tableRef = useRef(null);
   const horizontalScrollRef = useRef(null);
+
+  const [
+    selectedPhysician,
+    setSelectedPhysician,
+  ] = useState(null);
 
   const [sortConfig, setSortConfig] =
     useState({
@@ -389,7 +395,8 @@ const AuditTable = () => {
   };
 
   return (
-    <section className="glass u-container u-container--md audit-panel">
+    <>
+      <section className="glass u-container u-container--md audit-panel">
       <div className="audit-panel__body">
         <div
           ref={tableRef}
@@ -493,8 +500,13 @@ const AuditTable = () => {
                       row.name ??
                       rowIndex
                     }
-                    className="audit-table__row"
+                    className="audit-table__row audit-table__row--interactive"
                     role="row"
+                    onClick={() =>
+                      setSelectedPhysician(
+                        row
+                      )
+                    }
                   >
                     <div className="audit-table__row-viewport">
                       <div className="audit-table__track">
@@ -542,7 +554,19 @@ const AuditTable = () => {
           </div>
         </div>
       </div>
-    </section>
+      </section>
+
+      <PhysicianTrendModal
+        physician={
+          selectedPhysician
+        }
+        onClose={() =>
+          setSelectedPhysician(
+            null
+          )
+        }
+      />
+    </>
   );
 };
 

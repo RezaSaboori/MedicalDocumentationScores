@@ -51,6 +51,25 @@ export const saveResidentsMaster = async (list) => {
   return res.json();
 };
 
+export const fetchPhysicianTrend = async (
+  category,
+  name
+) => {
+  const res = await fetch(
+    `${API_BASE}/api/physician-trend/${encodeURIComponent(
+      category
+    )}/${encodeURIComponent(name)}`
+  );
+
+  if (!res.ok) {
+    throw new Error(
+      'خطا در دریافت روند پزشک'
+    );
+  }
+
+  return res.json();
+};
+
 export const fetchFacultyImpact = async (facultyName) => {
   const res = await fetch(`${API_BASE}/api/faculty-impact/${encodeURIComponent(facultyName)}`);
   if (!res.ok) return [];
