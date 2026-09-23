@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import KpiCards from '../kpis/KpiCards';
 import DashboardFilters from '../filters/DashboardFilters';
-import GroupDonutChart from '../charts/GroupDonutChart';
-import FlagMembershipChart from '../charts/FlagMembershipChart';
+import BehavioralGroupsChart from '../charts/BehavioralGroupsChart';
 import LoadVsQualityChart from '../charts/LoadVsQualityChart';
 import QualityMixChart from '../charts/QualityMixChart';
 import AuditTable from '../table/AuditTable';
@@ -61,12 +60,8 @@ const DashboardLayout = () => {
           </div>
         )}
 
-      <div className="charts-grid-2">
-        <GroupDonutChart />
-        <FlagMembershipChart />
-      </div>
-
       <div className="charts-grid-1">
+        <BehavioralGroupsChart />
         <QualityMixChart />
         <LoadVsQualityChart />
       </div>

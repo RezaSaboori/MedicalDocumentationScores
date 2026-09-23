@@ -1,0 +1,95 @@
+.behavioral-groups-chart {
+  min-height: 460px;
+}
+
+.behavioral-groups-chart__wrapper {
+  width: 100%;
+  min-height: 340px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.behavioral-groups-chart__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 420px;
+  overflow: visible;
+}
+
+.behavioral-groups-chart__halo {
+  opacity: 0.1;
+  pointer-events: none;
+  transition:
+    cx 360ms var(--motion-easing-easeOut),
+    cy 360ms var(--motion-easing-easeOut),
+    r 360ms var(--motion-easing-easeOut);
+}
+
+.behavioral-groups-chart__fill {
+  fill-opacity: 0.68;
+  cursor: pointer;
+  transition:
+    cx 360ms var(--motion-easing-easeOut),
+    cy 360ms var(--motion-easing-easeOut),
+    r 360ms var(--motion-easing-easeOut),
+    fill-opacity 180ms var(--motion-easing-easeOut),
+    filter 180ms var(--motion-easing-easeOut);
+}
+
+.behavioral-groups-chart__fill.is-active {
+  fill-opacity: 0.84;
+  filter:
+    drop-shadow(
+      0 7px 14px
+      rgba(0, 0, 0, 0.18)
+    );
+}
+
+.behavioral-groups-chart__overlap {
+  fill-opacity: 0.88;
+  cursor: pointer;
+  transition:
+    fill-opacity 180ms var(--motion-easing-easeOut),
+    filter 180ms var(--motion-easing-easeOut);
+}
+
+.behavioral-groups-chart__overlap.is-active {
+  fill-opacity: 1;
+  filter:
+    drop-shadow(
+      0 6px 12px
+      rgba(0, 0, 0, 0.22)
+    );
+}
+
+.behavioral-groups-chart__outline {
+  stroke-width: 8px;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.behavioral-groups-chart__count {
+  fill: rgba(255, 255, 255, 0.96);
+  font-family: var(--font-family-base);
+  font-weight: 800;
+  pointer-events: none;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.12);
+  stroke-width: 2px;
+  stroke-linejoin: round;
+}
+
+.behavioral-groups-chart__overlap-count {
+  stroke: rgba(0, 0, 0, 0.2);
+  stroke-width: 2.5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .behavioral-groups-chart__halo,
+  .behavioral-groups-chart__fill,
+  .behavioral-groups-chart__overlap {
+    transition: none;
+  }
+}
