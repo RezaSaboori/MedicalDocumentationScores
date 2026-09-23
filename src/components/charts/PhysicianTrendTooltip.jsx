@@ -111,9 +111,7 @@ const PhysicianTrendTooltip = ({
               Math.max(
                 0,
                 Number(
-                  qualityRow[
-                    key
-                  ]
+                  qualityRow[key]
                 ) || 0
               ),
             ]
@@ -173,68 +171,8 @@ const PhysicianTrendTooltip = ({
       title={title}
       className="physician-trend-tooltip qm-rich-tooltip"
     >
-      <div className="physician-trend-tooltip__comparison">
-        <table className="physician-trend-tooltip__table">
-          <thead>
-            <tr>
-              {columns.map(
-                (column) => (
-                  <th key={column}>
-                    {column}
-                  </th>
-                )
-              )}
-            </tr>
-          </thead>
-
-          <tbody>
-            {rows.map(
-              (row) => (
-                <tr key={row.label}>
-                  <td>
-                    <span className="physician-trend-tooltip__metric">
-                      {row.color && (
-                        <span
-                          className="physician-trend-tooltip__swatch"
-                          style={{
-                            backgroundColor:
-                              row.color,
-                          }}
-                        />
-                      )}
-
-                      <span>
-                        {row.label}
-                      </span>
-                    </span>
-                  </td>
-
-                  {row.values.map(
-                    (
-                      value,
-                      index
-                    ) => (
-                      <td
-                        key={`${row.label}-${index}`}
-                        className="physician-trend-tooltip__value"
-                      >
-                        {value}
-                      </td>
-                    )
-                  )}
-                </tr>
-              )
-            )}
-          </tbody>
-        </table>
-      </div>
-
       {hasQualityData && (
         <>
-          <div className="physician-trend-tooltip__physician">
-            {qualityRow.name}
-          </div>
-
           <div className="qm-rich-tooltip__headline">
             <span
               className={`qm-rich-tooltip__status ${
@@ -332,13 +270,73 @@ const PhysicianTrendTooltip = ({
               </strong>
             </div>
           </div>
+        </>
+      )}
 
-          <div className="qm-rich-tooltip__section">
-            <div className="qm-rich-tooltip__section-title">
+      <div className="physician-trend-tooltip__section">
+        <table className="physician-trend-tooltip__table physician-trend-tooltip__table--comparison">
+          <thead>
+            <tr>
+              {columns.map(
+                (column) => (
+                  <th key={column}>
+                    {column}
+                  </th>
+                )
+              )}
+            </tr>
+          </thead>
+
+          <tbody>
+            {rows.map(
+              (row) => (
+                <tr key={row.label}>
+                  <td>
+                    <span className="physician-trend-tooltip__metric">
+                      {row.color && (
+                        <span
+                          className="physician-trend-tooltip__swatch"
+                          style={{
+                            backgroundColor:
+                              row.color,
+                          }}
+                        />
+                      )}
+
+                      <span>
+                        {row.label}
+                      </span>
+                    </span>
+                  </td>
+
+                  {row.values.map(
+                    (
+                      value,
+                      index
+                    ) => (
+                      <td
+                        key={`${row.label}-${index}`}
+                        className="physician-trend-tooltip__value"
+                      >
+                        {value}
+                      </td>
+                    )
+                  )}
+                </tr>
+              )
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {hasQualityData && (
+        <>
+          <div className="physician-trend-tooltip__section">
+            <div className="physician-trend-tooltip__section-title">
               توزیع کیفیت پرونده‌ها
             </div>
 
-            <table className="qm-rich-tooltip__table">
+            <table className="physician-trend-tooltip__table physician-trend-tooltip__table--quality">
               <thead>
                 <tr>
                   <th>سطح</th>
@@ -364,9 +362,9 @@ const PhysicianTrendTooltip = ({
                     return (
                       <tr key={key}>
                         <td>
-                          <span className="qm-rich-tooltip__quality">
+                          <span className="physician-trend-tooltip__metric">
                             <span
-                              className="qm-rich-tooltip__swatch"
+                              className="physician-trend-tooltip__swatch"
                               style={{
                                 backgroundColor:
                                   QUALITY_CATEGORIES[
@@ -375,21 +373,23 @@ const PhysicianTrendTooltip = ({
                               }}
                             />
 
-                            {
-                              QUALITY_CATEGORIES[
-                                key
-                              ].label
-                            }
+                            <span>
+                              {
+                                QUALITY_CATEGORIES[
+                                  key
+                                ].label
+                              }
+                            </span>
                           </span>
                         </td>
 
-                        <td className="qm-rich-tooltip__number">
+                        <td className="physician-trend-tooltip__value">
                           {formatInteger(
                             count
                           )}
                         </td>
 
-                        <td className="qm-rich-tooltip__number">
+                        <td className="physician-trend-tooltip__value">
                           {Math.round(
                             ratio *
                               100
@@ -404,19 +404,19 @@ const PhysicianTrendTooltip = ({
             </table>
           </div>
 
-          <div className="qm-rich-tooltip__section">
-            <div className="qm-rich-tooltip__section-title">
+          <div className="physician-trend-tooltip__section">
+            <div className="physician-trend-tooltip__section-title">
               جزئیات
             </div>
 
-            <table className="qm-rich-tooltip__table qm-rich-tooltip__table--details">
+            <table className="physician-trend-tooltip__table physician-trend-tooltip__table--details">
               <tbody>
                 <tr>
                   <td>
                     پرونده‌های مستند
                   </td>
 
-                  <td className="qm-rich-tooltip__number">
+                  <td className="physician-trend-tooltip__value">
                     {formatInteger(
                       documentedCount
                     )}
@@ -428,7 +428,7 @@ const PhysicianTrendTooltip = ({
                     پوشش مستندسازی
                   </td>
 
-                  <td className="qm-rich-tooltip__number">
+                  <td className="physician-trend-tooltip__value">
                     {Math.round(
                       coverage *
                         100
@@ -443,7 +443,7 @@ const PhysicianTrendTooltip = ({
                   </td>
 
                   <td
-                    className="qm-rich-tooltip__number"
+                    className="physician-trend-tooltip__value"
                     style={{
                       color:
                         rankChange !==
@@ -470,7 +470,7 @@ const PhysicianTrendTooltip = ({
                   </td>
 
                   <td
-                    className="qm-rich-tooltip__number"
+                    className="physician-trend-tooltip__value"
                     style={{
                       color:
                         scoreChange !==

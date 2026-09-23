@@ -38,24 +38,33 @@
   padding:
     13px
     16px
-    8px;
+    10px;
 
   font-size: 14px;
   font-weight: 700;
 }
 
-.physician-trend-tooltip__comparison {
+.physician-trend-tooltip
+.qm-rich-tooltip__headline {
   padding:
-    6px
+    0
+    12px
+    10px;
+}
+
+.physician-trend-tooltip
+.qm-rich-tooltip__stats {
+  padding:
+    0
     12px
     12px;
 }
 
-.physician-trend-tooltip__physician {
+.physician-trend-tooltip__section {
   padding:
-    11px
-    16px
-    8px;
+    10px
+    12px
+    12px;
 
   border-top:
     1px solid
@@ -64,17 +73,20 @@
       var(--color-gray8) 12%,
       transparent
     );
+}
+
+.physician-trend-tooltip__section-title {
+  margin-bottom:
+    7px;
 
   color:
-    var(--color-gray12);
+    var(--color-gray10);
 
   font-size:
-    13px;
+    10px;
 
   font-weight:
-    var(--font-weight-bold);
-
-  text-align: right;
+    var(--font-weight-semibold);
 }
 
 .physician-trend-tooltip__table {
@@ -122,7 +134,11 @@ td {
       transparent
     );
 
-  font-size: 10px;
+  color:
+    var(--color-gray10);
+
+  font-size:
+    10px;
 }
 
 .physician-trend-tooltip__table
@@ -151,8 +167,6 @@ td {
 th:first-child,
 .physician-trend-tooltip__table
 td:first-child {
-  width: 42%;
-
   text-align: right;
 }
 
@@ -160,6 +174,35 @@ td:first-child {
 th:not(:first-child),
 .physician-trend-tooltip__table
 td:not(:first-child) {
+  text-align: center;
+}
+
+.physician-trend-tooltip__table--comparison
+th:first-child,
+.physician-trend-tooltip__table--comparison
+td:first-child {
+  width: 42%;
+}
+
+.physician-trend-tooltip__table--quality
+th:first-child,
+.physician-trend-tooltip__table--quality
+td:first-child {
+  width: 58%;
+}
+
+.physician-trend-tooltip__table--details
+td:first-child {
+  width: 72%;
+
+  color:
+    var(--color-gray8);
+}
+
+.physician-trend-tooltip__table--details
+td:last-child {
+  width: 28%;
+
   text-align: center;
 }
 
@@ -199,15 +242,4 @@ td:not(:first-child) {
 
   font-variant-numeric:
     tabular-nums;
-}
-
-.physician-trend-tooltip
-.qm-rich-tooltip__headline {
-  padding-top: 0;
-}
-
-.physician-trend-tooltip
-.qm-rich-tooltip__section:last-child {
-  padding-bottom:
-    14px;
 }
