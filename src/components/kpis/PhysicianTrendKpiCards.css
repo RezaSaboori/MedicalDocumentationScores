@@ -1,0 +1,89 @@
+.physician-trend-kpis {
+  display: grid;
+
+  width: 100%;
+
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(150px, 1fr)
+    );
+
+  gap:
+    var(--spacing-md);
+}
+
+.physician-trend-kpi.u-container {
+  min-width: 0;
+
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  --p:
+    var(--spacing-md);
+
+  --gap:
+    var(--spacing-xs);
+
+  --radius:
+    var(
+      --border-radius-container-md
+    );
+}
+
+.physician-trend-kpi__title {
+  width: 100%;
+
+  overflow: hidden;
+
+  color:
+    var(--color-gray8);
+
+  font-size:
+    var(--font-size-sm);
+
+  text-align: center;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.physician-trend-kpi__value {
+  width: 100%;
+
+  overflow: hidden;
+
+  font-size:
+    var(--font-size-2xl);
+
+  font-weight:
+    var(--font-weight-bold);
+
+  line-height: 1.2;
+
+  text-align: center;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  direction: rtl;
+}
+
+.physician-trend-kpi__value--text {
+  font-size:
+    var(--font-size-lg);
+}
+
+@media (
+  max-width: 900px
+) {
+  .physician-trend-kpis {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
+}

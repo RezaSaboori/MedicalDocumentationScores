@@ -6,17 +6,25 @@ import {
   fetchPhysicianTrend,
 } from '../../services/dataService';
 import {
+  useDashboard,
+} from '../../context/DashboardContext';
+import {
   flagGroupColor,
   flagGroupLabel,
 } from '../../utils/flagGroups';
 import PhysicianScoreTrendChart from '../charts/PhysicianScoreTrendChart';
 import PhysicianDocumentationBubbleChart from '../charts/PhysicianDocumentationBubbleChart';
+import PhysicianTrendKpiCards from '../kpis/PhysicianTrendKpiCards';
 import './PhysicianTrendModal.css';
 
 const PhysicianTrendModal = ({
   physician,
   onClose,
 }) => {
+  const {
+    selectedPeriod,
+  } = useDashboard();
+
   const [
     trendData,
     setTrendData,
@@ -198,6 +206,14 @@ const PhysicianTrendModal = ({
         row.row_id !== null
     );
 
+  const selectedPeriodRow =
+    trendData.find(
+      (row) =>
+        row.period ===
+          selectedPeriod &&
+        row.row_id !== null
+    ) || null;
+
   return (
     <div className="physician-trend-modal">
       <div
@@ -255,6 +271,12 @@ const PhysicianTrendModal = ({
             !error &&
             hasData && (
               <>
+                <PhysicianTrendKpiCards
+                  row={
+                    selectedPeriodRow
+                  }
+                />
+
                 <PhysicianScoreTrendChart
                   data={
                     trendData
