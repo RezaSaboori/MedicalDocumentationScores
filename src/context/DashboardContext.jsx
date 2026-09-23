@@ -12,6 +12,16 @@ export const DashboardProvider = ({ children }) => {
   const [residentsMaster, setResidentsMaster] = useState([]);
 
   const [
+    rawCurrentData,
+    setRawCurrentData,
+  ] = useState([]);
+
+  const [
+    rawPreviousData,
+    setRawPreviousData,
+  ] = useState([]);
+
+  const [
     rawOlderData,
     setRawOlderData,
   ] = useState([]);
