@@ -10,14 +10,14 @@
     );
 
   gap:
-    var(--spacing-md);
+    var(--spacing-4xl);
 }
 
 .physician-trend-kpi.u-container {
   position: relative;
 
   min-width: 0;
-  min-height: 154px;
+  min-height: 170px;
 
   align-items: stretch;
   justify-content: flex-start;
@@ -26,44 +26,11 @@
 
   text-align: right;
 
-  isolation: isolate;
-
   --p:
     var(--spacing-md);
 
   --gap:
     var(--spacing-sm);
-}
-
-.physician-trend-kpi::after {
-  position: absolute;
-
-  top: -42px;
-  left: -28px;
-
-  z-index: -1;
-
-  width: 120px;
-  height: 120px;
-
-  border-radius:
-    var(--border-radius-pill);
-
-  background:
-    color-mix(
-      in srgb,
-      var(
-        --physician-kpi-accent
-      ) 10%,
-      transparent
-    );
-
-  filter:
-    blur(18px);
-
-  content: '';
-
-  pointer-events: none;
 }
 
 .physician-trend-kpi__title {
@@ -75,7 +42,7 @@
     var(--color-gray8);
 
   font-size:
-    var(--font-size-sm);
+    var(--font-size-md);
 
   font-weight:
     var(--font-weight-medium);
@@ -83,7 +50,7 @@
   line-height:
     var(--line-height-normal);
 
-  text-align: right;
+  text-align: center;
 
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -94,9 +61,9 @@
 
   width: 100%;
   min-width: 0;
-
+  margin-top: var(--spacing-lg);
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
 
   gap:
     var(--spacing-sm);
@@ -113,7 +80,7 @@
     );
 
   font-size:
-    var(--font-size-2xl);
+    var(--font-size-4xl);
 
   font-weight:
     var(--font-weight-bold);
@@ -247,44 +214,28 @@
 .physician-trend-kpi__trend {
   display: flex;
 
-  width: 100%;
+  width: 90%;
 
   flex-direction: column;
 
-  gap: 3px;
+  gap: 5px;
 
-  margin-top: auto;
+  margin: auto;
 
   padding-top:
     var(--spacing-xs);
 
-  border-top:
-    1px solid
-    color-mix(
-      in srgb,
-      var(--color-gray7) 10%,
-      transparent
-    );
 }
 
-.physician-trend-kpi__trend-label {
-  color:
-    var(--color-gray7);
-
-  font-size:
-    var(--font-size-xs);
-
-  font-weight:
-    var(--font-weight-medium);
-
-  text-align: right;
-}
 
 .physician-trend-kpi__sparkline {
   display: block;
 
   width: 100%;
-  height: 38px;
+  height: auto;
+
+  aspect-ratio:
+    180 / 92;
 
   overflow: visible;
 
@@ -294,19 +245,7 @@
     );
 }
 
-.physician-trend-kpi__sparkline-baseline {
-  stroke:
-    color-mix(
-      in srgb,
-      var(--color-gray7) 12%,
-      transparent
-    );
 
-  stroke-width: 1;
-
-  vector-effect:
-    non-scaling-stroke;
-}
 
 .physician-trend-kpi__sparkline-line {
   fill: none;
@@ -314,7 +253,7 @@
   stroke:
     currentColor;
 
-  stroke-width: 2;
+  stroke-width: 2.25;
 
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -322,7 +261,7 @@
   vector-effect:
     non-scaling-stroke;
 
-  opacity: 0.78;
+  opacity: 0.92;
 }
 
 .physician-trend-kpi__sparkline-point {
@@ -332,19 +271,49 @@
   stroke:
     currentColor;
 
-  stroke-width: 1.5;
+  stroke-width: 1.8;
 
   vector-effect:
     non-scaling-stroke;
-
-  opacity: 0.75;
 }
 
 .physician-trend-kpi__sparkline-point--current {
   fill:
     currentColor;
+}
 
-  opacity: 1;
+.physician-trend-kpi__sparkline-value-label,
+.physician-trend-kpi__sparkline-month-label {
+  fill:
+    var(--color-gray8);
+
+  font-family:
+    var(
+      --font-family-persian,
+      var(--font-family-base)
+    );
+
+  font-size:
+    6px;
+
+  text-anchor: middle;
+}
+
+.physician-trend-kpi__sparkline-value-label {
+  fill:
+    var(--color-gray6);
+
+  font-weight:
+    var(--font-weight-base);
+
+  direction: ltr;
+
+  unicode-bidi: plaintext;
+}
+
+.physician-trend-kpi__sparkline-month-label {
+  fill:
+    var(--color-gray6);
 }
 
 @media (

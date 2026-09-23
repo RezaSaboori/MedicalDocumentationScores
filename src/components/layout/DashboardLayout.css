@@ -1,7 +1,7 @@
 .dashboard-wrapper {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-4xl);
   max-width: 1400px;
   margin: 0 auto;
   padding: var(--spacing-lg) var(--spacing-md) var(--spacing-xl);
@@ -62,13 +62,13 @@
 .charts-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-4xl);
 }
 
 .charts-grid-1 {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-4xl);
 }
 
 .table-section-title {

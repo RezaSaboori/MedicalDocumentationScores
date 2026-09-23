@@ -276,7 +276,7 @@
   min-height: 0;
 
   gap:
-    var(--spacing-lg);
+    var(--spacing-4xl);
 
   padding:
     var(--spacing-md);

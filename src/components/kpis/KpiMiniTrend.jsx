@@ -1,12 +1,17 @@
 import React, {
   useMemo,
 } from 'react';
+import {
+  formatPeriodLabel,
+} from '../../utils/period';
 
-const WIDTH = 132;
-const HEIGHT = 38;
+const WIDTH = 180;
+const HEIGHT = 92;
 
-const PADDING_X = 5;
-const PADDING_Y = 5;
+const PADDING_LEFT = 10;
+const PADDING_RIGHT = 10;
+const PADDING_TOP = 18;
+const PADDING_BOTTOM = 22;
 
 const toFiniteNumber = (
   value
@@ -27,6 +32,25 @@ const toFiniteNumber = (
     : null;
 };
 
+const formatPointValue = (
+  value
+) => {
+  const number =
+    toFiniteNumber(
+      value
+    );
+
+  if (number === null) {
+    return '—';
+  }
+
+  return Number.isInteger(
+    number
+  )
+    ? String(number)
+    : number.toFixed(1);
+};
+
 const buildSegments = (
   points
 ) => {
@@ -36,7 +60,9 @@ const buildSegments = (
 
   points.forEach(
     (point) => {
-      if (!point) {
+      if (
+        !point?.hasValue
+      ) {
         if (
           current.length
         ) {
@@ -67,11 +93,13 @@ const buildSegments = (
 
 const KpiMiniTrend = ({
   values = [],
+  labels = [],
   lowerIsBetter = false,
 }) => {
   const {
-    points,
+    slots,
     segments,
+    axisY,
   } = useMemo(() => {
     const normalizedValues =
       values.map(
@@ -84,12 +112,66 @@ const KpiMiniTrend = ({
           value !== null
       );
 
+    const drawableWidth =
+      WIDTH -
+      PADDING_LEFT -
+      PADDING_RIGHT;
+
+    const drawableHeight =
+      HEIGHT -
+      PADDING_TOP -
+      PADDING_BOTTOM;
+
+    const denominator =
+      Math.max(
+        normalizedValues.length - 1,
+        1
+      );
+
+    const axisYValue =
+      HEIGHT -
+      PADDING_BOTTOM;
+
     if (
       !finiteValues.length
     ) {
+      const emptySlots =
+        normalizedValues.map(
+          (
+            value,
+            index
+          ) => ({
+            x:
+              PADDING_LEFT +
+              (
+                index /
+                denominator
+              ) *
+                drawableWidth,
+
+            y:
+              axisYValue -
+              drawableHeight /
+                2,
+
+            value,
+            label:
+              labels[index]
+                ? formatPeriodLabel(
+                    labels[index]
+                  )
+                : '',
+
+            hasValue: false,
+          })
+        );
+
       return {
-        points: [],
+        slots:
+          emptySlots,
         segments: [],
+        axisY:
+          axisYValue,
       };
     }
 
@@ -110,30 +192,40 @@ const KpiMiniTrend = ({
       maximum += 1;
     }
 
-    const drawableWidth =
-      WIDTH -
-      2 * PADDING_X;
-
-    const drawableHeight =
-      HEIGHT -
-      2 * PADDING_Y;
-
-    const denominator =
-      Math.max(
-        values.length - 1,
-        1
-      );
-
-    const pointList =
+    const pointSlots =
       normalizedValues.map(
         (
           value,
           index
         ) => {
+          const x =
+            PADDING_LEFT +
+            (
+              index /
+              denominator
+            ) *
+              drawableWidth;
+
+          const label =
+            labels[index]
+              ? formatPeriodLabel(
+                  labels[index]
+                )
+              : '';
+
           if (
             value === null
           ) {
-            return null;
+            return {
+              x,
+              y:
+                axisYValue -
+                drawableHeight /
+                  2,
+              value,
+              label,
+              hasValue: false,
+            };
           }
 
           const normalized =
@@ -153,36 +245,35 @@ const KpiMiniTrend = ({
                 normalized;
 
           return {
-            x:
-              PADDING_X +
-              (
-                index /
-                denominator
-              ) *
-                drawableWidth,
+            x,
 
             y:
-              PADDING_Y +
+              PADDING_TOP +
               visualNormalized *
                 drawableHeight,
 
             value,
-            index,
+            label,
+            hasValue: true,
           };
         }
       );
 
     return {
-      points:
-        pointList,
+      slots:
+        pointSlots,
 
       segments:
         buildSegments(
-          pointList
+          pointSlots
         ),
+
+      axisY:
+        axisYValue,
     };
   }, [
     values,
+    labels,
     lowerIsBetter,
   ]);
 
@@ -190,24 +281,18 @@ const KpiMiniTrend = ({
     <svg
       className="physician-trend-kpi__sparkline"
       viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-      preserveAspectRatio="none"
+      preserveAspectRatio="xMidYMid meet"
       aria-hidden="true"
     >
       <line
-        className="physician-trend-kpi__sparkline-baseline"
-        x1={PADDING_X}
-        y1={
-          HEIGHT -
-          PADDING_Y
-        }
+        className="physician-trend-kpi__sparkline-axis"
+        x1={PADDING_LEFT}
+        y1={axisY}
         x2={
           WIDTH -
-          PADDING_X
+          PADDING_RIGHT
         }
-        y2={
-          HEIGHT -
-          PADDING_Y
-        }
+        y2={axisY}
       />
 
       {segments.map(
@@ -238,38 +323,70 @@ const KpiMiniTrend = ({
           ) : null
       )}
 
-      {points.map(
+      {slots.map(
         (
           point,
           index
-        ) =>
-          point ? (
-            <circle
-              key={
-                index
-              }
-              className={`physician-trend-kpi__sparkline-point ${
-                index ===
-                points.length -
-                  1
-                  ? 'physician-trend-kpi__sparkline-point--current'
-                  : ''
-              }`}
-              cx={
+        ) => (
+          <g
+            key={index}
+          >
+            {point.hasValue && (
+              <text
+                className="physician-trend-kpi__sparkline-value-label"
+                x={
+                  point.x
+                }
+                y={Math.max(
+                  point.y -
+                    8,
+                  11
+                )}
+              >
+                {formatPointValue(
+                  point.value
+                )}
+              </text>
+            )}
+
+            {point.hasValue && (
+              <circle
+                className={`physician-trend-kpi__sparkline-point ${
+                  index ===
+                  slots.length -
+                    1
+                    ? 'physician-trend-kpi__sparkline-point--current'
+                    : ''
+                }`}
+                cx={
+                  point.x
+                }
+                cy={
+                  point.y
+                }
+                r={
+                  index ===
+                  slots.length -
+                    1
+                    ? 3.6
+                    : 3
+                }
+              />
+            )}
+
+            <text
+              className="physician-trend-kpi__sparkline-month-label"
+              x={
                 point.x
               }
-              cy={
-                point.y
+              y={
+                HEIGHT - 4
               }
-              r={
-                index ===
-                points.length -
-                  1
-                  ? 2.8
-                  : 2
-              }
-            />
-          ) : null
+            >
+              {point.label}
+            </text>
+          </g>
+        )
       )}
     </svg>
   );

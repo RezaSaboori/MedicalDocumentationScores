@@ -327,6 +327,15 @@ const PhysicianTrendKpiCards = ({
                   config.dataKey
                 )
             ),
+
+          trendLabels:
+            trendRows.map(
+              (
+                trendRow
+              ) =>
+                trendRow?.period ||
+                ''
+            ),
         };
       }
     );
@@ -389,13 +398,12 @@ const PhysicianTrendKpiCards = ({
             </div>
 
             <div className="physician-trend-kpi__trend">
-              <div className="physician-trend-kpi__trend-label">
-                روند ۳ ماه اخیر
-              </div>
-
               <KpiMiniTrend
                 values={
                   card.trendValues
+                }
+                labels={
+                  card.trendLabels
                 }
                 lowerIsBetter={
                   card.lowerIsBetter
