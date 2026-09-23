@@ -12,6 +12,12 @@ import {
   flagGroupColor,
   flagGroupLabel,
 } from '../../utils/flagGroups';
+import {
+  PDI_THRESHOLD,
+} from '../../utils/constants';
+import {
+  toPersianDigits,
+} from '../../utils/period';
 import PhysicianScoreTrendChart from '../charts/PhysicianScoreTrendChart';
 import PhysicianDocumentationBubbleChart from '../charts/PhysicianDocumentationBubbleChart';
 import PhysicianTrendKpiCards from '../kpis/PhysicianTrendKpiCards';
@@ -214,6 +220,34 @@ const PhysicianTrendModal = ({
         row.row_id !== null
     ) || null;
 
+  const residentYear =
+    selectedPeriodRow?.category ===
+      'resident' &&
+    selectedPeriodRow?.resident_year !==
+      null &&
+    selectedPeriodRow?.resident_year !==
+      undefined &&
+    String(
+      selectedPeriodRow.resident_year
+    ).trim() !== ''
+      ? selectedPeriodRow.resident_year
+      : null;
+
+  const selectedPdi =
+    Number(
+      selectedPeriodRow?.PDI
+    );
+
+  const hasStatus =
+    Number.isFinite(
+      selectedPdi
+    );
+
+  const isAcceptable =
+    hasStatus &&
+    selectedPdi >=
+      PDI_THRESHOLD;
+
   return (
     <div className="physician-trend-modal">
       <div
@@ -228,12 +262,45 @@ const PhysicianTrendModal = ({
         aria-labelledby="physician-trend-modal-title"
       >
         <header className="physician-trend-modal__header">
-          <h2
-            id="physician-trend-modal-title"
-            className="physician-trend-modal__title"
-          >
-            {physician.name}
-          </h2>
+          <div className="physician-trend-modal__heading">
+            <h2
+              id="physician-trend-modal-title"
+              className="physician-trend-modal__title"
+            >
+              {physician.name}
+            </h2>
+
+            <div className="physician-trend-modal__meta">
+              {residentYear !==
+                null && (
+                <span className="physician-trend-modal__year">
+                  سال{' '}
+                  {toPersianDigits(
+                    residentYear
+                  )}
+                </span>
+              )}
+
+              {hasStatus && (
+                <span
+                  className={`physician-trend-modal__status ${
+                    isAcceptable
+                      ? 'physician-trend-modal__status--good'
+                      : 'physician-trend-modal__status--bad'
+                  }`}
+                >
+                  <span
+                    className="physician-trend-modal__status-dot"
+                    aria-hidden="true"
+                  />
+
+                  {isAcceptable
+                    ? 'قابل قبول'
+                    : 'غیر قابل قبول'}
+                </span>
+              )}
+            </div>
+          </div>
 
           <button
             type="button"

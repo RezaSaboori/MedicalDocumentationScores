@@ -26,11 +26,6 @@
 
   --gap:
     var(--spacing-xs);
-
-  --radius:
-    var(
-      --border-radius-container-md
-    );
 }
 
 .physician-trend-kpi__title {
@@ -71,10 +66,7 @@
   direction: rtl;
 }
 
-.physician-trend-kpi__value--text {
-  font-size:
-    var(--font-size-lg);
-}
+
 
 @media (
   max-width: 900px

@@ -90,6 +90,16 @@
     var(--spacing-sm);
 }
 
+.physician-trend-modal__heading {
+  display: flex;
+  align-items: center;
+
+  min-width: 0;
+
+  gap:
+    var(--spacing-md);
+}
+
 .physician-trend-modal__title {
   margin: 0;
 
@@ -103,6 +113,105 @@
     var(--font-weight-semibold);
 
   text-align: right;
+}
+
+.physician-trend-modal__meta {
+  display: flex;
+  align-items: center;
+
+  gap:
+    var(--spacing-sm);
+}
+
+.physician-trend-modal__year {
+  display: inline-flex;
+  align-items: center;
+
+  padding:
+    var(--spacing-xs)
+    var(--spacing-sm);
+
+  border-radius:
+    var(--border-radius-pill);
+
+  background:
+    color-mix(
+      in srgb,
+      var(--color-purple) 12%,
+      transparent
+    );
+
+  color:
+    var(--color-purple);
+
+  font-size:
+    var(--font-size-sm);
+
+  font-weight:
+    var(--font-weight-semibold);
+
+  white-space: nowrap;
+}
+
+.physician-trend-modal__status {
+  display: inline-flex;
+  align-items: center;
+
+  gap:
+    var(--spacing-xs);
+
+  padding:
+    var(--spacing-xs)
+    var(--spacing-sm);
+
+  border-radius:
+    var(--border-radius-pill);
+
+  font-size:
+    var(--font-size-sm);
+
+  font-weight:
+    var(--font-weight-semibold);
+
+  white-space: nowrap;
+}
+
+.physician-trend-modal__status--good {
+  background:
+    color-mix(
+      in srgb,
+      var(--color-green) 12%,
+      transparent
+    );
+
+  color:
+    var(--color-green);
+}
+
+.physician-trend-modal__status--bad {
+  background:
+    color-mix(
+      in srgb,
+      var(--color-red) 12%,
+      transparent
+    );
+
+  color:
+    var(--color-red);
+}
+
+.physician-trend-modal__status-dot {
+  width: 7px;
+  height: 7px;
+
+  flex:
+    0 0 7px;
+
+  border-radius:
+    var(--border-radius-pill);
+
+  background:
+    currentColor;
 }
 
 .physician-trend-modal__close {

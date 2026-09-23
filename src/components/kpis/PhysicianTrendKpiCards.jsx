@@ -24,40 +24,10 @@ const PhysicianTrendKpiCards = ({
     return null;
   }
 
-  const isResident =
-    row.category ===
-    'resident';
-
   const pdi =
     Number(row.PDI);
 
   const cards = [
-    ...(isResident
-      ? [
-          {
-            key: 'year',
-            title: 'سال',
-            value:
-              row.resident_year ??
-              '—',
-            color:
-              'var(--color-purple)',
-          },
-        ]
-      : []),
-
-    {
-      key: 'group',
-      title: 'گروه',
-      value:
-        row.group_fa ||
-        '—',
-      color:
-        row.group_color ||
-        'var(--color-gray9)',
-      textValue: true,
-    },
-
     {
       key: 'rank',
       title: 'رتبه',
@@ -111,11 +81,7 @@ const PhysicianTrendKpiCards = ({
             </div>
 
             <div
-              className={`physician-trend-kpi__value ${
-                card.textValue
-                  ? 'physician-trend-kpi__value--text'
-                  : ''
-              }`}
+              className="physician-trend-kpi__value"
               style={{
                 color:
                   card.color,
