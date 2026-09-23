@@ -342,6 +342,9 @@ const PhysicianTrendModal = ({
                   row={
                     selectedPeriodRow
                   }
+                  data={
+                    trendData
+                  }
                 />
 
                 <PhysicianScoreTrendChart
