@@ -28,6 +28,32 @@
     border-box;
 }
 
+/*
+ * Dashboard KPI typography overrides.
+ *
+ * The modal KPI cards remain the visual
+ * source of truth, but dashboard cards are
+ * narrower, so the primary value is reduced
+ * while sparkline annotations are enlarged.
+ */
+.kpi-grid
+.physician-trend-kpi__value {
+  font-size:
+    var(--font-size-3xl);
+}
+
+.kpi-grid
+.physician-trend-kpi__sparkline-value-label {
+  font-size:
+    8px;
+}
+
+.kpi-grid
+.physician-trend-kpi__sparkline-month-label {
+  font-size:
+    8px;
+}
+
 .kpi-grid
 .physician-trend-kpi--static {
   justify-content:
