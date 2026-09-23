@@ -213,9 +213,28 @@ export const createRouter = (db) => {
     const currentSnapshot = db.prepare('SELECT id, period, start_date, end_date FROM snapshots WHERE period = ?').get(period);
     if (!currentSnapshot) return res.status(404).json({ error: 'Snapshot not found' });
 
-    const previousSnapshot = db.prepare(
-      'SELECT id, period, start_date, end_date FROM snapshots WHERE period < ? ORDER BY period DESC LIMIT 1'
-    ).get(period);
+    const historicalSnapshots =
+      db.prepare(
+        `
+          SELECT
+            id,
+            period,
+            start_date,
+            end_date
+          FROM snapshots
+          WHERE period < ?
+          ORDER BY period DESC
+          LIMIT 2
+        `
+      ).all(period);
+
+    const previousSnapshot =
+      historicalSnapshots[0] ||
+      null;
+
+    const olderSnapshot =
+      historicalSnapshots[1] ||
+      null;
 
     const dashboardColumns = `
       id,
@@ -265,19 +284,62 @@ export const createRouter = (db) => {
       `)
       .all(currentSnapshot.id);
 
-    const previousData = previousSnapshot
-      ? db
-          .prepare(`
-            SELECT ${dashboardColumns}
-            FROM aggregated_scores
-            WHERE snapshot_id = ?
-          `)
-          .all(previousSnapshot.id)
-      : [];
+    const previousData =
+      previousSnapshot
+        ? db
+            .prepare(`
+              SELECT ${dashboardColumns}
+              FROM aggregated_scores
+              WHERE snapshot_id = ?
+            `)
+            .all(
+              previousSnapshot.id
+            )
+        : [];
+
+    const olderData =
+      olderSnapshot
+        ? db
+            .prepare(`
+              SELECT ${dashboardColumns}
+              FROM aggregated_scores
+              WHERE snapshot_id = ?
+            `)
+            .all(
+              olderSnapshot.id
+            )
+        : [];
 
     res.json({
-      current: { snapshot: currentSnapshot, data: currentData },
-      previous: previousSnapshot ? { snapshot: previousSnapshot, data: previousData } : null
+      current: {
+        snapshot:
+          currentSnapshot,
+
+        data:
+          currentData,
+      },
+
+      previous:
+        previousSnapshot
+          ? {
+              snapshot:
+                previousSnapshot,
+
+              data:
+                previousData,
+            }
+          : null,
+
+      older:
+        olderSnapshot
+          ? {
+              snapshot:
+                olderSnapshot,
+
+              data:
+                olderData,
+            }
+          : null,
     });
   });
 

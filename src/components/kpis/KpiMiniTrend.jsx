@@ -95,6 +95,7 @@ const KpiMiniTrend = ({
   values = [],
   labels = [],
   lowerIsBetter = false,
+  valueFormatter = null,
 }) => {
   const {
     slots,
@@ -343,9 +344,14 @@ const KpiMiniTrend = ({
                   11
                 )}
               >
-                {formatPointValue(
-                  point.value
-                )}
+                {typeof valueFormatter ===
+                'function'
+                  ? valueFormatter(
+                      point.value
+                    )
+                  : formatPointValue(
+                      point.value
+                    )}
               </text>
             )}
 

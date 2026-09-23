@@ -1,29 +1,54 @@
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-xl);
+
+  width: 100%;
+
+  grid-template-columns:
+    repeat(
+      5,
+      minmax(0, 1fr)
+    );
+
+  gap:
+    var(--spacing-md);
+
+  margin-bottom:
+    var(--spacing-xl);
 }
 
-.kpi-card {
-  text-align: center;
-  padding: var(--spacing-md);
+.kpi-grid
+.physician-trend-kpi.u-container {
+  min-width: 0;
+  width: 100%;
+
+  box-sizing:
+    border-box;
 }
 
-.kpi-title {
-  font-size: var(--font-size-sm);
-  color: var(--color-gray8);
-  margin-bottom: var(--spacing-xs);
+.kpi-card--loading {
+  min-height: 170px;
+
+  align-items: center;
+  justify-content: center;
 }
 
-.kpi-value {
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-blue);
+@media (
+  max-width: 1050px
+) {
+  .kpi-grid {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
 }
 
-.kpi-sub {
-  font-size: var(--font-size-xs);
-  color: var(--color-gray7);
-  margin-top: 2px;
+@media (
+  max-width: 640px
+) {
+  .kpi-grid {
+    grid-template-columns:
+      1fr;
+  }
 }

@@ -11,8 +11,20 @@ export const DashboardProvider = ({ children }) => {
   const [selectedPeriod, setSelectedPeriod] = useState(null);
   const [residentsMaster, setResidentsMaster] = useState([]);
 
-  const [rawCurrentData, setRawCurrentData] = useState([]);
-  const [rawPreviousData, setRawPreviousData] = useState([]);
+  const [
+    rawOlderData,
+    setRawOlderData,
+  ] = useState([]);
+
+  const [
+    previousPeriod,
+    setPreviousPeriod,
+  ] = useState(null);
+
+  const [
+    olderPeriod,
+    setOlderPeriod,
+  ] = useState(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -60,17 +72,56 @@ export const DashboardProvider = ({ children }) => {
     if (!selectedPeriod) {
       setRawCurrentData([]);
       setRawPreviousData([]);
+      setRawOlderData([]);
+
+      setPreviousPeriod(
+        null
+      );
+
+      setOlderPeriod(
+        null
+      );
+
       setLoading(false);
+
       return;
     }
 
     setLoading(true);
     setError(null);
 
-    fetchDashboardData(selectedPeriod)
+    fetchDashboardData(
+      selectedPeriod
+    )
       .then((result) => {
-        setRawCurrentData(result.current?.data || []);
-        setRawPreviousData(result.previous?.data || []);
+        setRawCurrentData(
+          result.current?.data ||
+            []
+        );
+
+        setRawPreviousData(
+          result.previous?.data ||
+            []
+        );
+
+        setRawOlderData(
+          result.older?.data ||
+            []
+        );
+
+        setPreviousPeriod(
+          result.previous
+            ?.snapshot
+            ?.period ||
+            null
+        );
+
+        setOlderPeriod(
+          result.older
+            ?.snapshot
+            ?.period ||
+            null
+        );
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -115,7 +166,10 @@ export const DashboardProvider = ({ children }) => {
 
     const scoredCurrentData = scoreSnapshot(rawCurrentData);
     const scoredPreviousData = scoreSnapshot(rawPreviousData);
-
+    const scoredOlderData =
+      scoreSnapshot(
+        rawOlderData
+      );
     const yearByName = new Map(
       residentsMaster.map((r) => [String(r.name || '').replace(/\s+/g, ' ').trim(), r.year])
     );
@@ -138,7 +192,16 @@ export const DashboardProvider = ({ children }) => {
     const previousModeData = scoredPreviousData
       .filter((d) => d.category === dbCategory)
       .map(attachYear);
-
+    const olderModeData =
+      scoredOlderData
+        .filter(
+          (d) =>
+            d.category ===
+            dbCategory
+        )
+        .map(
+          attachYear
+        );
     const facultySupervisionRows =
       scoredCurrentData.filter(
         (row) =>
@@ -211,8 +274,23 @@ export const DashboardProvider = ({ children }) => {
       (a, b) => Number(a) - Number(b)
     );
 
-    const allCurrent = applyFilters(currentModeData, includeYear);
-    const allPrevious = applyFilters(previousModeData, includeYear);
+    const allCurrent =
+      applyFilters(
+        currentModeData,
+        includeYear
+      );
+
+    const allPrevious =
+      applyFilters(
+        previousModeData,
+        includeYear
+      );
+
+    const allOlder =
+      applyFilters(
+        olderModeData,
+        includeYear
+      );
 
     const inFacultyScope = (rows) =>
       isFacultyFilterActive
@@ -225,10 +303,30 @@ export const DashboardProvider = ({ children }) => {
           )
         : rows;
 
-    const filteredCurrent = inFacultyScope(allCurrent);
-    const filteredPrevious = inFacultyScope(allPrevious);
+    const filteredCurrent =
+      inFacultyScope(
+        allCurrent
+      );
 
-    const enrichedPrevious = filteredPrevious.map(enrichRow);
+    const filteredPrevious =
+      inFacultyScope(
+        allPrevious
+      );
+
+    const filteredOlder =
+      inFacultyScope(
+        allOlder
+      );
+
+    const enrichedPrevious =
+      filteredPrevious.map(
+        enrichRow
+      );
+
+    const enrichedOlder =
+      filteredOlder.map(
+        enrichRow
+      );
 
     const enrichedCurrent = filteredCurrent.map((c) => {
       const prev = enrichedPrevious.find((p) => p.name === c.name);
@@ -249,15 +347,55 @@ export const DashboardProvider = ({ children }) => {
 
     return {
       data: {
-        current: enrichedCurrent,
-        previous: enrichedPrevious,
-        allCurrent: allCurrent.map(enrichRow),
-        allPrevious: allPrevious.map(enrichRow),
+        current:
+          enrichedCurrent,
+
+        previous:
+          enrichedPrevious,
+
+        older:
+          enrichedOlder,
+
+        allCurrent:
+          allCurrent.map(
+            enrichRow
+          ),
+
+        allPrevious:
+          allPrevious.map(
+            enrichRow
+          ),
+
+        allOlder:
+          allOlder.map(
+            enrichRow
+          ),
+
+        periods: {
+          current:
+            selectedPeriod,
+
+          previous:
+            previousPeriod,
+
+          older:
+            olderPeriod,
+        },
       },
       availableYears: years,
       availableFaculties: availableFacultyList,
     };
-  }, [rawCurrentData, rawPreviousData, mode, filters, residentsMaster]);
+  }, [
+    rawCurrentData,
+    rawPreviousData,
+    rawOlderData,
+    mode,
+    filters,
+    residentsMaster,
+    selectedPeriod,
+    previousPeriod,
+    olderPeriod,
+  ]);
   const updateFilters = (newFilters) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
   };
