@@ -73,18 +73,6 @@ const buildKpis = (
           value !== null
       );
 
-  const validEmptyRate =
-    rows
-      .map((row) =>
-        toFiniteNumber(
-          row.rho_Z
-        )
-      )
-      .filter(
-        (value) =>
-          value !== null
-      );
-
   return {
     n_physicians:
       rows.length,
@@ -130,20 +118,6 @@ const buildKpis = (
             0
           ) /
           validCov.length
-        : null,
-
-    mean_rho_z:
-      validEmptyRate.length
-        ? validEmptyRate.reduce(
-            (
-              sum,
-              value
-            ) =>
-              sum +
-              value,
-            0
-          ) /
-          validEmptyRate.length
         : null,
   };
 };
@@ -301,7 +275,7 @@ const KpiCards = () => {
     return (
       <div className="kpi-grid">
         {Array.from({
-          length: 5,
+          length: 4,
         }).map(
           (
             _,
@@ -402,24 +376,14 @@ const KpiCards = () => {
       color:
         'var(--color-blue)',
 
-      lowerIsBetter:
+      showChange:
         false,
 
-      changeDigits:
-        0,
+      showTrend:
+        false,
 
-      changeScale:
-        1,
-
-      changeSuffix:
-        '',
-
-      valueFormatter:
-        (value) =>
-          formatNumber(
-            value,
-            0
-          ),
+      lowerIsBetter:
+        false,
     },
 
     {
@@ -540,46 +504,6 @@ const KpiCards = () => {
           ),
     },
 
-    {
-      key:
-        'mean_rho_z',
-
-      title:
-        'میانگین نرخ پرونده خالی',
-
-      value:
-        currentKpis
-          .mean_rho_z !==
-        null
-          ? formatPercent(
-              currentKpis
-                .mean_rho_z,
-              0
-            )
-          : '—',
-
-      color:
-        'var(--color-orange)',
-
-      lowerIsBetter:
-        true,
-
-      changeDigits:
-        0,
-
-      changeScale:
-        100,
-
-      changeSuffix:
-        '٪',
-
-      valueFormatter:
-        (value) =>
-          formatPercent(
-            value,
-            0
-          ),
-    },
   ];
 
   const cards =
@@ -641,7 +565,12 @@ const KpiCards = () => {
             key={
               card.key
             }
-            className="glass u-container u-container--sm physician-trend-kpi"
+            className={`glass u-container u-container--sm physician-trend-kpi ${
+              card.showTrend ===
+              false
+                ? 'physician-trend-kpi--static'
+                : ''
+            }`}
             style={{
               '--physician-kpi-accent':
                 card.color,
@@ -661,62 +590,68 @@ const KpiCards = () => {
                 {card.value}
               </div>
 
-              <div
-                className={`physician-trend-kpi__change ${
-                  card.direction
-                    ? `physician-trend-kpi__change--${card.direction}`
-                    : 'physician-trend-kpi__change--unavailable'
-                }`}
-                title="تغییر نسبت به ماه قبل"
-              >
-                {card.direction ? (
-                  <>
-                    <ChangeChevron
-                      direction={
-                        card.direction
-                      }
-                    />
-
-                    <span>
-                      {formatChange(
-                        card.delta,
-                        {
-                          digits:
-                            card.changeDigits,
-
-                          scale:
-                            card.changeScale,
-
-                          suffix:
-                            card.changeSuffix,
+              {card.showChange !==
+                false && (
+                <div
+                  className={`physician-trend-kpi__change ${
+                    card.direction
+                      ? `physician-trend-kpi__change--${card.direction}`
+                      : 'physician-trend-kpi__change--unavailable'
+                  }`}
+                  title="تغییر نسبت به ماه قبل"
+                >
+                  {card.direction ? (
+                    <>
+                      <ChangeChevron
+                        direction={
+                          card.direction
                         }
-                      )}
+                      />
+
+                      <span>
+                        {formatChange(
+                          card.delta,
+                          {
+                            digits:
+                              card.changeDigits,
+
+                            scale:
+                              card.changeScale,
+
+                            suffix:
+                              card.changeSuffix,
+                          }
+                        )}
+                      </span>
+                    </>
+                  ) : (
+                    <span>
+                      —
                     </span>
-                  </>
-                ) : (
-                  <span>
-                    —
-                  </span>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            <div className="physician-trend-kpi__trend">
-              <KpiMiniTrend
-                values={
-                  card.trendValues
-                }
-                labels={
-                  trendLabels
-                }
-                lowerIsBetter={
-                  card.lowerIsBetter
-                }
-                valueFormatter={
-                  card.valueFormatter
-                }
-              />
-            </div>
+            {card.showTrend !==
+              false && (
+              <div className="physician-trend-kpi__trend">
+                <KpiMiniTrend
+                  values={
+                    card.trendValues
+                  }
+                  labels={
+                    trendLabels
+                  }
+                  lowerIsBetter={
+                    card.lowerIsBetter
+                  }
+                  valueFormatter={
+                    card.valueFormatter
+                  }
+                />
+              </div>
+            )}
           </div>
         )
       )}

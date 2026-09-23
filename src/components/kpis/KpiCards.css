@@ -5,7 +5,7 @@
 
   grid-template-columns:
     repeat(
-      5,
+      4,
       minmax(
         0,
         1fr
@@ -26,6 +26,22 @@
 
   box-sizing:
     border-box;
+}
+
+.kpi-grid
+.physician-trend-kpi--static {
+  justify-content:
+    center;
+}
+
+.kpi-grid
+.physician-trend-kpi--static
+.physician-trend-kpi__value-row {
+  margin-top:
+    var(--spacing-xl);
+
+  margin-bottom:
+    auto;
 }
 
 .kpi-card--loading {
