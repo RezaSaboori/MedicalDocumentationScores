@@ -57,17 +57,28 @@
 .kpi-grid
 .physician-trend-kpi--static {
   justify-content:
-    center;
+    flex-start;
 }
 
 .kpi-grid
 .physician-trend-kpi--static
 .physician-trend-kpi__value-row {
-  margin-top:
-    var(--spacing-xl);
+  flex: 1 1 auto;
 
-  margin-bottom:
-    auto;
+  margin: 0;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+}
+
+.kpi-grid
+.physician-trend-kpi--static
+.physician-trend-kpi__value {
+  font-size:
+    var(--font-size-4xl);
 }
 
 .kpi-card--loading {

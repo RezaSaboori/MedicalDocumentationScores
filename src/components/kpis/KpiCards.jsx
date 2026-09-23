@@ -530,17 +530,49 @@ const KpiCards = () => {
               previous
             : null;
 
+        const changeScale =
+          config.changeScale ??
+          1;
+
+        const changeDigits =
+          config.changeDigits ??
+          0;
+
+        const roundedDisplayDelta =
+          delta !== null
+            ? Number(
+                (
+                  delta *
+                  changeScale
+                ).toFixed(
+                  changeDigits
+                )
+              )
+            : null;
+
+        const hasVisibleChange =
+          config.showChange !==
+            false &&
+          roundedDisplayDelta !==
+            null &&
+          roundedDisplayDelta !==
+            0;
+
         return {
           ...config,
 
           delta,
 
+          hasVisibleChange,
+
           direction:
-            getDirection(
-              delta,
-              config
-                .lowerIsBetter
-            ),
+            hasVisibleChange
+              ? getDirection(
+                  delta,
+                  config
+                    .lowerIsBetter
+                )
+              : null,
 
           trendValues:
             history.map(
@@ -590,8 +622,7 @@ const KpiCards = () => {
                 {card.value}
               </div>
 
-              {card.showChange !==
-                false && (
+              {card.hasVisibleChange && (
                 <div
                   className={`physician-trend-kpi__change ${
                     card.direction
