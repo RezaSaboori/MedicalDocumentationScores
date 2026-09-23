@@ -9,6 +9,7 @@ import {
   formatPeriodLabel,
 } from '../../utils/period';
 import PhysicianScoreTrendLayer from './PhysicianScoreTrendLayer';
+import PhysicianTrendYAxis from './PhysicianTrendYAxis';
 
 const SERIES_CONFIG = [
   {
@@ -207,6 +208,27 @@ const PhysicianScoreTrendChart = ({
       720,
       data.length * 120
     );
+  const xScaleConfig = {
+    type: 'linear',
+    min: 0,
+    max: Math.max(
+      data.length - 1,
+      1
+    ),
+  };
+
+  const yScaleConfig = {
+    type: 'linear',
+    min: 'auto',
+    max: 'auto',
+  };
+
+  const yAxisConfig = {
+    legend: 'امتیاز',
+    legendPosition:
+      'middle',
+    legendOffset: -56,
+  };
 
   return (
     <section className="glass u-container u-container--md physician-trend-chart">
@@ -230,79 +252,90 @@ const PhysicianScoreTrendChart = ({
         </div>
       ) : (
         <>
-          <div className="physician-trend-chart__scroll">
-            <div
-              className="physician-trend-chart__plot"
-              style={{
-                minWidth:
-                  `${chartMinWidth}px`,
-              }}
-            >
-              <ResponsiveScatterPlot
-                data={series}
-                margin={{
-                  top: 24,
-                  right: 32,
-                  bottom: 76,
-                  left: 72,
+          <div className="physician-trend-chart__viewport">
+            <PhysicianTrendYAxis
+              data={series}
+              xScale={
+                xScaleConfig
+              }
+              yScale={
+                yScaleConfig
+              }
+              axisLeft={
+                yAxisConfig
+              }
+            />
+
+            <div className="physician-trend-chart__scroll">
+              <div
+                className="physician-trend-chart__plot"
+                style={{
+                  minWidth:
+                    `${chartMinWidth}px`,
                 }}
-                xScale={{
-                  type: 'linear',
-                  min: 0,
-                  max: Math.max(
-                    data.length - 1,
-                    1
-                  ),
-                }}
-                yScale={{
-                  type: 'linear',
-                  min: 'auto',
-                  max: 'auto',
-                }}
-                axisBottom={{
-                  tickValues,
-                  format: (
-                    value
-                  ) =>
-                    periodLabels[
-                      Math.round(
-                        value
-                      )
-                    ] || '',
-                  legend: 'زمان',
-                  legendPosition:
-                    'middle',
-                  legendOffset: 58,
-                }}
-                axisLeft={{
-                  legend: 'امتیاز',
-                  legendPosition:
-                    'middle',
-                  legendOffset: -56,
-                }}
-                enableGridX={false}
-                enableGridY
-                isInteractive
-                layers={[
-                  'grid',
-                  'axes',
-                  (
-                    layerProps
-                  ) => (
-                    <PhysicianScoreTrendLayer
-                      key="score-trend"
-                      {...layerProps}
-                      data={data}
-                      seriesConfig={
-                        SERIES_CONFIG
-                      }
-                      hoveredSeries={
-                        hoveredSeries
-                      }
-                    />
-                  ),
-                ]}
-              />
+              >
+                <ResponsiveScatterPlot
+                  data={series}
+                  margin={{
+                    top: 24,
+                    right: 32,
+                    bottom: 76,
+                    left: 12,
+                  }}
+                  xScale={
+                    xScaleConfig
+                  }
+                  yScale={
+                    yScaleConfig
+                  }
+                  axisBottom={{
+                    tickValues,
+                    format: (
+                      value
+                    ) =>
+                      periodLabels[
+                        Math.round(
+                          value
+                        )
+                      ] || '',
+                    legend:
+                      'زمان',
+                    legendPosition:
+                      'middle',
+                    legendOffset:
+                      58,
+                  }}
+                  axisLeft={
+                    null
+                  }
+                  enableGridX={
+                    false
+                  }
+                  enableGridY
+                  isInteractive
+                  layers={[
+                    'grid',
+                    'axes',
+                    (
+                      layerProps
+                    ) => (
+                      <PhysicianScoreTrendLayer
+                        key="score-trend"
+                        {...layerProps}
+                        data={
+                          data
+                        }
+                        seriesConfig={
+                          SERIES_CONFIG
+                        }
+                        hoveredSeries={
+                          hoveredSeries
+                        }
+                      />
+                    ),
+                  ]}
+                />
+              </div>
             </div>
           </div>
 

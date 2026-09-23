@@ -9,7 +9,7 @@ import {
 } from '../../utils/period';
 import ChartLegend from './ChartLegend';
 import PhysicianDocumentationBubbleLayer from './PhysicianDocumentationBubbleLayer';
-
+import PhysicianTrendYAxis from './PhysicianTrendYAxis';
 const PhysicianDocumentationBubbleChart = ({
   data,
 }) => {
@@ -154,7 +154,46 @@ const PhysicianDocumentationBubbleChart = ({
       720,
       data.length * 120
     );
+  const xScaleConfig = {
+    type: 'linear',
+    min: 0,
+    max: Math.max(
+      data.length - 1,
+      1
+    ),
+  };
 
+  const yScaleConfig = {
+    type: 'linear',
+    min: 0,
+    max: 1,
+  };
+
+  const yAxisConfig = {
+    tickValues: [
+      0,
+      0.25,
+      0.5,
+      0.75,
+      1,
+    ],
+
+    format: (
+      value
+    ) =>
+      `${Math.round(
+        value * 100
+      )}٪`,
+
+    legend:
+      'نسبت مستندسازی',
+
+    legendPosition:
+      'middle',
+
+    legendOffset:
+      -62,
+  };
   const legendItems =
     useMemo(
       () =>
@@ -189,98 +228,92 @@ const PhysicianDocumentationBubbleChart = ({
         </div>
       ) : (
         <>
-          <div className="physician-trend-chart__scroll">
-            <div
-              className="physician-trend-chart__plot"
-              style={{
-                minWidth:
-                  `${chartMinWidth}px`,
-              }}
-            >
-              <ResponsiveScatterPlot
-                data={series}
-                margin={{
-                  top: 24,
-                  right: 32,
-                  bottom: 76,
-                  left: 80,
+          <div className="physician-trend-chart__viewport">
+            <PhysicianTrendYAxis
+              data={series}
+              xScale={
+                xScaleConfig
+              }
+              yScale={
+                yScaleConfig
+              }
+              axisLeft={
+                yAxisConfig
+              }
+            />
+
+            <div className="physician-trend-chart__scroll">
+              <div
+                className="physician-trend-chart__plot"
+                style={{
+                  minWidth:
+                    `${chartMinWidth}px`,
                 }}
-                xScale={{
-                  type: 'linear',
-                  min: 0,
-                  max: Math.max(
-                    data.length - 1,
-                    1
-                  ),
-                }}
-                yScale={{
-                  type: 'linear',
-                  min: 0,
-                  max: 1,
-                }}
-                colors={({
-                  serieId,
-                }) =>
-                  groupColors.get(
-                    serieId
-                  ) ??
-                  'var(--color-blue)'
-                }
-                axisBottom={{
-                  tickValues,
-                  format: (
-                    value
-                  ) =>
-                    periodLabels[
-                      Math.round(
-                        value
-                      )
-                    ] || '',
-                  legend: 'زمان',
-                  legendPosition:
-                    'middle',
-                  legendOffset: 58,
-                }}
-                axisLeft={{
-                  tickValues: [
-                    0,
-                    0.25,
-                    0.5,
-                    0.75,
-                    1,
-                  ],
-                  format: (
-                    value
-                  ) =>
-                    `${Math.round(
-                      value *
-                        100
-                    )}٪`,
-                  legend:
-                    'نسبت مستندسازی',
-                  legendPosition:
-                    'middle',
-                  legendOffset: -62,
-                }}
-                enableGridX={false}
-                enableGridY
-                isInteractive
-                layers={[
-                  'grid',
-                  'axes',
-                  (
-                    layerProps
-                  ) => (
-                    <PhysicianDocumentationBubbleLayer
-                      key="documentation-bubbles"
-                      {...layerProps}
-                      maxVisits={
-                        maxVisits
-                      }
-                    />
-                  ),
-                ]}
-              />
+              >
+                <ResponsiveScatterPlot
+                  data={series}
+                  margin={{
+                    top: 24,
+                    right: 32,
+                    bottom: 76,
+                    left: 12,
+                  }}
+                  xScale={
+                    xScaleConfig
+                  }
+                  yScale={
+                    yScaleConfig
+                  }
+                  colors={({
+                    serieId,
+                  }) =>
+                    groupColors.get(
+                      serieId
+                    ) ??
+                    'var(--color-blue)'
+                  }
+                  axisBottom={{
+                    tickValues,
+                    format: (
+                      value
+                    ) =>
+                      periodLabels[
+                        Math.round(
+                          value
+                        )
+                      ] || '',
+                    legend:
+                      'زمان',
+                    legendPosition:
+                      'middle',
+                    legendOffset:
+                      58,
+                  }}
+                  axisLeft={
+                    null
+                  }
+                  enableGridX={
+                    false
+                  }
+                  enableGridY
+                  isInteractive
+                  layers={[
+                    'grid',
+                    'axes',
+                    (
+                      layerProps
+                    ) => (
+                      <PhysicianDocumentationBubbleLayer
+                        key="documentation-bubbles"
+                        {...layerProps}
+                        maxVisits={
+                          maxVisits
+                        }
+                      />
+                    ),
+                  ]}
+                />
+              </div>
             </div>
           </div>
 
