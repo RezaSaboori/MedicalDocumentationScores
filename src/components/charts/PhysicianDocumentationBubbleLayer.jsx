@@ -3,15 +3,17 @@ import {
   useTooltip,
 } from '@nivo/tooltip';
 import {
+  formatNumber,
   formatPercent,
 } from '../../utils/formatters';
 import {
   formatPeriodLabel,
+  toPersianDigits,
 } from '../../utils/period';
-import PhysicianTrendTooltip from './PhysicianTrendTooltip';
+import PhysicianDocumentationTooltip from './PhysicianDocumentationTooltip';
 
 const PhysicianDocumentationBubbleLayer = ({
-  nodes,
+  nodes = [],
   maxVisits,
 }) => {
   const tooltip =
@@ -56,6 +58,50 @@ const PhysicianDocumentationBubbleLayer = ({
     }
   };
 
+  const formatVisitValue = (
+    value
+  ) => {
+    if (
+      value === null ||
+      value === undefined ||
+      value === ''
+    ) {
+      return '—';
+    }
+
+    const number =
+      Number(value);
+
+    return Number.isFinite(number)
+      ? formatNumber(
+          number,
+          1
+        )
+      : '—';
+  };
+
+  const formatRatioValue = (
+    value
+  ) => {
+    if (
+      value === null ||
+      value === undefined ||
+      value === ''
+    ) {
+      return '—';
+    }
+
+    const number =
+      Number(value);
+
+    return Number.isFinite(number)
+      ? formatPercent(
+          number,
+          1
+        )
+      : '—';
+  };
+
   const handleTooltip = (
     event,
     node
@@ -67,49 +113,119 @@ const PhysicianDocumentationBubbleLayer = ({
       return;
     }
 
+    const isResident =
+      row.category ===
+      'resident';
+
+    const hasKnownYear =
+      row.resident_year !==
+        null &&
+      row.resident_year !==
+        undefined &&
+      String(
+        row.resident_year
+      ).trim() !== '';
+
+    const showYearComparison =
+      isResident &&
+      hasKnownYear;
+
+    const columns =
+      showYearComparison
+        ? [
+            'شاخص',
+            'پزشک',
+            `دستیاران سال ${toPersianDigits(
+              row.resident_year
+            )}`,
+            'همه دستیاران',
+          ]
+        : [
+            'شاخص',
+            'پزشک',
+            'همه دستیاران',
+          ];
+
+    const tooltipRows = [
+      {
+        label: 'ویزیت',
+
+        values:
+          showYearComparison
+            ? [
+                formatVisitValue(
+                  row.V
+                ),
+
+                formatVisitValue(
+                  row.year_residents_V
+                ),
+
+                formatVisitValue(
+                  row.residents_V
+                ),
+              ]
+            : [
+                formatVisitValue(
+                  row.V
+                ),
+
+                formatVisitValue(
+                  row.residents_V
+                ),
+              ],
+      },
+
+      {
+        label:
+          'نسبت مستندسازی',
+
+        values:
+          showYearComparison
+            ? [
+                formatRatioValue(
+                  row.documentation_ratio
+                ),
+
+                formatRatioValue(
+                  row.year_residents_documentation_ratio
+                ),
+
+                formatRatioValue(
+                  row.residents_documentation_ratio
+                ),
+              ]
+            : [
+                formatRatioValue(
+                  row.documentation_ratio
+                ),
+
+                formatRatioValue(
+                  row.residents_documentation_ratio
+                ),
+              ],
+      },
+    ];
+
     showTooltip(
-      <PhysicianTrendTooltip
+      <PhysicianDocumentationTooltip
         title={
           formatPeriodLabel(
             row.period
           )
         }
-        columns={[
-          'شاخص',
-          'مقدار',
-        ]}
-        rows={[
-          {
-            label: 'گروه',
-            color:
-              row.group_color,
-            values: [
-              row.group_fa ||
-                '—',
-            ],
-          },
-          {
-            label: 'ویزیت',
-            values: [
-              Number(
-                row.V
-              ).toLocaleString(
-                'en-US'
-              ),
-            ],
-          },
-          {
-            label:
-              'نسبت مستندسازی',
-            values: [
-              formatPercent(
-                row.documentation_ratio,
-                1
-              ),
-            ],
-          },
-        ]}
-        qualityRow={row}
+        group={
+          row.group_fa
+        }
+        groupColor={
+          row.group_color
+        }
+        columns={
+          columns
+        }
+        rows={
+          tooltipRows
+        }
       />,
       event
     );
