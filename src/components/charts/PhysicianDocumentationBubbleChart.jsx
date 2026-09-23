@@ -1,300 +1,298 @@
-import React, {
-  useMemo,
-} from 'react';
+import React from 'react';
 import {
-  ResponsiveScatterPlot,
-} from '@nivo/scatterplot';
+  useTooltip,
+} from '@nivo/tooltip';
+import {
+  formatNumber,
+  formatPercent,
+} from '../../utils/formatters';
 import {
   formatPeriodLabel,
+  toPersianDigits,
 } from '../../utils/period';
-import ChartLegend from './ChartLegend';
-import PhysicianDocumentationBubbleLayer from './PhysicianDocumentationBubbleLayer';
+import PhysicianDocumentationTooltip from './PhysicianDocumentationTooltip';
 
-const PhysicianDocumentationBubbleChart = ({
-  data,
+const PhysicianDocumentationBubbleLayer = ({
+  nodes,
+  maxVisits,
 }) => {
-  const validRows =
-    useMemo(
-      () =>
-        data.filter(
-          (row) =>
-            Number.isFinite(
-              Number(
-                row
-                  .documentation_ratio
-              )
-            ) &&
-            row.row_id !==
-              null
-        ),
-      [data]
-    );
+  const tooltip =
+    useTooltip();
 
-  const groupColors =
-    useMemo(() => {
-      const map =
-        new Map();
-
-      validRows.forEach(
-        (row) => {
-          if (
-            !map.has(
-              row.group_fa
-            )
-          ) {
-            map.set(
-              row.group_fa,
-              row.group_color
-            );
-          }
-        }
+  const showTooltip = (
+    content,
+    event
+  ) => {
+    if (
+      typeof tooltip
+        .showTooltipFromEvent ===
+      'function'
+    ) {
+      tooltip.showTooltipFromEvent(
+        content,
+        event
       );
 
-      return map;
-    }, [validRows]);
+      return;
+    }
 
-  const series =
-    useMemo(() => {
-      const byGroup =
-        new Map();
-
-      data.forEach(
-        (
-          row,
-          index
-        ) => {
-          const y =
-            Number(
-              row
-                .documentation_ratio
-            );
-
-          if (
-            row.row_id ===
-              null ||
-            !Number.isFinite(y)
-          ) {
-            return;
-          }
-
-          const group =
-            row.group_fa ||
-            'بدون گروه';
-
-          if (
-            !byGroup.has(
-              group
-            )
-          ) {
-            byGroup.set(
-              group,
-              []
-            );
-          }
-
-          byGroup
-            .get(group)
-            .push({
-              x: index,
-              y,
-              row,
-            });
-        }
+    if (
+      typeof tooltip
+        .showTooltip ===
+      'function'
+    ) {
+      tooltip.showTooltip(
+        content,
+        event
       );
+    }
+  };
 
-      return [
-        ...byGroup.entries(),
-      ].map(
-        ([id, points]) => ({
-          id,
-          data: points,
-        })
-      );
-    }, [data]);
+  const hideTooltip = () => {
+    if (
+      typeof tooltip
+        .hideTooltip ===
+      'function'
+    ) {
+      tooltip.hideTooltip();
+    }
+  };
 
-  const maxVisits =
-    useMemo(
-      () =>
-        Math.max(
-          1,
-          ...validRows.map(
-            (row) =>
-              Number(
-                row.V
-              ) || 0
+  const formatVisitValue = (
+    value
+  ) => {
+    if (
+      value === null ||
+      value === undefined ||
+      value === ''
+    ) {
+      return '—';
+    }
+
+    const number =
+      Number(value);
+
+    return Number.isFinite(number)
+      ? formatNumber(
+          number,
+          1
+        )
+      : '—';
+  };
+
+  const formatRatioValue = (
+    value
+  ) => {
+    if (
+      value === null ||
+      value === undefined ||
+      value === ''
+    ) {
+      return '—';
+    }
+
+    const number =
+      Number(value);
+
+    return Number.isFinite(number)
+      ? formatPercent(
+          number,
+          1
+        )
+      : '—';
+  };
+
+  const handleTooltip = (
+    event,
+    node
+  ) => {
+    const row =
+      node.data?.row;
+
+    if (!row) {
+      return;
+    }
+
+    const isResident =
+      row.category ===
+      'resident';
+
+    const hasKnownYear =
+      row.resident_year !==
+        null &&
+      row.resident_year !==
+        undefined &&
+      String(
+        row.resident_year
+      ).trim() !== '';
+
+    const showYearComparison =
+      isResident &&
+      hasKnownYear;
+
+    const columns =
+      showYearComparison
+        ? [
+            'شاخص',
+            'پزشک',
+            `دستیاران سال ${toPersianDigits(
+              row.resident_year
+            )}`,
+            'همه دستیاران',
+          ]
+        : [
+            'شاخص',
+            'پزشک',
+            'همه دستیاران',
+          ];
+
+    const rows = [
+      {
+        label: 'ویزیت',
+
+        values:
+          showYearComparison
+            ? [
+                formatVisitValue(
+                  row.V
+                ),
+
+                formatVisitValue(
+                  row.year_residents_V
+                ),
+
+                formatVisitValue(
+                  row.residents_V
+                ),
+              ]
+            : [
+                formatVisitValue(
+                  row.V
+                ),
+
+                formatVisitValue(
+                  row.residents_V
+                ),
+              ],
+      },
+
+      {
+        label:
+          'نسبت مستندسازی',
+
+        values:
+          showYearComparison
+            ? [
+                formatRatioValue(
+                  row.documentation_ratio
+                ),
+
+                formatRatioValue(
+                  row.year_residents_documentation_ratio
+                ),
+
+                formatRatioValue(
+                  row.residents_documentation_ratio
+                ),
+              ]
+            : [
+                formatRatioValue(
+                  row.documentation_ratio
+                ),
+
+                formatRatioValue(
+                  row.residents_documentation_ratio
+                ),
+              ],
+      },
+    ];
+
+    showTooltip(
+      <PhysicianDocumentationTooltip
+        title={
+          formatPeriodLabel(
+            row.period
           )
-        ),
-      [validRows]
+        }
+        group={
+          row.group_fa
+        }
+        groupColor={
+          row.group_color
+        }
+        columns={
+          columns
+        }
+        rows={
+          rows
+        }
+      />,
+      event
     );
-
-  const tickValues =
-    useMemo(
-      () =>
-        data.map(
-          (_, index) =>
-            index
-        ),
-      [data]
-    );
-
-  const periodLabels =
-    useMemo(
-      () =>
-        data.map(
-          (row) =>
-            formatPeriodLabel(
-              row.period
-            )
-        ),
-      [data]
-    );
-
-  const chartMinWidth =
-    Math.max(
-      720,
-      data.length * 120
-    );
-
-  const legendItems =
-    useMemo(
-      () =>
-        [
-          ...groupColors.entries(),
-        ].map(
-          ([label, color]) => ({
-            label,
-            color,
-          })
-        ),
-      [groupColors]
-    );
+  };
 
   return (
-    <section className="glass u-container u-container--md physician-trend-chart">
-      <header className="physician-trend-chart__header">
-        <div>
-          <h3 className="physician-trend-chart__title">
-            روند نسبت مستندسازی
-          </h3>
+    <g>
+      {nodes.map(
+        (node) => {
+          const visits =
+            Math.max(
+              0,
+              Number(
+                node.data?.row
+                  ?.V
+              ) || 0
+            );
 
-          <p className="physician-trend-chart__subtitle">
-            اندازه حباب = ویزیت، رنگ حباب = گروه
-          </p>
-        </div>
-      </header>
+          const ratio =
+            maxVisits > 0
+              ? visits /
+                maxVisits
+              : 0;
 
-      {!validRows.length ? (
-        <div className="physician-trend-chart__empty">
-          داده‌ای برای نمایش وجود ندارد
-        </div>
-      ) : (
-        <>
-          <div className="physician-trend-chart__scroll">
-            <div
-              className="physician-trend-chart__plot"
-              style={{
-                minWidth:
-                  `${chartMinWidth}px`,
-              }}
-            >
-              <ResponsiveScatterPlot
-                data={series}
-                margin={{
-                  top: 24,
-                  right: 32,
-                  bottom: 76,
-                  left: 80,
-                }}
-                xScale={{
-                  type: 'linear',
-                  min: 0,
-                  max: Math.max(
-                    data.length - 1,
-                    1
-                  ),
-                }}
-                yScale={{
-                  type: 'linear',
-                  min: 0,
-                  max: 1,
-                }}
-                colors={({
-                  serieId,
-                }) =>
-                  groupColors.get(
-                    serieId
-                  ) ??
-                  'var(--color-blue)'
-                }
-                axisBottom={{
-                  tickValues,
-                  format: (
-                    value
-                  ) =>
-                    periodLabels[
-                      Math.round(
-                        value
-                      )
-                    ] || '',
-                  legend: 'زمان',
-                  legendPosition:
-                    'middle',
-                  legendOffset: 58,
-                }}
-                axisLeft={{
-                  tickValues: [
-                    0,
-                    0.25,
-                    0.5,
-                    0.75,
-                    1,
-                  ],
-                  format: (
-                    value
-                  ) =>
-                    `${Math.round(
-                      value *
-                        100
-                    )}٪`,
-                  legend:
-                    'نسبت مستندسازی',
-                  legendPosition:
-                    'middle',
-                  legendOffset: -62,
-                }}
-                enableGridX={false}
-                enableGridY
-                isInteractive
-                layers={[
-                  'grid',
-                  'axes',
-                  (
-                    layerProps
-                  ) => (
-                    <PhysicianDocumentationBubbleLayer
-                      key="documentation-bubbles"
-                      {...layerProps}
-                      maxVisits={
-                        maxVisits
-                      }
-                    />
-                  ),
-                ]}
-              />
-            </div>
-          </div>
+          const radius =
+            4 +
+            12 *
+              Math.sqrt(
+                ratio
+              );
 
-          <div className="physician-documentation-bubble__legend">
-            <ChartLegend
-              items={
-                legendItems
+          return (
+            <circle
+              key={node.id}
+              cx={node.x}
+              cy={node.y}
+              r={radius}
+              fill={node.color}
+              fillOpacity="0.72"
+              stroke={node.color}
+              strokeWidth="1.5"
+              className="physician-documentation-bubble__node"
+              onMouseEnter={(
+                event
+              ) =>
+                handleTooltip(
+                  event,
+                  node
+                )
+              }
+              onMouseMove={(
+                event
+              ) =>
+                handleTooltip(
+                  event,
+                  node
+                )
+              }
+              onMouseLeave={
+                hideTooltip
               }
             />
-          </div>
-        </>
+          );
+        }
       )}
-    </section>
+    </g>
   );
 };
 
-export default PhysicianDocumentationBubbleChart;
+export default PhysicianDocumentationBubbleLayer;

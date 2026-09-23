@@ -399,6 +399,57 @@ export const createRouter = (db) => {
       );
     };
 
+    const meanDocumentationRatio = (
+      rows
+    ) => {
+      const values =
+        rows
+          .map((row) => {
+            const visits =
+              toFiniteNumber(
+                row.V
+              );
+
+            const documented =
+              toFiniteNumber(
+                row.D
+              );
+
+            if (
+              visits === null ||
+              visits <= 0 ||
+              documented === null
+            ) {
+              return null;
+            }
+
+            return Math.min(
+              1,
+              Math.max(
+                0,
+                documented /
+                  visits
+              )
+            );
+          })
+          .filter(
+            (value) =>
+              value !== null
+          );
+
+      if (!values.length) {
+        return null;
+      }
+
+      return (
+        values.reduce(
+          (sum, value) =>
+            sum + value,
+          0
+        ) / values.length
+      );
+    };
+
     const groupBySnapshot = (
       rows
     ) => {
@@ -554,6 +605,9 @@ export const createRouter = (db) => {
         SELECT
           a.snapshot_id,
           a.name,
+
+          a.V,
+          a.D,
 
           a.PDI,
           a.calibrated_score,
@@ -897,6 +951,17 @@ export const createRouter = (db) => {
                 'raw_score'
               ),
 
+            residents_V:
+              meanField(
+                allResidents,
+                'V'
+              ),
+
+            residents_documentation_ratio:
+              meanDocumentationRatio(
+                allResidents
+              ),
+
             year_residents_PDI:
               meanField(
                 relatedResidents,
@@ -913,6 +978,17 @@ export const createRouter = (db) => {
               meanField(
                 relatedResidents,
                 'raw_score'
+              ),
+
+            year_residents_V:
+              meanField(
+                relatedResidents,
+                'V'
+              ),
+
+            year_residents_documentation_ratio:
+              meanDocumentationRatio(
+                relatedResidents
               ),
 
             benchmark_PDI:

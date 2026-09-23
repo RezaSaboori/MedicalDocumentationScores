@@ -1,0 +1,43 @@
+.physician-documentation-tooltip {
+  width: 520px;
+
+  max-width:
+    min(
+      520px,
+      calc(
+        100vw - 20px
+      )
+    );
+}
+
+.physician-documentation-tooltip__group {
+  display: flex;
+  align-items: center;
+
+  gap:
+    7px;
+
+  padding:
+    0
+    16px
+    11px;
+
+  color:
+    var(--color-gray10);
+
+  font-size:
+    11px;
+}
+
+.physician-documentation-tooltip__group-label {
+  color:
+    var(--color-gray8);
+}
+
+.physician-documentation-tooltip__group-value {
+  color:
+    var(--color-gray11);
+
+  font-weight:
+    var(--font-weight-semibold);
+}
