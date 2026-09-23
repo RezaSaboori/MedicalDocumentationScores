@@ -237,8 +237,6 @@ export const buildBehavioralGroupsModel = (
             r,
             cx: 0,
             cy: 0,
-            labelX: 0,
-            labelY: 0,
             fontSize:
               groupFontSize(r),
           },
@@ -289,68 +287,7 @@ export const buildBehavioralGroupsModel = (
 
   ok.cy = 0;
 
-  low.labelX =
-    low.cx -
-    (
-      lowEngagementCount > 0
-        ? Math.min(
-            44,
-            low.r * 0.34
-          )
-        : 0
-    );
 
-  low.labelY = low.cy;
-
-  exemplar.labelX =
-    exemplar.cx +
-    (
-      engagementExemplarCount > 0
-        ? Math.min(
-            44,
-            exemplar.r * 0.34
-          )
-        : 0
-    );
-
-  exemplar.labelY =
-    exemplar.cy;
-
-  engagement.labelX =
-    engagement.cx;
-
-  engagement.labelY =
-    engagement.cy;
-
-  if (
-    lowEngagementCount > 0 &&
-    engagementExemplarCount > 0
-  ) {
-    engagement.labelY -=
-      Math.min(
-        44,
-        engagement.r * 0.36
-      );
-  } else if (
-    lowEngagementCount > 0
-  ) {
-    engagement.labelX +=
-      Math.min(
-        40,
-        engagement.r * 0.3
-      );
-  } else if (
-    engagementExemplarCount > 0
-  ) {
-    engagement.labelX -=
-      Math.min(
-        40,
-        engagement.r * 0.3
-      );
-  }
-
-  ok.labelX = ok.cx;
-  ok.labelY = ok.cy;
 
   const overlapDefinitions = [
     {

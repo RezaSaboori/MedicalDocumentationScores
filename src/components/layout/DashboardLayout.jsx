@@ -61,8 +61,8 @@ const DashboardLayout = () => {
         )}
 
       <div className="charts-grid-1">
-        <BehavioralGroupsChart />
         <QualityMixChart />
+        <BehavioralGroupsChart />
         <LoadVsQualityChart />
       </div>
 

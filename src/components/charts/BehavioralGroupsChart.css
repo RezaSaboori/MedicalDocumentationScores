@@ -29,39 +29,14 @@
 
 .behavioral-groups-chart__fill {
   fill-opacity: 0.68;
-  cursor: pointer;
   transition:
     cx 360ms var(--motion-easing-easeOut),
     cy 360ms var(--motion-easing-easeOut),
-    r 360ms var(--motion-easing-easeOut),
-    fill-opacity 180ms var(--motion-easing-easeOut),
-    filter 180ms var(--motion-easing-easeOut);
-}
-
-.behavioral-groups-chart__fill.is-active {
-  fill-opacity: 0.84;
-  filter:
-    drop-shadow(
-      0 7px 14px
-      rgba(0, 0, 0, 0.18)
-    );
+    r 360ms var(--motion-easing-easeOut);
 }
 
 .behavioral-groups-chart__overlap {
   fill-opacity: 0.88;
-  cursor: pointer;
-  transition:
-    fill-opacity 180ms var(--motion-easing-easeOut),
-    filter 180ms var(--motion-easing-easeOut);
-}
-
-.behavioral-groups-chart__overlap.is-active {
-  fill-opacity: 1;
-  filter:
-    drop-shadow(
-      0 6px 12px
-      rgba(0, 0, 0, 0.22)
-    );
 }
 
 .behavioral-groups-chart__outline {

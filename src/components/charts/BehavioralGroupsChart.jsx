@@ -1,13 +1,11 @@
 import React, {
   useId,
   useMemo,
-  useState,
 } from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 import { buildBehavioralGroupsModel } from '../../utils/behavioralGroups';
 import { Skeleton } from '../ui/Skeleton';
 import ChartContainer from './ChartContainer';
-import ChartTooltip from './ChartTooltip';
 import './BehavioralGroupsChart.css';
 
 const EMPTY_STATE_STYLE = {
@@ -28,9 +26,6 @@ const BehavioralGroupsChart = () => {
 
   const rows =
     data.current || [];
-
-  const [hovered, setHovered] =
-    useState(null);
 
   const rawId = useId();
 
@@ -59,27 +54,21 @@ const BehavioralGroupsChart = () => {
       )
     );
 
-  const legendItems =
-    model.groups.map(
+  const legendItems = [
+    ...model.groups.map(
       (group) => ({
-        label: `${group.label} (${group.total})`,
+        label: group.label,
         color: group.color,
       })
-    );
+    ),
 
-  const hoveredGroup =
-    model.groups.find(
-      (group) =>
-        hovered ===
-        `group:${group.flag}`
-    );
-
-  const hoveredOverlap =
-    model.overlaps.find(
-      (overlap) =>
-        hovered ===
-        `overlap:${overlap.id}`
-    );
+    ...model.overlaps.map(
+      (overlap) => ({
+        label: overlap.label,
+        color: overlap.color,
+      })
+    ),
+  ];
 
   const title =
     'توزیع و تقاطع گروه‌های رفتاری';
@@ -163,61 +152,24 @@ const BehavioralGroupsChart = () => {
             )}
 
             {model.groups.map(
-              (group) => {
-                const groupKey =
-                  `group:${group.flag}`;
-
-                const activeFromOverlap =
-                  hoveredOverlap &&
-                  (
-                    hoveredOverlap.firstFlag ===
-                      group.flag ||
-                    hoveredOverlap.secondFlag ===
-                      group.flag
-                  );
-
-                const isActive =
-                  hovered ===
-                    groupKey ||
-                  activeFromOverlap;
-
-                return (
-                  <circle
-                    key={`fill-${group.flag}`}
-                    cx={group.cx}
-                    cy={group.cy}
-                    r={group.r}
-                    fill={group.color}
-                    className={`behavioral-groups-chart__fill${
-                      isActive
-                        ? ' is-active'
-                        : ''
-                    }`}
-                    onMouseEnter={() =>
-                      setHovered(
-                        groupKey
-                      )
-                    }
-                    onMouseLeave={() =>
-                      setHovered(
-                        null
-                      )
-                    }
-                  />
-                );
-              }
+              (group) => (
+                <circle
+                  key={`fill-${group.flag}`}
+                  cx={group.cx}
+                  cy={group.cy}
+                  r={group.r}
+                  fill={group.color}
+                  className="behavioral-groups-chart__fill"
+                />
+              )
             )}
 
             {model.overlaps.map(
               (overlap) => {
                 const second =
                   groupByFlag[
-                    overlap
-                      .secondFlag
+                    overlap.secondFlag
                   ];
-
-                const overlapKey =
-                  `overlap:${overlap.id}`;
 
                 return (
                   <circle
@@ -227,22 +179,7 @@ const BehavioralGroupsChart = () => {
                     r={second.r}
                     fill={overlap.color}
                     clipPath={`url(#behavioral-clip-${clipPrefix}-${overlap.id})`}
-                    className={`behavioral-groups-chart__overlap${
-                      hovered ===
-                      overlapKey
-                        ? ' is-active'
-                        : ''
-                    }`}
-                    onMouseEnter={() =>
-                      setHovered(
-                        overlapKey
-                      )
-                    }
-                    onMouseLeave={() =>
-                      setHovered(
-                        null
-                      )
-                    }
+                    className="behavioral-groups-chart__overlap"
                   />
                 );
               }
@@ -266,8 +203,8 @@ const BehavioralGroupsChart = () => {
               (group) => (
                 <text
                   key={`count-${group.flag}`}
-                  x={group.labelX}
-                  y={group.labelY}
+                  x={group.cx}
+                  y={group.cy}
                   textAnchor="middle"
                   dominantBaseline="middle"
                   className="behavioral-groups-chart__count"
@@ -303,41 +240,7 @@ const BehavioralGroupsChart = () => {
         </div>
       )}
 
-      {hoveredGroup && (
-        <ChartTooltip
-          title={hoveredGroup.label}
-          rows={[
-            {
-              label:
-                'کل اعضای گروه',
-              value:
-                hoveredGroup.total,
-            },
-            {
-              label:
-                'بدون هم‌پوشانی',
-              value:
-                hoveredGroup.exclusive,
-            },
-          ]}
-        />
-      )}
 
-      {hoveredOverlap && (
-        <ChartTooltip
-          title={
-            hoveredOverlap.label
-          }
-          rows={[
-            {
-              label:
-                'تعداد پزشکان',
-              value:
-                hoveredOverlap.count,
-            },
-          ]}
-        />
-      )}
     </ChartContainer>
   );
 };
