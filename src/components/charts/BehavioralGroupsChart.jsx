@@ -73,14 +73,10 @@ const BehavioralGroupsChart = () => {
   const title =
     'توزیع و تقاطع گروه‌های رفتاری';
 
-  const subtitle =
-    'اندازه دایره‌ها بر اساس تعداد کل پزشکان هر گروه است؛ اعداد داخل نواحی بدون شمارش مضاعف نمایش داده می‌شوند';
-
   if (loading) {
     return (
       <ChartContainer
         title={title}
-        subtitle={subtitle}
         className="behavioral-groups-chart"
         legendItems={legendItems}
       >
@@ -95,7 +91,6 @@ const BehavioralGroupsChart = () => {
   return (
     <ChartContainer
       title={title}
-      subtitle={subtitle}
       className="behavioral-groups-chart"
       legendItems={legendItems}
     >

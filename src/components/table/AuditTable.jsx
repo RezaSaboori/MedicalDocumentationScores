@@ -151,22 +151,6 @@ const createColumns = (
       render: (row) =>
         formatFixed(row.raw_score, 2),
     },
-    {
-      key: 'adjusted-quality',
-      label: 'کیفیت تعدیل‌شده',
-      sortKey: 'WQS_adj',
-      width: 140,
-      render: (row) =>
-        formatFixed(row.WQS_adj, 2),
-    },
-    {
-      key: 'laq',
-      label: 'LAQ',
-      sortKey: 'LAQ',
-      width: 100,
-      render: (row) =>
-        formatFixed(row.LAQ, 2),
-    },
   );
 
   return columns;
@@ -242,13 +226,7 @@ const AuditTable = () => {
 
   /*
    * The visual track is rendered from left to right,
-   * while the logical table order remains RTL:
-   *
-   * right:
-   * name → year → group → ... → LAQ
-   *
-   * left:
-   * LAQ → ... → name
+   * while the logical table order remains RTL.
    */
   const trackColumns = useMemo(
     () =>
