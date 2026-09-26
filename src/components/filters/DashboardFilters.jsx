@@ -1,6 +1,6 @@
 import React from 'react';
 import { useDashboard } from '../../context/DashboardContext';
-import { BASE_FLAG_FA, DASHBOARD_MODES } from '../../utils/constants';
+import { DASHBOARD_MODES } from '../../utils/constants';
 import { DropdownInput } from '../inputs/DropdownInput';
 import { RadioToggle } from '../inputs/RadioToggle';
 import {
@@ -27,12 +27,6 @@ const DashboardFilters = () => {
     setSelectedPeriod,
   } = useDashboard();
 
-  const flagEntries =
-    Object.entries(BASE_FLAG_FA);
-
-  const totalFlags =
-    flagEntries.length;
-
   const periodEntries =
     (snapshots || []).map(
       (snapshot) => ({
@@ -54,7 +48,6 @@ const DashboardFilters = () => {
     );
 
   const yearDropdownOptions = ['همه سال‌ها', ...availableYears.map(y => `سال ${y}`)];
-  const flagDropdownOptions = flagEntries.map(([_, label]) => label);
   const FACULTY_ALL_LABEL = 'همه اساتید';
   const facultyDropdownOptions = [FACULTY_ALL_LABEL, ...(availableFaculties || [])];
   const handlePeriodChange = (
@@ -72,13 +65,6 @@ const DashboardFilters = () => {
         match.period
       );
     }
-  };
-
-  const handleFlagChange = (selectedLabels) => {
-    const selectedValues = flagEntries
-      .filter(([_, label]) => selectedLabels.includes(label))
-      .map(([value]) => value);
-    updateFilters({ selectedFlags: selectedValues });
   };
 
   const handleYearChange = (val) => {
@@ -132,13 +118,6 @@ const DashboardFilters = () => {
 
   const isFacultyFilterActive = filters.selectedFaculty !== 'all';
 
-  const flagValue = flagEntries
-    .filter(([value]) => filters.selectedFlags.includes(value))
-    .map(([_, label]) => label);
-
-  const allFlagsSelected = filters.selectedFlags.length === totalFlags;
-  const flagDisplayValue = allFlagsSelected ? "همه گروه ها" : undefined;
-
   return (
     <div className="filters-wrapper">
       <div className="filter-group filter-group--period">
@@ -160,21 +139,6 @@ const DashboardFilters = () => {
             <ChevronIcon />
           }
           placeholder="انتخاب ماه..."
-        />
-      </div>
-
-      <div className="filter-group">
-        <label className="filter-label">فیلتر بر اساس گروه رفتاری:</label>
-        <DropdownInput
-          multiple
-          dir="rtl"
-          busy={loading}
-          options={flagDropdownOptions}
-          value={flagValue}
-          onChange={handleFlagChange}
-          displayValue={flagDisplayValue}
-          chevronIcon={<ChevronIcon />}
-          placeholder="انتخاب گروه..."
         />
       </div>
       

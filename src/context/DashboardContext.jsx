@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { fetchDashboardData, fetchSnapshots, fetchResidentsMaster } from '../services/dataService';
-import { DASHBOARD_MODES, BASE_FLAG_FA } from '../utils/constants';
+import { DASHBOARD_MODES } from '../utils/constants';
 import { flagGroupLabel, flagGroupColor } from '../utils/flagGroups';
 import { enrichScoringGroup } from '../utils/scoring';
 
@@ -44,7 +44,6 @@ export const DashboardProvider = ({ children }) => {
   const [filters, setFilters] = useState({
     selectedYear: 'all',
     selectedFaculty: 'all',
-    selectedFlags: Object.keys(BASE_FLAG_FA),
     reviewResidents: false,
   });
 
@@ -254,13 +253,6 @@ export const DashboardProvider = ({ children }) => {
         ) {
           return false;
         }
-
-        const rowFlags = row.flags ? row.flags.split('|') : ['OK'];
-        const hasSelectedFlag = rowFlags.some((f) =>
-          filters.selectedFlags.includes(f)
-        );
-
-        if (!hasSelectedFlag) return false;
 
         return true;
       });
