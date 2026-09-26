@@ -159,15 +159,6 @@ const DashboardFilters = () => {
       
       {mode === DASHBOARD_MODES.FACULTY && (
         <>
-          <div className="filter-group filter-group--review-residents">
-            <label className="filter-label">نوع بررسی:</label>
-            <RadioToggle
-              checked={Boolean(filters.reviewResidents)}
-              onChange={handleReviewResidentsChange}
-              label="بررسی دستیاران"
-            />
-          </div>
-
           <div
             className={`filter-group filter-group--with-clear${
               filters.reviewResidents
@@ -216,6 +207,14 @@ const DashboardFilters = () => {
                 </button>
               )}
             </div>
+          </div>
+          <div className="filter-group filter-group--review-residents">
+            <label className="filter-label">نوع بررسی:</label>
+            <RadioToggle
+              checked={Boolean(filters.reviewResidents)}
+              onChange={handleReviewResidentsChange}
+              label="بررسی دستیاران"
+            />
           </div>
         </>
       )}

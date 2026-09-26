@@ -1,21 +1,31 @@
 .filters-wrapper {
-  display: flex;
-  gap: var(--spacing-lg);
-  flex-wrap: wrap;
+  display: grid;
+
+  width: 100%;
+
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(0, 1fr)
+    );
+
+  gap:
+    var(--spacing-lg);
 }
 
-.filter-group {
-  flex: 1;
-  min-width: 260px;
-}
-
-.filter-group--period {
-  flex: 0 1 240px;
-  min-width: 220px;
-}
-
+.filter-group,
+.filter-group--period,
+.filter-group--review-residents,
 .filter-group:last-child {
-  min-width: 200px;
+  width: 100%;
+  min-width: 0;
+}
+
+.filter-group
+.ui-dropdown,
+.filter-group
+.ui-radio-toggle {
+  width: 100%;
 }
 
 .filter-label {
@@ -82,8 +92,8 @@
 }
 
 .filter-group--review-residents {
-  flex: 0 0 auto;
-  min-width: 170px;
+  width: 100%;
+  min-width: 0;
 }
 
 .filter-group--review-residents .ui-radio-toggle {
@@ -92,4 +102,25 @@
 
 .filter-group--disabled .filter-label {
   opacity: 0.5;
+}
+
+@media (
+  max-width: 900px
+) {
+  .filters-wrapper {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
+}
+
+@media (
+  max-width: 600px
+) {
+  .filters-wrapper {
+    grid-template-columns:
+      1fr;
+  }
 }
