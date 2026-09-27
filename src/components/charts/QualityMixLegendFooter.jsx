@@ -45,7 +45,7 @@ const QualityMixLegendFooter = ({
             }}
           >
             <div className="qm-footer__label">
-              میانگین نمره
+              میانگین درصد تکمیل
             </div>
 
             <div

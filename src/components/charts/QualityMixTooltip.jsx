@@ -105,7 +105,7 @@ const QualityMixTooltip = ({
           }}
         >
           <span className="qm-rich-tooltip__stat-label">
-            میانگین نمره
+            میانگین درصد تکمیل
           </span>
 
           <strong className="qm-rich-tooltip__stat-value">

@@ -1,5 +1,10 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { uploadDataToServer, saveResidentsMaster, fetchDashboardData } from '../../services/dataService';
+import {
+  uploadDataToServer,
+  saveResidentsMaster,
+  fetchDashboardData,
+  deleteSnapshotFromServer,
+} from '../../services/dataService';
 import { parseAndProcessExcel, parseResidentsCSV } from '../../utils/excelPipeline';
 import { useDashboard } from '../../context/DashboardContext';
 import { useModeIndicator } from '../../hooks/useModeIndicator';
@@ -42,6 +47,10 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
   const [parsing, setParsing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fetchingDataset, setFetchingDataset] = useState(false);
+  const [
+    deletingSnapshotId,
+    setDeletingSnapshotId,
+  ] = useState(null);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
@@ -215,6 +224,61 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
     }
   };
 
+  const handleDeleteDataset = async (
+    snapshot
+  ) => {
+    const confirmed =
+      window.confirm(
+        `آیا از حذف کامل داده‌های بازه «${snapshot.period}» اطمینان دارید؟\n\nاین عملیات قابل بازگشت نیست.`
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingSnapshotId(
+      snapshot.id
+    );
+
+    setError(null);
+
+    try {
+      await deleteSnapshotFromServer(
+        snapshot.id
+      );
+
+      if (
+        openedPeriod ===
+        snapshot.period
+      ) {
+        setOpenedPeriod(
+          null
+        );
+
+        setPreviewResidents(
+          []
+        );
+
+        setPreviewFaculty(
+          []
+        );
+      }
+
+      if (refresh) {
+        await refresh();
+      }
+    } catch (err) {
+      setError(
+        err.message ||
+        'خطا در حذف داده‌های بازه زمانی.'
+      );
+    } finally {
+      setDeletingSnapshotId(
+        null
+      );
+    }
+  };
+
   // ── DERIVED VALUES (Safe to declare after early return) ──────────────────
   const yearOptions = ['همه سال‌ها', ...datasetYears.map(y => `سال ${y}`)];
   const monthOptions = ['همه ماه‌ها', ...datasetMonths.map(m => `ماه ${m}`)];
@@ -383,23 +447,75 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
                   <div className="upload-modal-empty">هیچ بازه زمانی ذخیره‌شده‌ای یافت نشد.</div>
                 )}
 
-                {filteredSnapshots.map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    className="upload-modal-dataset upload-modal-dataset--btn"
-                    onClick={() => handleOpenDataset(s.period)}
-                  >
-                    <div>
-                      <div>{s.period}</div>
-                      <div className="upload-modal-dataset__meta">
-                        <span>شروع: {s.start_date || '—'}</span>
-                        <span>پایان: {s.end_date || '—'}</span>
+                {filteredSnapshots.map(
+                  (s) => {
+                    const isDeleting =
+                      deletingSnapshotId ===
+                      s.id;
+
+                    return (
+                      <div
+                        key={s.id}
+                        className="upload-modal-dataset"
+                      >
+                        <div>
+                          <div>
+                            {s.period}
+                          </div>
+
+                          <div className="upload-modal-dataset__meta">
+                            <span>
+                              شروع:{' '}
+                              {s.start_date ||
+                                '—'}
+                            </span>
+
+                            <span>
+                              پایان:{' '}
+                              {s.end_date ||
+                                '—'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="upload-modal-dataset__actions">
+                          <button
+                            type="button"
+                            className="upload-modal-btn upload-modal-btn--sm upload-modal-btn--ghost"
+                            onClick={() =>
+                              handleOpenDataset(
+                                s.period
+                              )
+                            }
+                            disabled={
+                              fetchingDataset ||
+                              isDeleting
+                            }
+                          >
+                            مشاهده
+                          </button>
+
+                          <button
+                            type="button"
+                            className="upload-modal-btn upload-modal-btn--sm upload-modal-btn--danger"
+                            onClick={() =>
+                              handleDeleteDataset(
+                                s
+                              )
+                            }
+                            disabled={
+                              isDeleting
+                            }
+                          >
+                            {isDeleting
+                              ? 'در حال حذف...'
+                              : 'حذف'}
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                    <span className="upload-modal-btn upload-modal-btn--sm upload-modal-btn--ghost">مشاهده</span>
-                  </button>
-                ))}
+                    );
+                  }
+                )}
               </section>
 
               {openedPeriod && (

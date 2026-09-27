@@ -387,23 +387,27 @@
   border: var(--border-width-hairline) solid color-mix(in srgb, var(--color-gray8) 25%, transparent);
   font-size: var(--font-size-sm);
 }
+.upload-modal-dataset__actions {
+  display: flex;
+  align-items: center;
+
+  flex: 0 0 auto;
+
+  gap:
+    var(--spacing-sm);
+}
+
+.upload-modal-dataset__actions
+.upload-modal-btn {
+  white-space: nowrap;
+}
+
 .upload-modal-dataset-filters {
   width: 100%;
   display: flex;
   gap: var(--spacing-sm);
 }
 .upload-modal-dataset-filters > * { flex: 1; }
-
-.upload-modal-dataset--btn {
-  background: transparent;
-  color: inherit;
-  font-family: inherit;
-  text-align: right;
-  cursor: pointer;
-}
-.upload-modal-dataset--btn:hover {
-  border-color: var(--color-blue);
-}
 
 .upload-modal-dataset__meta {
   display: flex;

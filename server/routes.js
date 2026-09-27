@@ -207,6 +207,110 @@ export const createRouter = (db) => {
     res.json(snapshots);
   });
 
+  router.delete(
+    '/api/snapshots/:id',
+    (req, res) => {
+      const snapshotId =
+        Number(req.params.id);
+
+      if (
+        !Number.isInteger(
+          snapshotId
+        ) ||
+        snapshotId <= 0
+      ) {
+        return res
+          .status(400)
+          .json({
+            error:
+              'شناسه بازه زمانی نامعتبر است.',
+          });
+      }
+
+      const snapshot =
+        db
+          .prepare(`
+            SELECT
+              id,
+              period
+            FROM snapshots
+            WHERE id = ?
+          `)
+          .get(snapshotId);
+
+      if (!snapshot) {
+        return res
+          .status(404)
+          .json({
+            error:
+              'بازه زمانی مورد نظر یافت نشد.',
+          });
+      }
+
+      try {
+        db.exec(
+          'BEGIN TRANSACTION'
+        );
+
+        db
+          .prepare(`
+            DELETE FROM documents
+            WHERE snapshot_id = ?
+          `)
+          .run(snapshotId);
+
+        db
+          .prepare(`
+            DELETE FROM residents
+            WHERE snapshot_id = ?
+          `)
+          .run(snapshotId);
+
+        db
+          .prepare(`
+            DELETE FROM aggregated_scores
+            WHERE snapshot_id = ?
+          `)
+          .run(snapshotId);
+
+        db
+          .prepare(`
+            DELETE FROM snapshots
+            WHERE id = ?
+          `)
+          .run(snapshotId);
+
+        db.exec('COMMIT');
+
+        return res.json({
+          success: true,
+          id: snapshotId,
+          period:
+            snapshot.period,
+        });
+      } catch (err) {
+        try {
+          db.exec(
+            'ROLLBACK'
+          );
+        } catch {
+          // Transaction may already
+          // have been rolled back.
+        }
+
+        console.error(err);
+
+        return res
+          .status(500)
+          .json({
+            error:
+              err.message ||
+              'خطا در حذف داده‌های بازه زمانی.',
+          });
+      }
+    }
+  );
+
   router.get('/api/dashboard/:period', (req, res) => {
     const { period } = req.params;
     

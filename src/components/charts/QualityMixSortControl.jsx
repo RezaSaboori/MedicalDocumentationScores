@@ -25,7 +25,7 @@ const SORT_OPTIONS = [
   {
     value:
       QUALITY_MIX_SORTS.CALIBRATED_SCORE,
-    label: 'میانگین نمره',
+    label: 'میانگین درصد تکمیل',
   },
   {
     value:

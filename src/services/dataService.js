@@ -20,6 +20,35 @@ export const fetchSnapshots = async () => {
   return res.json();
 };
 
+export const deleteSnapshotFromServer = async (
+  snapshotId
+) => {
+  const res = await fetch(
+    `${API_BASE}/api/snapshots/${encodeURIComponent(
+      snapshotId
+    )}`,
+    {
+      method: 'DELETE',
+    }
+  );
+
+  if (!res.ok) {
+    const payload =
+      await res
+        .json()
+        .catch(
+          () => null
+        );
+
+    throw new Error(
+      payload?.error ||
+      'خطا در حذف داده‌های بازه زمانی'
+    );
+  }
+
+  return res.json();
+};
+
 export const fetchDashboardData = async (period) => {
   const res = await fetch(`${API_BASE}/api/dashboard/${encodeURIComponent(period)}`);
   if (!res.ok) throw new Error('خطا در دریافت اطلاعات داشبورد');
