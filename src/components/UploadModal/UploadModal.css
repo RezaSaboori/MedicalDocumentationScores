@@ -343,6 +343,38 @@
 .upload-modal-btn:hover { opacity: 0.85; }
 .upload-modal-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
+.upload-modal-person--hidden {
+  opacity: 0.45;
+}
+
+.upload-modal-visibility {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  width: 32px;
+  height: 32px;
+  margin-inline-end: var(--spacing-xs);
+  padding: 0;
+  border: var(--border-width-hairline) solid
+    color-mix(in srgb, var(--color-gray8) 40%, transparent);
+  border-radius: var(--border-radius-pill);
+  background: transparent;
+  color: var(--color-blue);
+  cursor: pointer;
+  transition:
+    color var(--motion-duration-fast) var(--motion-easing-easeOut),
+    opacity var(--motion-duration-fast) var(--motion-easing-easeOut);
+}
+
+.upload-modal-visibility:hover {
+  opacity: 0.75;
+}
+
+.upload-modal-visibility--hidden {
+  color: var(--color-gray9);
+}
+
 .upload-modal-btn--solid { color: #fff; }
 
 .upload-modal-btn--cancel {

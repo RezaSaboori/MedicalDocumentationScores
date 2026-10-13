@@ -2,10 +2,12 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   uploadDataToServer,
   saveResidentsMaster,
+  saveFacultiesMaster,
   fetchDashboardData,
   deleteSnapshotFromServer,
 } from '../../services/dataService';
-import { parseAndProcessExcel, parseResidentsCSV } from '../../utils/excelPipeline';
+import { parseAndProcessExcel } from '../../utils/excelPipeline';
+import { parsePersonnelCSV } from '../../utils/personnelCsv';
 import { useDashboard } from '../../context/DashboardContext';
 import { useModeIndicator } from '../../hooks/useModeIndicator';
 import { DropdownInput } from '../inputs/DropdownInput';
@@ -22,7 +24,14 @@ const ChevronIcon = () => (
 );
 
 export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }) => {
-  const { refresh, snapshots, refreshResidentsMaster, residentsMaster } = useDashboard();
+  const {
+    refresh,
+    snapshots,
+    refreshResidentsMaster,
+    residentsMaster,
+    refreshFacultiesMaster,
+    facultiesMaster,
+  } = useDashboard();
 
   const visible = isOpen === undefined ? true : Boolean(isOpen);
 
@@ -38,12 +47,16 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
   const [residentsRows, setResidentsRows] = useState([]);
   const [residentsSavedMsg, setResidentsSavedMsg] = useState(false);
 
+  const [facultiesRows, setFacultiesRows] = useState([]);
+  const [facultiesSavedMsg, setFacultiesSavedMsg] = useState(false);
+
   const [yearFilter, setYearFilter] = useState('all');
   const [monthFilter, setMonthFilter] = useState('all');
   const [openedPeriod, setOpenedPeriod] = useState(null);
 
   const [dragExcel, setDragExcel] = useState(false);
   const [dragResidents, setDragResidents] = useState(false);
+  const [dragFaculties, setDragFaculties] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fetchingDataset, setFetchingDataset] = useState(false);
@@ -56,6 +69,7 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
 
   const excelInputRef = useRef(null);
   const residentsInputRef = useRef(null);
+  const facultiesInputRef = useRef(null);
 
   // ── UNCONDITIONAL HOOKS (Rules of Hooks compliance) ──────────────────────
   // These MUST be declared before the early return `if (!visible) return null;`
@@ -95,7 +109,20 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
   useEffect(() => {
     if (visible) {
       setTab(TABS.UPLOAD);
-      setResidentsRows((residentsMaster || []).map(r => ({ name: r.name, year: r.year })));
+      setResidentsRows(
+        (residentsMaster || []).map((resident) => ({
+          name: resident.name,
+          year: resident.year,
+          visible: resident.visible ?? 1,
+        }))
+      );
+
+      setFacultiesRows(
+        (facultiesMaster || []).map((faculty) => ({
+          name: faculty.name,
+          visible: faculty.visible ?? 1,
+        }))
+      );
       setError(null);
       setSuccess(false);
       setOpenedPeriod(null);
@@ -143,10 +170,28 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
     setError(null);
     setParsing(true);
     try {
-      const list = await parseResidentsCSV(file);
+      const list = await parsePersonnelCSV(file, 'resident');
       setResidentsRows(list);
+      setResidentsSavedMsg(false);
     } catch (err) {
       setError(err.message || 'خطا در پردازش فایل CSV رزیدنت‌ها.');
+    } finally {
+      setParsing(false);
+    }
+  };
+
+  const handleFacultiesFile = async (file) => {
+    if (!file) return;
+
+    setError(null);
+    setParsing(true);
+
+    try {
+      const list = await parsePersonnelCSV(file, 'faculty');
+      setFacultiesRows(list);
+      setFacultiesSavedMsg(false);
+    } catch (err) {
+      setError(err.message || 'خطا در پردازش فایل CSV اساتید.');
     } finally {
       setParsing(false);
     }
@@ -167,7 +212,74 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
     }
   };
 
-  const handleClearResidents = () => setResidentsRows([]);
+  const handleClearResidents = async () => {
+    const confirmed = window.confirm(
+      'آیا از حذف کامل «مشخصات رزیدنت‌ها» اطمینان دارید؟\n\nاین عملیات قابل بازگشت نیست.'
+    );
+
+    if (!confirmed) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      await saveResidentsMaster([]);
+      await refreshResidentsMaster();
+
+      setResidentsRows([]);
+      setResidentsSavedMsg(false);
+    } catch (err) {
+      setError(
+        err.message || 'خطا در حذف مشخصات رزیدنت‌ها از پایگاه داده.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveFaculties = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      await saveFacultiesMaster(facultiesRows);
+      await refreshFacultiesMaster();
+
+      setFacultiesSavedMsg(true);
+      setTimeout(() => setFacultiesSavedMsg(false), 2000);
+    } catch (err) {
+      setError(
+        err.message || 'خطا در ذخیره‌سازی مشخصات هیئت علمی.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClearFaculties = async () => {
+    const confirmed = window.confirm(
+      'آیا از حذف کامل «مشخصات هیئت علمی» اطمینان دارید؟\n\nاین عملیات قابل بازگشت نیست.'
+    );
+
+    if (!confirmed) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      await saveFacultiesMaster([]);
+      await refreshFacultiesMaster();
+
+      setFacultiesRows([]);
+      setFacultiesSavedMsg(false);
+    } catch (err) {
+      setError(
+        err.message || 'خطا در حذف مشخصات هیئت علمی از پایگاه داده.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!processed || !excelFile) {
@@ -316,6 +428,23 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
     },
   };
 
+  const facultiesDropProps = {
+    onClick: () => facultiesInputRef.current?.click(),
+
+    onDragOver: (e) => {
+      e.preventDefault();
+      setDragFaculties(true);
+    },
+
+    onDragLeave: () => setDragFaculties(false),
+
+    onDrop: (e) => {
+      e.preventDefault();
+      setDragFaculties(false);
+      handleFacultiesFile(e.dataTransfer.files?.[0]);
+    },
+  };
+
   const previewHandlers = (setter) => ({
     onRowChange: (idx, buffer) => setter(prev => prev.map((r, i) => (i === idx ? { ...r, ...buffer } : r))),
     onRowRemove: (idx) => setter(prev => prev.filter((_, i) => i !== idx)),
@@ -398,26 +527,65 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
             </>
           ) : (
             <>
-              <section className="upload-modal-section glass u-container">
-                <div className="upload-modal-section-title">مشخصات رزیدنت‌ها</div>
-                <ResidentsManager
-                  rows={residentsRows}
-                  onRowsChange={setResidentsRows}
-                  onSave={handleSaveResidents}
-                  onClear={handleClearResidents}
-                  saving={loading}
-                  saved={residentsSavedMsg}
-                  dropProps={residentsDropProps}
-                  dragActive={dragResidents}
-                />
-                <input
-                  ref={residentsInputRef}
-                  type="file"
-                  accept=".csv"
-                  style={{ display: 'none' }}
-                  onChange={(e) => handleResidentsFile(e.target.files?.[0])}
-                />
-              </section>
+              <div className="upload-modal-personnel-grid">
+                <section className="upload-modal-section glass u-container">
+                  <div className="upload-modal-section-title">
+                    مشخصات رزیدنت‌ها
+                  </div>
+
+                  <ResidentsManager
+                    kind="resident"
+                    rows={residentsRows}
+                    onRowsChange={setResidentsRows}
+                    onSave={handleSaveResidents}
+                    onClear={handleClearResidents}
+                    saving={loading}
+                    saved={residentsSavedMsg}
+                    dropProps={residentsDropProps}
+                    dragActive={dragResidents}
+                  />
+
+                  <input
+                    ref={residentsInputRef}
+                    type="file"
+                    accept=".csv"
+                    className="upload-modal-file-input"
+                    onChange={(e) => {
+                      handleResidentsFile(e.target.files?.[0]);
+                      e.target.value = '';
+                    }}
+                  />
+                </section>
+
+                <section className="upload-modal-section glass u-container">
+                  <div className="upload-modal-section-title">
+                    مشخصات هیئت علمی
+                  </div>
+
+                  <ResidentsManager
+                    kind="faculty"
+                    rows={facultiesRows}
+                    onRowsChange={setFacultiesRows}
+                    onSave={handleSaveFaculties}
+                    onClear={handleClearFaculties}
+                    saving={loading}
+                    saved={facultiesSavedMsg}
+                    dropProps={facultiesDropProps}
+                    dragActive={dragFaculties}
+                  />
+
+                  <input
+                    ref={facultiesInputRef}
+                    type="file"
+                    accept=".csv"
+                    className="upload-modal-file-input"
+                    onChange={(e) => {
+                      handleFacultiesFile(e.target.files?.[0]);
+                      e.target.value = '';
+                    }}
+                  />
+                </section>
+              </div>
 
               <section className="upload-modal-section glass u-container">
                 <div className="upload-modal-section-title">بازه‌های زمانی ذخیره‌شده</div>
