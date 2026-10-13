@@ -4,7 +4,7 @@ import {
   QUALITY_CLASS_MAX_WEIGHT,
 } from './qualityClasses';
 import { PDI_THRESHOLD } from './constants';
-
+import { personNameKey } from '../../shared/personnel.js';
 const CONFIG = {
   shrink_k: 30,
 
@@ -14,10 +14,7 @@ const CONFIG = {
   flag_exemplar_min_pdi: PDI_THRESHOLD,
 };
 
-const normalize = (text) =>
-  String(text || '')
-    .replace(/\s+/g, ' ')
-    .trim();
+const normalize = personNameKey;
 
 const ebAdjust = (
   value,

@@ -80,6 +80,31 @@ export const saveResidentsMaster = async (list) => {
   return res.json();
 };
 
+export const fetchFacultiesMaster = async () => {
+  const res = await fetch(`${API_BASE}/api/faculties-master`);
+
+  if (!res.ok) {
+    throw new Error('خطا در دریافت مشخصات اساتید');
+  }
+
+  return res.json();
+};
+
+export const saveFacultiesMaster = async (list) => {
+  const res = await fetch(`${API_BASE}/api/faculties-master`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ facultiesList: list }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.error || 'خطا در ذخیره‌سازی مشخصات اساتید');
+  }
+
+  return res.json();
+};
+
 export const fetchPhysicianTrend = async (
   category,
   name

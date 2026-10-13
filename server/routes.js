@@ -1,7 +1,34 @@
 import express from 'express';
+import {
+  personNameKey,
+  isPersonnelVisible,
+  normalizeResidentYear,
+} from '../shared/personnel.js';
 
 export const createRouter = (db) => {
   const router = express.Router();
+
+  const getPersonnelScope = () => {
+    const hiddenResidents = new Set(
+      db.prepare(
+        'SELECT name FROM residents_master WHERE visible = 0'
+      ).all().map((row) => personNameKey(row.name))
+    );
+
+    const visibleFaculties = new Set(
+      db.prepare(
+        'SELECT name FROM faculties_master WHERE visible = 1'
+      ).all().map((row) => personNameKey(row.name))
+    );
+
+    return {
+      acceptsResident: (name) =>
+        !hiddenResidents.has(personNameKey(name)),
+
+      acceptsFaculty: (name) =>
+        visibleFaculties.has(personNameKey(name)),
+    };
+  };
 
   router.post('/api/upload', (req, res) => {
     try {
@@ -456,20 +483,74 @@ export const createRouter = (db) => {
   });
 
   router.get('/api/residents-master', (req, res) => {
-    const rows = db.prepare('SELECT name, year FROM residents_master ORDER BY name').all();
+    const rows = db.prepare(
+      'SELECT name, year, visible FROM residents_master ORDER BY name'
+    ).all();
+
     res.json(rows);
   });
 
   router.post('/api/residents-master', (req, res) => {
-    const list = Array.isArray(req.body) ? req.body : req.body.residentsList || [];
+    const list = Array.isArray(req.body)
+      ? req.body
+      : req.body.residentsList || [];
 
     db.exec('BEGIN TRANSACTION');
+
     try {
       db.exec('DELETE FROM residents_master');
-      const stmt = db.prepare('INSERT INTO residents_master (name, year) VALUES (?, ?)');
-      for (const res of list) {
-        stmt.run(res.name, res.year || null);
+
+      const stmt = db.prepare(`
+        INSERT INTO residents_master (name, year, visible)
+        VALUES (?, ?, ?)
+      `);
+
+      for (const resident of list) {
+        stmt.run(
+          resident.name,
+          normalizeResidentYear(resident.year),
+          isPersonnelVisible(resident) ? 1 : 0
+        );
       }
+
+      db.exec('COMMIT');
+      res.json({ success: true, count: list.length });
+    } catch (err) {
+      db.exec('ROLLBACK');
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  router.get('/api/faculties-master', (req, res) => {
+    const rows = db.prepare(
+      'SELECT name, visible FROM faculties_master ORDER BY name'
+    ).all();
+
+    res.json(rows);
+  });
+
+  router.post('/api/faculties-master', (req, res) => {
+    const list = Array.isArray(req.body)
+      ? req.body
+      : req.body.facultiesList || [];
+
+    db.exec('BEGIN TRANSACTION');
+
+    try {
+      db.exec('DELETE FROM faculties_master');
+
+      const stmt = db.prepare(`
+        INSERT INTO faculties_master (name, visible)
+        VALUES (?, ?)
+      `);
+
+      for (const faculty of list) {
+        stmt.run(
+          faculty.name,
+          isPersonnelVisible(faculty) ? 1 : 0
+        );
+      }
+
       db.exec('COMMIT');
       res.json({ success: true, count: list.length });
     } catch (err) {

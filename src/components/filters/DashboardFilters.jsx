@@ -47,7 +47,14 @@ const DashboardFilters = () => {
         entry.label
     );
 
-  const yearDropdownOptions = ['همه سال‌ها', ...availableYears.map(y => `سال ${y}`)];
+  const yearDropdownOptions = [
+    'همه سال‌ها',
+    'سال 1',
+    'سال 2',
+    'سال 3',
+    'سال 4',
+    'نامشخص',
+  ];
   const FACULTY_ALL_LABEL = 'همه اساتید';
   const facultyDropdownOptions = [FACULTY_ALL_LABEL, ...(availableFaculties || [])];
   const handlePeriodChange = (
@@ -70,9 +77,10 @@ const DashboardFilters = () => {
   const handleYearChange = (val) => {
     if (val === 'همه سال‌ها') {
       updateFilters({ selectedYear: 'all' });
+    } else if (val === 'نامشخص') {
+      updateFilters({ selectedYear: 'unknown' });
     } else {
-      const yearStr = val.replace('سال ', '');
-      updateFilters({ selectedYear: yearStr });
+      updateFilters({ selectedYear: val.replace('سال ', '') });
     }
   };
 
@@ -108,9 +116,12 @@ const DashboardFilters = () => {
     selectedPeriod ||
     '';
 
-  const yearValue = filters.selectedYear === 'all'
-    ? 'همه سال‌ها'
-    : `سال ${filters.selectedYear}`;
+  const yearValue =
+    filters.selectedYear === 'all'
+      ? 'همه سال‌ها'
+      : filters.selectedYear === 'unknown'
+        ? 'نامشخص'
+        : `سال ${filters.selectedYear}`;
 
   const facultyValue = filters.selectedFaculty === 'all'
     ? FACULTY_ALL_LABEL

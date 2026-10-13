@@ -67,7 +67,14 @@ export const initializeDB = () => {
     CREATE TABLE IF NOT EXISTS residents_master (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL UNIQUE,
-      year TEXT
+      year TEXT,
+      visible INTEGER NOT NULL DEFAULT 1
+    );
+
+    CREATE TABLE IF NOT EXISTS faculties_master (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      visible INTEGER NOT NULL DEFAULT 1
     );
 
     CREATE TABLE IF NOT EXISTS aggregated_scores (
@@ -126,6 +133,10 @@ export const initializeDB = () => {
     Q3: 'INTEGER',
     Q4: 'INTEGER',
     Q5: 'INTEGER',
+  });
+
+  ensureColumns(db, 'residents_master', {
+    visible: 'INTEGER NOT NULL DEFAULT 1',
   });
 
   return db;

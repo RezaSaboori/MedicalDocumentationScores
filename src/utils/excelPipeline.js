@@ -1,6 +1,10 @@
 import * as XLSX from 'xlsx';
 import { enrichScoringGroup } from './scoring';
 import {
+  normalizePersianName,
+  personNameKey,
+} from '../../shared/personnel.js';
+import {
   resolveQualityClass,
   qualityWeightToStatus,
   QUALITY_CLASS_WEIGHTS,
@@ -12,9 +16,10 @@ const normalize = (text) =>
     .trim();
 
 const cleanName = (text) =>
-  normalize(text)
-    .replace(/\s*:\s*\d+\s*\/\s*\d+\s*$/, '')
-    .trim();
+  normalizePersianName(
+    normalize(text)
+      .replace(/\s*:\s*\d+\s*\/\s*\d+\s*$/, '')
+  );
 
 const readSheet = (file) =>
   new Promise((resolve, reject) => {
@@ -64,18 +69,18 @@ const parseOptionalNum = (val) => {
 };
 
 const parseAfrad = (afradStr) => {
-  const str = normalize(afradStr);
+  const str = normalizePersianName(afradStr);
 
   let faculty = null;
   let resident = null;
 
-  const facultyMatch = str.match(/پزشک:\s*([^,]+)/);
+  const facultyMatch = str.match(/پزشک\s*:\s*([^,،]+)/);
 
   if (facultyMatch) {
     faculty = cleanName(facultyMatch[1]);
   }
 
-  const residentMatch = str.match(/رزیدنت:\s*([^,]+)/);
+  const residentMatch = str.match(/رزیدنت\s*:\s*([^,،]+)/);
 
   if (residentMatch) {
     resident = cleanName(residentMatch[1]);
@@ -99,7 +104,8 @@ const mergeByName = (rows, keyField) => {
   ];
 
   for (const row of rows) {
-    const key = row[keyField];
+    const name = row[keyField];
+    const key = personNameKey(name);
 
     if (!key) {
       continue;
@@ -108,7 +114,7 @@ const mergeByName = (rows, keyField) => {
     if (!map.has(key)) {
       map.set(key, {
         ...row,
-        name: key,
+        name,
         V_prev: row.V || 0,
       });
 
@@ -397,10 +403,13 @@ export const parseAndProcessExcel = async (
     const hasResident =
       Boolean(resident);
 
+    const facultyKey = personNameKey(faculty);
+    const residentKey = personNameKey(resident);
+
     const groupKey =
       hasResident
-        ? `resident__${faculty}__${resident}`
-        : `faculty__${faculty}`;
+        ? `resident__${facultyKey}__${residentKey}`
+        : `faculty__${facultyKey}`;
 
     if (!groups.has(groupKey)) {
       groups.set(groupKey, {
