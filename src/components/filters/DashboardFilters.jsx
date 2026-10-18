@@ -53,6 +53,7 @@ const DashboardFilters = () => {
     'سال 2',
     'سال 3',
     'سال 4',
+    'فلوشیپ',
     'نامشخص',
   ];
   const FACULTY_ALL_LABEL = 'همه اساتید';
@@ -121,7 +122,9 @@ const DashboardFilters = () => {
       ? 'همه سال‌ها'
       : filters.selectedYear === 'unknown'
         ? 'نامشخص'
-        : `سال ${filters.selectedYear}`;
+        : filters.selectedYear === 'فلوشیپ'
+          ? 'فلوشیپ'
+          : `سال ${filters.selectedYear}`;
 
   const facultyValue = filters.selectedFaculty === 'all'
     ? FACULTY_ALL_LABEL

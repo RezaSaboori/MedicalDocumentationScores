@@ -18,12 +18,14 @@ export const personNameKey = (value) =>
 export const normalizeResidentYear = (value) => {
   const year = String(value ?? '')
     .normalize('NFKC')
+    .replace(/[يى]/g, 'ی')
     .replace(/[۰-۹]/g, (digit) =>
       String(digit.charCodeAt(0) - 0x06F0)
     )
     .replace(/[٠-٩]/g, (digit) =>
       String(digit.charCodeAt(0) - 0x0660)
     )
+    .replace(/\s+/g, ' ')
     .trim()
     .replace(/^سال\s*/, '');
 
@@ -37,6 +39,7 @@ export const normalizeResidentYear = (value) => {
     'سوم': '3',
     '4': '4',
     'چهارم': '4',
+    'فلوشیپ': 'فلوشیپ',
   };
 
   return years[year] || null;

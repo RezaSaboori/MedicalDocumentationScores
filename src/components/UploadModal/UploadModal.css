@@ -173,6 +173,33 @@
   --radius: var(--border-radius-container-md);
 }
 
+.upload-modal-personnel-grid {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--spacing-md);
+}
+
+.upload-modal-personnel-grid > .upload-modal-section.u-container {
+  width: 100%;
+  min-width: 0;
+}
+
+.upload-modal-personnel-grid .upload-modal-table-wrapper {
+  min-width: 0;
+}
+
+.upload-modal-file-input {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  .upload-modal-personnel-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .upload-modal-section-title {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
@@ -184,8 +211,34 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: var(--spacing-sm);
-  
+}
+
+.upload-modal-section-footer > .upload-modal-btn {
+  height: 36px;
+  min-height: 36px;
+  justify-content: center;
+  padding: 0 var(--spacing-md);
+  font-size: var(--font-size-sm);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.upload-modal-section-footer > .upload-modal-btn.glass {
+  background-image: linear-gradient(
+    135deg,
+    var(--color-gray1),
+    var(--color-gray2) 70%
+  );
+}
+
+.dark .upload-modal-section-footer > .upload-modal-btn.glass {
+  background-image: linear-gradient(
+    135deg,
+    var(--color-gray2) 60%,
+    var(--color-gray1) 100%
+  );
 }
 
 /* ── Warning / error banners ── */
@@ -354,7 +407,7 @@
   vertical-align: middle;
   width: 32px;
   height: 32px;
-  margin-inline-end: var(--spacing-xs);
+  flex: 0 0 32px;
   padding: 0;
   border: var(--border-width-hairline) solid
     color-mix(in srgb, var(--color-gray8) 40%, transparent);
@@ -373,6 +426,21 @@
 
 .upload-modal-visibility--hidden {
   color: var(--color-gray9);
+}
+
+.upload-modal-personnel-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  white-space: nowrap;
+}
+
+.upload-modal-personnel-actions .upload-modal-btn {
+  height: 32px;
+  min-height: 32px;
+  justify-content: center;
+  padding: 0 var(--spacing-md);
+  line-height: 1;
 }
 
 .upload-modal-btn--solid { color: #fff; }

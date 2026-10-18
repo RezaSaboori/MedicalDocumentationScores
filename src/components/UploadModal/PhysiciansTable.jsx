@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import VisibilityButton from './VisibilityButton';
+import VisibilityButton from './VisibilityButton.jsx';
 import { isPersonnelVisible } from '../../../shared/personnel.js';
 
-const ResidentsManager = ({
+const PhysiciansTable = ({
   rows,
   kind = 'resident',
   onRowsChange,
@@ -75,8 +75,21 @@ const ResidentsManager = ({
                       </td>
                     )}
                     <td>
-                      <button className="upload-modal-btn upload-modal-btn--sm green-glass upload-modal-btn--solid" onClick={saveEdit}>ذخیره</button>{' '}
-                      <button className="upload-modal-btn upload-modal-btn--sm upload-modal-btn--ghost" onClick={cancelEdit}>انصراف</button>
+                      <div className="upload-modal-personnel-actions">
+                        <button
+                          className="upload-modal-btn upload-modal-btn--sm green-glass upload-modal-btn--solid"
+                          onClick={saveEdit}
+                        >
+                          ذخیره
+                        </button>
+
+                        <button
+                          className="upload-modal-btn upload-modal-btn--sm upload-modal-btn--ghost"
+                          onClick={cancelEdit}
+                        >
+                          انصراف
+                        </button>
+                      </div>
                     </td>
                   </>
                 ) : (
@@ -98,38 +111,40 @@ const ResidentsManager = ({
                     )}
 
                     <td>
-                      <VisibilityButton
-                        visible={isPersonnelVisible(row)}
-                        name={row.name}
-                        onClick={() => {
-                          onRowsChange(
-                            rows.map((person, index) =>
-                              index === idx
-                                ? {
-                                    ...person,
-                                    visible: isPersonnelVisible(person) ? 0 : 1,
-                                  }
-                                : person
-                            )
-                          );
-                        }}
-                      />
+                      <div className="upload-modal-personnel-actions">
+                        <VisibilityButton
+                          visible={isPersonnelVisible(row)}
+                          name={row.name}
+                          onClick={() => {
+                            onRowsChange(
+                              rows.map((person, index) =>
+                                index === idx
+                                  ? {
+                                      ...person,
+                                      visible: isPersonnelVisible(person) ? 0 : 1,
+                                    }
+                                  : person
+                              )
+                            );
+                          }}
+                        />
 
-                      <button
-                        className="upload-modal-btn upload-modal-btn--sm upload-modal-btn--ghost"
-                        onClick={() => startEdit(idx)}
-                      >
-                        ویرایش
-                      </button>
+                        <button
+                          className="upload-modal-btn upload-modal-btn--sm upload-modal-btn--ghost"
+                          onClick={() => startEdit(idx)}
+                        >
+                          ویرایش
+                        </button>
 
-                      <button
-                        className="upload-modal-btn upload-modal-btn--sm upload-modal-btn--danger"
-                        onClick={() =>
-                          onRowsChange(rows.filter((_, i) => i !== idx))
-                        }
-                      >
-                        حذف
-                      </button>
+                        <button
+                          className="upload-modal-btn upload-modal-btn--sm upload-modal-btn--danger"
+                          onClick={() =>
+                            onRowsChange(rows.filter((_, i) => i !== idx))
+                          }
+                        >
+                          حذف
+                        </button>
+                      </div>
                     </td>
                   </>
                 )}
@@ -168,7 +183,8 @@ const ResidentsManager = ({
         ) : (
           <>
             <button
-              className="upload-modal-btn upload-modal-btn--sm upload-modal-btn--ghost"
+              type="button"
+              className="upload-modal-btn upload-modal-btn--sm glass"
               onClick={dropProps.onClick}
               disabled={saving}
             >
@@ -200,4 +216,4 @@ const ResidentsManager = ({
   );
 };
 
-export default ResidentsManager;
+export default PhysiciansTable;

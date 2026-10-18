@@ -12,7 +12,7 @@ import { useDashboard } from '../../context/DashboardContext';
 import { useModeIndicator } from '../../hooks/useModeIndicator';
 import { DropdownInput } from '../inputs/DropdownInput';
 import PreviewTable from './PreviewTable';
-import ResidentsManager from './ResidentsTable';
+import PhysiciansTable from './PhysiciansTable';
 import './UploadModal.css';
 
 const TABS = { UPLOAD: 'upload', DATABASE: 'database' };
@@ -533,7 +533,7 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
                     مشخصات رزیدنت‌ها
                   </div>
 
-                  <ResidentsManager
+                  <PhysiciansTable
                     kind="resident"
                     rows={residentsRows}
                     onRowsChange={setResidentsRows}
@@ -549,6 +549,7 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
                     ref={residentsInputRef}
                     type="file"
                     accept=".csv"
+                    hidden
                     className="upload-modal-file-input"
                     onChange={(e) => {
                       handleResidentsFile(e.target.files?.[0]);
@@ -562,7 +563,7 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
                     مشخصات هیئت علمی
                   </div>
 
-                  <ResidentsManager
+                  <PhysiciansTable
                     kind="faculty"
                     rows={facultiesRows}
                     onRowsChange={setFacultiesRows}
@@ -578,6 +579,7 @@ export const UploadModal = ({ isOpen, onClose, onDataUploaded, onDataProcessed }
                     ref={facultiesInputRef}
                     type="file"
                     accept=".csv"
+                    hidden
                     className="upload-modal-file-input"
                     onChange={(e) => {
                       handleFacultiesFile(e.target.files?.[0]);
