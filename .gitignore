@@ -39,3 +39,7 @@ lerna-debug.log*
 
 #data:
 .css
+
+# Private application data
+/server/database.sqlite
+/public/data/

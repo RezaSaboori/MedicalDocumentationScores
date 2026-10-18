@@ -1,12 +1,25 @@
 import express from 'express';
-import cors from 'cors';
 import net from 'net';
+import { existsSync } from 'node:fs';
+import { loadEnvFile } from 'node:process';
 import { initializeDB } from './db.js';
 import { createRouter } from './routes.js';
+import { createAuthentication } from './auth.js';
+
+if (existsSync('.env.local')) {
+  loadEnvFile('.env.local');
+}
 
 const app = express();
-app.use(cors());
+
+app.disable('x-powered-by');
+
 app.use(express.json({ limit: '50mb' }));
+
+app.use('/api', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store');
+  next();
+});
 
 const getFreePort = () =>
   new Promise((resolve, reject) => {
@@ -21,7 +34,13 @@ const getFreePort = () =>
   });
 
 const startServer = async () => {
+  const { router: authRouter, requireAuth } =
+    createAuthentication();
+
   const db = initializeDB();
+
+  app.use('/api/auth', authRouter);
+  app.use('/api', requireAuth);
   app.use(createRouter(db));
 
   const PORT = Number(process.env.PORT) || (await getFreePort());

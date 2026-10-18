@@ -1,13 +1,16 @@
 import React from 'react';
 import DashboardLayout from './components/layout/DashboardLayout';
 import { DashboardProvider } from './context/DashboardContext';
+import AccessGate from './components/auth/AccessGate';
 import './App.css';
 
 function App() {
   return (
-    <DashboardProvider>
-      <DashboardLayout />
-    </DashboardProvider>
+    <AccessGate>
+      <DashboardProvider>
+        <DashboardLayout />
+      </DashboardProvider>
+    </AccessGate>
   );
 }
 

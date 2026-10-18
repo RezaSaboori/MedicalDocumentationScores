@@ -1,5 +1,16 @@
-const API_PORT = import.meta.env.VITE_API_PORT || '3001';
-const API_BASE = import.meta.env.VITE_API_BASE_URL || `http://localhost:${API_PORT}`;
+const API_BASE = '';
+
+const fetch = async (...args) => {
+  const response = await globalThis.fetch(...args);
+
+  if (response.status === 401) {
+    window.dispatchEvent(
+      new Event('mds:unauthorized')
+    );
+  }
+
+  return response;
+};
 
 export const uploadDataToServer = async (payload) => {
   const res = await fetch(`${API_BASE}/api/upload`, {
