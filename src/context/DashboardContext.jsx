@@ -310,7 +310,14 @@ export const DashboardProvider = ({ children }) => {
 
     const includeYear = mode === DASHBOARD_MODES.RESIDENTS;
 
-    const years = ['1', '2', '3', '4'];
+    const years = [
+      '1',
+      '2',
+      '3',
+      '4',
+      'فلوشیپ',
+      'فوق تخصص',
+    ];
 
     const allCurrent =
       applyFilters(

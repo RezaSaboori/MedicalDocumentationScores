@@ -25,6 +25,7 @@ export const normalizeResidentYear = (value) => {
     .replace(/[٠-٩]/g, (digit) =>
       String(digit.charCodeAt(0) - 0x0660)
     )
+    .replace(/[\u200C\u200D\u200E\u200F\uFEFF]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
     .replace(/^سال\s*/, '');
@@ -40,6 +41,7 @@ export const normalizeResidentYear = (value) => {
     '4': '4',
     'چهارم': '4',
     'فلوشیپ': 'فلوشیپ',
+    'فوق تخصص': 'فوق تخصص',
   };
 
   return years[year] || null;
