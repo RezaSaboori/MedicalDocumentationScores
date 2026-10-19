@@ -7,7 +7,8 @@ export default defineConfig({
     port: 5617,
     strictPort: true,
     host: '127.0.0.1',
-    open: true,
+    open: false,
+    allowedHosts: ['scores.cardiosmart.ai'],
     proxy: {
       '/api': {
         target: `http://127.0.0.1:${process.env.VITE_API_PORT || 4617}`,
